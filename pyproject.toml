@@ -28,6 +28,7 @@ pcr-extract = "pcr_audit.cli:extract_main"
 pcr-raw-audit = "pcr_audit.cli:raw_audit_main"
 pcr-report = "pcr_audit.cli:report_main"
 pcr-audit = "pcr_audit.cli:audit_main"
+pcr-crosscheck = "pcr_audit.cli:crosscheck_main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

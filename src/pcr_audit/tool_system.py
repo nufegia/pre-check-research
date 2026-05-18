@@ -96,6 +96,16 @@ TOOL_REGISTRY: dict[str, ToolSpec] = {
         reliability="高级/需 R",
         method_limitations="需要明确量表范围、精度和约束；结果解释成本高，只作为专家复核入口。",
     ),
+    "crosscheck": ToolSpec(
+        tool_id="crosscheck",
+        display_name="行级数学交叉校验",
+        category="统计一致性",
+        description="对摘要统计表执行 SE/SD/√N、CI/SE、percent/count/N、p/t/df 等纯数学交叉校验。",
+        accepted_input_types=("summary_statistics_table", "continuous_measure_summary", "likert_or_integer_scale_summary"),
+        default_enabled=False,
+        reliability="稳定",
+        method_limitations="只校验表内派生统计量的数学一致性；无法判断原始观测是否真实或统计模型是否合适。",
+    ),
     "digit_distribution": ToolSpec(
         tool_id="digit_distribution",
         display_name="数字分布检测",

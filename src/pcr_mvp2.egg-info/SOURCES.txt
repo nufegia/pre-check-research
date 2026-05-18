@@ -2,6 +2,7 @@ README.md
 pyproject.toml
 src/pcr_audit/__init__.py
 src/pcr_audit/cli.py
+src/pcr_audit/crosscheck.py
 src/pcr_audit/data_trace_mvp.py
 src/pcr_audit/tool_system.py
 src/pcr_audit/detectors/__init__.py
@@ -13,5 +14,6 @@ src/pcr_mvp2.egg-info/dependency_links.txt
 src/pcr_mvp2.egg-info/entry_points.txt
 src/pcr_mvp2.egg-info/requires.txt
 src/pcr_mvp2.egg-info/top_level.txt
+tests/test_crosscheck.py
 tests/test_python_cli.py
 tests/test_r_clis.py

@@ -15,7 +15,7 @@ from typing import Any
 
 import pandas as pd
 
-from pcr_audit.data_trace_mvp import Finding, TableResult, enrich_finding_explanation
+from pcr_audit.models import Finding, TableResult, enrich_finding_explanation
 from pcr_audit.tool_system import TOOL_REGISTRY
 
 

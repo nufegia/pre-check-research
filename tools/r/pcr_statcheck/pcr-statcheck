@@ -115,7 +115,7 @@ if (!requireNamespace("statcheck", quietly = TRUE)) {
 txt <- paste(readLines(input, warn = FALSE, encoding = "UTF-8"), collapse = "\n")
 res <- tryCatch({
   out <- statcheck::statcheck(txt, messages = FALSE)
-  if (is.list(out) && "results" %in% names(out)) out$results else out
+  if (is.null(out)) { data.frame() } else if (is.list(out) && "results" %in% names(out)) out$results else out
 }, error = function(e) {
   data.frame(error = conditionMessage(e), stringsAsFactors = FALSE)
 })
