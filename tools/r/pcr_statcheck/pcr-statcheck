@@ -1,0 +1,173 @@
+#!/usr/bin/env Rscript
+
+args <- commandArgs(trailingOnly = TRUE)
+
+usage <- function() {
+  cat("Usage: pcr-statcheck <text.txt> --json findings.json\n", file = stderr())
+}
+
+json_escape <- function(x) {
+  x <- ifelse(is.na(x), "", as.character(x))
+  x <- gsub("\\\\", "\\\\\\\\", x)
+  x <- gsub("\"", "\\\\\"", x)
+  x <- gsub("\n", "\\\\n", x)
+  x <- gsub("\r", "\\\\r", x)
+  x <- gsub("\t", "\\\\t", x)
+  x
+}
+
+jstr <- function(x) paste0("\"", json_escape(x), "\"")
+
+finding_json <- function(level, check, target, summary, evidence, detail, suggestion,
+                         dependency_status = "ready", confidence = "medium",
+                         false_positive_risk = "medium") {
+  paste0(
+    "{",
+    "\"level\":", jstr(level), ",",
+    "\"check\":", jstr(check), ",",
+    "\"target\":", jstr(target), ",",
+    "\"summary\":", jstr(summary), ",",
+    "\"evidence\":", jstr(evidence), ",",
+    "\"detail\":", jstr(detail), ",",
+    "\"suggestion\":", jstr(suggestion), ",",
+    "\"meaning\":", jstr(summary), ",",
+    "\"normal_explanations\":", jstr("可能的正常原因包括四舍五入、单双侧检验、统计量抽取错误或同一结果不同版本未同步。"), ",",
+    "\"review_steps\":", jstr(suggestion), ",",
+    "\"confidence\":", jstr(confidence), ",",
+    "\"false_positive_risk\":", jstr(false_positive_risk), ",",
+    "\"tool_id\":\"r_statcheck\",",
+    "\"tool_name\":\"R statcheck\",",
+    "\"detector_runtime\":\"r\",",
+    "\"dependency_status\":", jstr(dependency_status),
+    "}"
+  )
+}
+
+row_bool <- function(row, candidates) {
+  for (candidate in candidates) {
+    if (candidate %in% names(row)) {
+      return(tolower(as.character(row[[candidate]])) %in% c("true", "1"))
+    }
+  }
+  FALSE
+}
+
+row_value <- function(row, candidates, default = "") {
+  for (candidate in candidates) {
+    if (candidate %in% names(row)) return(as.character(row[[candidate]]))
+  }
+  default
+}
+
+write_payload <- function(source, input_type, dependency_status, findings, json_path) {
+  payload <- paste0(
+    "{\n",
+    "  \"tool_id\": \"r_statcheck\",\n",
+    "  \"tool_name\": \"R statcheck\",\n",
+    "  \"detector_runtime\": \"r\",\n",
+    "  \"dependency_status\": ", jstr(dependency_status), ",\n",
+    "  \"source\": ", jstr(source), ",\n",
+    "  \"input_type\": ", jstr(input_type), ",\n",
+    "  \"findings\": [", paste(findings, collapse = ","), "]\n",
+    "}\n"
+  )
+  if (!is.null(json_path)) {
+    writeLines(payload, json_path, useBytes = TRUE)
+  } else {
+    cat(payload)
+  }
+}
+
+if (length(args) < 1) {
+  usage()
+  quit(status = 2)
+}
+
+input <- args[[1]]
+json_path <- NULL
+if ("--json" %in% args) {
+  pos <- match("--json", args)
+  if (pos == length(args)) {
+    usage()
+    quit(status = 2)
+  }
+  json_path <- args[[pos + 1]]
+}
+
+if (!file.exists(input)) {
+  cat(paste0("Input file not found: ", input, "\n"), file = stderr())
+  quit(status = 2)
+}
+
+if (!requireNamespace("statcheck", quietly = TRUE)) {
+  f <- finding_json(
+    "info", "R statcheck运行记录", "R 包",
+    "缺少 R 包 statcheck，正文统计一致性检测已跳过。",
+    "dependency_status=missing_r_package",
+    "Install with install.packages('statcheck').",
+    "安装 statcheck 后重试；工具缺失不计入数据风险。",
+    "missing_r_package", "low", "low"
+  )
+  write_payload(normalizePath(input), "apa_statistical_text", "missing_r_package", c(f), json_path)
+  quit(status = 0)
+}
+
+txt <- paste(readLines(input, warn = FALSE, encoding = "UTF-8"), collapse = "\n")
+res <- tryCatch({
+  out <- statcheck::statcheck(txt, messages = FALSE)
+  if (is.list(out) && "results" %in% names(out)) out$results else out
+}, error = function(e) {
+  data.frame(error = conditionMessage(e), stringsAsFactors = FALSE)
+})
+
+if ("error" %in% names(res)) {
+  f <- finding_json(
+    "info", "R statcheck运行记录", "statcheck API",
+    "R statcheck API 调用失败。",
+    "dependency_status=error",
+    res$error[[1]],
+    "确认文本格式、statcheck 版本和输入编码后重试。",
+    "error", "low", "low"
+  )
+  write_payload(normalizePath(input), "apa_statistical_text", "error", c(f), json_path)
+  quit(status = 0)
+}
+
+findings <- c()
+if (nrow(res) > 0) {
+  for (i in seq_len(nrow(res))) {
+    row <- res[i, , drop = FALSE]
+    error <- row_bool(row, c("Error", "error"))
+    decision_error <- row_bool(row, c("Decision_Error", "decision_error"))
+    if (!error && !decision_error) next
+    raw <- row_value(row, c("Raw", "raw", "Source"), "APA统计表达式")
+    reported <- row_value(row, c("Reported_P_Value", "reported_p"), "")
+    computed <- row_value(row, c("Computed_P_Value", "computed_p"), "")
+    detail <- paste(paste(names(row), as.character(row[1, ]), sep = "="), collapse = "; ")
+    findings <- c(findings, finding_json(
+      ifelse(decision_error, "high", "medium"),
+      "R statcheck正文统计一致性",
+      substr(raw, 1, 120),
+      "R statcheck 发现正文统计量与报告 p 值不一致。",
+      paste0("报告p=", reported, "，反算p=", computed),
+      detail,
+      "优先核对统计量、自由度、单双侧检验和 p 值是否来自同一次分析。",
+      "ready",
+      ifelse(decision_error, "high", "medium"),
+      "medium"
+    ))
+  }
+}
+
+if (length(findings) == 0) {
+  findings <- c(finding_json(
+    "info", "R statcheck运行记录", "APA/NHST 文本",
+    "R statcheck 已运行，未发现可报告的不一致。",
+    paste0("文本长度=", nchar(txt)),
+    "",
+    "若论文统计表达式不是 APA/NHST 格式，应改用表格摘要统计工具或人工复核。",
+    "ready", "low", "low"
+  ))
+}
+
+write_payload(normalizePath(input), "apa_statistical_text", "ready", findings, json_path)

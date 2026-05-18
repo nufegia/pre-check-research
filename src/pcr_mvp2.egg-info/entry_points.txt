@@ -1,0 +1,5 @@
+[console_scripts]
+pcr-audit = pcr_audit.cli:audit_main
+pcr-extract = pcr_audit.cli:extract_main
+pcr-raw-audit = pcr_audit.cli:raw_audit_main
+pcr-report = pcr_audit.cli:report_main

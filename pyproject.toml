@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pcr-mvp2"
+version = "0.1.0"
+description = "Agent-oriented CLI toolkit for research data risk auditing."
+requires-python = ">=3.10"
+dependencies = [
+  "numpy>=1.24",
+  "openpyxl>=3.1",
+  "pandas>=2.0",
+  "pdfplumber>=0.11",
+  "scipy>=1.10",
+]
+
+[project.optional-dependencies]
+image = [
+  "Pillow>=10.0",
+  "opencv-python-headless>=4.8",
+  "imagehash>=4.3",
+]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+pcr-extract = "pcr_audit.cli:extract_main"
+pcr-raw-audit = "pcr_audit.cli:raw_audit_main"
+pcr-report = "pcr_audit.cli:report_main"
+pcr-audit = "pcr_audit.cli:audit_main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

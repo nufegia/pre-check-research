@@ -1,0 +1,131 @@
+#!/usr/bin/env Rscript
+
+args <- commandArgs(trailingOnly = TRUE)
+usage <- function() cat("Usage: pcr-sprite <summary.csv> --scale-min 1 --scale-max 5 --json findings.json\n", file = stderr())
+json_escape <- function(x) {
+  x <- ifelse(is.na(x), "", as.character(x))
+  x <- gsub("\\\\", "\\\\\\\\", x)
+  x <- gsub("\"", "\\\\\"", x)
+  x <- gsub("\n", "\\\\n", x)
+  x <- gsub("\r", "\\\\r", x)
+  x <- gsub("\t", "\\\\t", x)
+  x
+}
+jstr <- function(x) paste0("\"", json_escape(x), "\"")
+arg_value <- function(flag, default = NULL) {
+  if (!(flag %in% args)) return(default)
+  pos <- match(flag, args)
+  if (pos == length(args)) return(default)
+  args[[pos + 1]]
+}
+finding_json <- function(level, check, target, summary, evidence, detail, suggestion,
+                         dependency_status = "ready", confidence = "medium",
+                         false_positive_risk = "high") {
+  paste0("{",
+    "\"level\":", jstr(level), ",",
+    "\"check\":", jstr(check), ",",
+    "\"target\":", jstr(target), ",",
+    "\"summary\":", jstr(summary), ",",
+    "\"evidence\":", jstr(evidence), ",",
+    "\"detail\":", jstr(detail), ",",
+    "\"suggestion\":", jstr(suggestion), ",",
+    "\"meaning\":", jstr(summary), ",",
+    "\"normal_explanations\":", jstr("可能的正常原因包括量表范围、均值/SD 小数精度、约束条件或 rsprite2 搜索参数设置不匹配。"), ",",
+    "\"review_steps\":", jstr(suggestion), ",",
+    "\"confidence\":", jstr(confidence), ",",
+    "\"false_positive_risk\":", jstr(false_positive_risk), ",",
+    "\"tool_id\":\"r_rsprite2\",",
+    "\"tool_name\":\"R rsprite2 SPRITE\",",
+    "\"detector_runtime\":\"r\",",
+    "\"dependency_status\":", jstr(dependency_status),
+  "}")
+}
+write_payload <- function(source, dependency_status, findings, json_path) {
+  payload <- paste0("{\n",
+    "  \"tool_id\": \"r_rsprite2\",\n",
+    "  \"tool_name\": \"R rsprite2 SPRITE\",\n",
+    "  \"detector_runtime\": \"r\",\n",
+    "  \"dependency_status\": ", jstr(dependency_status), ",\n",
+    "  \"source\": ", jstr(source), ",\n",
+    "  \"input_type\": \"likert_or_integer_scale_summary\",\n",
+    "  \"findings\": [", paste(findings, collapse = ","), "]\n",
+    "}\n")
+  if (!is.null(json_path)) writeLines(payload, json_path, useBytes = TRUE) else cat(payload)
+}
+decimal_places <- function(x) {
+  x <- as.character(x)
+  if (is.na(x) || !grepl("\\.", x)) return(0)
+  nchar(sub("^[^.]*\\.", "", x))
+}
+
+if (length(args) < 1) {
+  usage()
+  quit(status = 2)
+}
+input <- args[[1]]
+json_path <- arg_value("--json")
+scale_min <- as.numeric(arg_value("--scale-min", "1"))
+scale_max <- as.numeric(arg_value("--scale-max", "5"))
+if (!file.exists(input)) {
+  cat(paste0("Input file not found: ", input, "\n"), file = stderr())
+  quit(status = 2)
+}
+if (!requireNamespace("rsprite2", quietly = TRUE)) {
+  f <- finding_json("info", "R rsprite2运行记录", "R 包", "缺少 R 包 rsprite2，SPRITE 高级复核已跳过。",
+    "dependency_status=missing_r_package", "Install with install.packages('rsprite2').",
+    "安装 rsprite2 后重试；工具缺失不计入数据风险。", "missing_r_package", "low", "low")
+  write_payload(normalizePath(input), "missing_r_package", c(f), json_path)
+  quit(status = 0)
+}
+
+d <- read.csv(input, check.names = FALSE, colClasses = "character")
+norm <- function(x) tolower(gsub("[ _-]", "", x))
+as_num <- function(x) suppressWarnings(as.numeric(gsub(",", "", gsub("%", "", x))))
+cols <- names(d)
+ncol <- cols[match(TRUE, norm(cols) %in% c("n", "samplesize", "cases", "样本量", "例数", "人数"))]
+mcol <- cols[match(TRUE, norm(cols) %in% c("mean", "means", "均值", "均数", "平均值", "平均数"))]
+sdcol <- cols[match(TRUE, norm(cols) %in% c("sd", "std", "标准差", "stdev"))]
+findings <- c()
+if (is.na(ncol) || is.na(mcol) || is.na(sdcol)) {
+  findings <- c(findings, finding_json("info", "R rsprite2 SPRITE", "摘要统计表", "缺少 N、mean 或 SD 列，无法调用 SPRITE 分布反推。",
+    paste0("columns=", paste(cols, collapse = ",")), "", "补充 N、mean、SD 和量表范围后重试。", "ready", "low", "low"))
+  write_payload(normalizePath(input), "ready", findings, json_path)
+  quit(status = 0)
+}
+
+cases <- 0
+for (i in seq_len(nrow(d))) {
+  n <- as_num(d[[ncol]][i])
+  m <- as_num(d[[mcol]][i])
+  sd <- as_num(d[[sdcol]][i])
+  m_raw <- as.character(d[[mcol]][i])
+  sd_raw <- as.character(d[[sdcol]][i])
+  if (is.na(n) || is.na(m) || is.na(sd)) next
+  cases <- cases + 1
+  res <- tryCatch({
+    params <- rsprite2::set_parameters(mean = m, sd = sd, n_obs = as.integer(n),
+      min_val = scale_min, max_val = scale_max, m_prec = decimal_places(m_raw),
+      sd_prec = decimal_places(sd_raw))
+    dist <- rsprite2::find_possible_distribution(params, seed = 20260517)
+    if (is.list(dist)) {
+      status <- ifelse(tolower(as.character(dist$outcome)) == "success", "possible", "not_found")
+      detail <- paste0("N=", n, ", mean=", m_raw, ", SD=", sd_raw, ", scale=", scale_min, "-", scale_max,
+        ", outcome=", dist$outcome, ", iterations=", dist$iterations)
+    } else {
+      status <- "not_found"
+      detail <- paste0("N=", n, ", mean=", m_raw, ", SD=", sd_raw, ", scale=", scale_min, "-", scale_max, "；未返回可行分布。")
+    }
+    list(status = status, detail = detail)
+  }, error = function(e) {
+    list(status = "impossible", detail = paste0("N=", n, ", mean=", m_raw, ", SD=", sd_raw, ", scale=", scale_min, "-", scale_max, "；", conditionMessage(e)))
+  })
+  if (res$status %in% c("impossible", "not_found")) {
+    findings <- c(findings, finding_json("high", "R rsprite2 SPRITE", paste0("行", i),
+      "SPRITE 未能找到匹配报告摘要统计的离散分布。", res$detail, "",
+      "确认量表范围、均值/SD 小数精度、样本量和是否为离散评分摘要；高风险结果应由人工复核原始频数。",
+      "ready", "medium", "high"))
+  }
+}
+findings <- c(findings, finding_json("info", "R rsprite2运行记录", "摘要统计表", "R rsprite2 SPRITE 已运行。",
+  paste0("尝试行数=", cases), "", "SPRITE 是高级复核工具，解释时必须保留量表和搜索参数限制。", "ready", "low", "medium"))
+write_payload(normalizePath(input), "ready", findings, json_path)

@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pcr.local/schemas/finding.schema.json",
+  "title": "PCR Finding Payload",
+  "type": "object",
+  "required": [
+    "tool_id",
+    "tool_name",
+    "detector_runtime",
+    "dependency_status",
+    "source",
+    "input_type",
+    "findings"
+  ],
+  "properties": {
+    "tool_id": { "type": "string" },
+    "tool_name": { "type": "string" },
+    "detector_runtime": { "type": "string" },
+    "dependency_status": { "type": "string" },
+    "source": {},
+    "input_type": { "type": "string" },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "level",
+          "check",
+          "target",
+          "summary",
+          "evidence",
+          "detail",
+          "suggestion",
+          "meaning",
+          "normal_explanations",
+          "review_steps",
+          "confidence",
+          "false_positive_risk"
+        ],
+        "properties": {
+          "level": { "enum": ["high", "medium", "low", "info"] },
+          "check": { "type": "string" },
+          "target": { "type": "string" },
+          "summary": { "type": "string" },
+          "evidence": { "type": "string" },
+          "detail": { "type": "string" },
+          "suggestion": { "type": "string" },
+          "meaning": { "type": "string" },
+          "normal_explanations": { "type": "string" },
+          "review_steps": { "type": "string" },
+          "confidence": { "type": "string" },
+          "false_positive_risk": { "type": "string" },
+          "tool_id": { "type": "string" },
+          "tool_name": { "type": "string" },
+          "detector_runtime": { "type": "string" },
+          "dependency_status": { "type": "string" }
+        }
+      }
+    }
+  }
+}
