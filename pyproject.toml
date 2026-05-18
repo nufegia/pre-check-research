@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pcr-mvp2"
-version = "0.1.0"
+version = "0.8.0"
 description = "Agent-oriented CLI toolkit for research data risk auditing."
 requires-python = ">=3.10"
 dependencies = [
@@ -19,7 +19,7 @@ dependencies = [
 image = [
   "Pillow>=10.0",
   "opencv-python-headless>=4.8",
-  "imagehash>=4.3",
+  "scikit-image>=0.22",
 ]
 dev = ["pytest>=8.0"]
 

@@ -47,6 +47,12 @@ Optional R packages:
 install.packages(c("statcheck", "scrutiny", "rsprite2"))
 ```
 
+Optional local image forensics dependencies:
+
+```bash
+python -m pip install -e ".[image]"
+```
+
 ## 使用方式
 
 推荐先使用确定性路由层判断输入适合哪些检测工具，再运行审计。这样可以把“工具是否适用”和“工具是否缺依赖”记录进 JSON，避免由 agent 或人工临时猜测。
@@ -115,10 +121,20 @@ pcr-report merge build/raw.json build/crosscheck.json --out build/merged.md --js
 | `pcr-report merge` | Python | JSON | Merge findings → Markdown |
 | `pcr-audit route` | Python | Mixed | Explain deterministic tool routing |
 | `pcr-audit run` | Python | Mixed | Optional one-command pipeline |
+| `pcr-audit project` | Python | Folder/manifest | Multi-material pre-submission audit |
+| `pcr-audit provenance` | Python | Folder/manifest | Append-only SHA-256 JSONL ledger |
+| `pcr-audit corpus` | Python | Folder/manifest | Local corpus index and cross-manuscript screening |
 
 ```bash
 pcr-audit route examples/summary_stat_sample.csv --json build/route.json
 pcr-audit run examples/summary_stat_sample.csv --out build/auto.md --json build/auto.json
+pcr-audit project path/to/project_folder --out build/project.md --json build/project.json
+pcr-audit project examples/project_minimal --out build/project-minimal.md --json build/project-minimal.json
+pcr-audit provenance record examples/project_minimal --json build/provenance-record.json
+pcr-audit provenance verify examples/project_minimal --json build/provenance-verify.json
+pcr-audit corpus build examples --out build/corpus-index.json
+pcr-audit corpus screen examples/project_minimal --index build/corpus-index.json --out build/corpus-screen.md --json build/corpus-screen.json
+pcr-audit project examples/project_questionnaire --inspect --json build/project-questionnaire.inspect.json
 pcr-audit run examples/summary_stat_sample.csv --out build/route.md --json build/route.json --dry-run
 pcr-extract examples/suspicious_sample.xlsx --out build/extracted --json build/extracted.json
 pcr-raw-audit examples/suspicious_sample.csv --out build/raw.md --json build/raw.json
@@ -138,6 +154,65 @@ pcr-report merge build/raw.json build/scrutiny.json --out build/merged.md --json
 - `runner.py`：执行 route-ready 工具并合并结果。
 - `reporting.py`：Markdown/JSON 报告渲染与合并。
 - `detectors/` 与 `crosscheck.py`：具体检测器实现。
+- `product_detectors.py`：最终产品版增量能力，包括参考文献核验、引用主张抽取、论文工厂轻量信号、图像内部重复初筛、哈希存证和代码复跑准备检查。
+
+## 最终产品版增量能力
+
+`pcr-audit project <folder-or-manifest>` 会对一个项目包执行多材料审计：
+
+- 数据文件：继续使用确定性路由运行原始数据规则、交叉验证和可用 R 工具。
+- 文档/参考文献：解析 DOI/PMID、抽取带引用主张、扫描轻量论文工厂短语信号。
+- 图像：从 DOCX 或图片目录发现图片，使用 Pillow/numpy/scipy 的 aHash/dHash/pHash 和可选 OpenCV ORB 做同稿件内部重复、旋转/翻转相似、局部 copy-move 初筛，并生成 blot/gel 复核清单。
+- 代码：只读扫描 R/Python/Stata/SPSS/SAS 脚本中的路径、输入、缺失剔除和显著性筛选线索。
+- 溯源：对项目内文件计算 SHA-256、文件大小和修改时间；可用 `pcr-audit provenance` 写入追加式 JSONL 版本链并验证 matched/changed/missing/new。
+- 论文工厂本地信号：可用 `pcr-audit corpus build/screen` 对本地项目语料建立索引，筛查文本模板、引用重叠、作者/邮箱域重叠和跨稿件图像指纹相似。
+
+v0.7 增加了项目预检和样例库：
+
+```bash
+pcr-audit project examples/project_questionnaire --inspect --json build/questionnaire.inspect.json
+pcr-audit project path/to/new_project --init-manifest
+```
+
+内置样例覆盖三类常见服务场景：
+
+- `examples/project_minimal`：最小项目包。
+- `examples/project_questionnaire`：问卷/社科摘要统计和原始数据。
+- `examples/project_biomed`：生物医学数据、图像材料清单和文献核验。
+
+默认不会把稿件或参考文献信息发往外部 API。需要 Crossref/OpenAlex/NCBI 元数据核验时，显式设置：
+
+```bash
+pcr-audit project examples/project_minimal --out build/project.md --json build/project.json --external-lookups --contact-email you@example.org
+```
+
+项目 manifest 使用 `pcr-project.json`：
+
+```json
+{
+  "project_id": "optional-id",
+  "title": "optional title",
+  "materials": [
+    {"path": "paper.docx", "role": "manuscript"},
+    {"path": "data.csv", "role": "raw_data"},
+    {"path": "analysis.py", "role": "analysis_code"},
+    {"path": "figures/", "role": "figures"}
+  ],
+  "settings": {
+    "external_lookups": false,
+    "grobid_url": "http://localhost:8070",
+    "contact_email": ""
+  }
+}
+```
+
+可选 GROBID REST 服务通过 manifest、`PCR_GROBID_URL` 或 CLI 参数启用：
+
+```bash
+pcr-audit project examples/project_minimal --out build/project.md --json build/project.json --grobid-url http://localhost:8070
+```
+
+商业/私有化部署默认不引入 PyMuPDF、grobid-client、imagehash、unstructured、tabula-py；GROBID 以独立 REST 服务接入，外部查询会在 workdir 中记录缓存和合规元数据，不缓存完整稿件正文。
 
 ## 扩展原则
 

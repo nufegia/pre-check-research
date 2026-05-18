@@ -1,0 +1,9 @@
+group,subject,response,biomarker
+control,C01,0,10
+control,C02,0,10
+control,C03,1,10
+control,C04,1,10
+treat,T01,1,20
+treat,T02,1,20
+treat,T03,1,20
+treat,T04,0,20

@@ -1,0 +1,15 @@
+{
+  "project_id": "project-biomed",
+  "title": "Biomedical figure audit example",
+  "materials": [
+    {"path": "paper.md", "role": "manuscript"},
+    {"path": "outcomes.csv", "role": "raw_data"},
+    {"path": "figures", "role": "figures"},
+    {"path": "analysis.py", "role": "analysis_code"}
+  ],
+  "settings": {
+    "external_lookups": false,
+    "grobid_url": "",
+    "contact_email": ""
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "project_id": "project-minimal",
+  "title": "Minimal pre-submission audit example",
+  "materials": [
+    {"path": "paper.md", "role": "manuscript"},
+    {"path": "data.csv", "role": "raw_data"},
+    {"path": "analysis.py", "role": "analysis_code"}
+  ],
+  "settings": {
+    "external_lookups": false,
+    "grobid_url": "",
+    "contact_email": ""
+  }
+}

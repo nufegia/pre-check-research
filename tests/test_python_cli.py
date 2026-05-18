@@ -129,6 +129,139 @@ def test_audit_run_dry_run_writes_route_json(tmp_path: Path) -> None:
     assert "routing_decisions" in payload["tables"][0]
 
 
+def test_audit_auto_reference_text_runs_local_reference_tools(tmp_path: Path) -> None:
+    source = tmp_path / "refs.md"
+    source.write_text(
+        "References\n[1] Smith J. A useful paper. doi:10.1234/example.2026.\n"
+        "The method is widely used [1].\n",
+        encoding="utf-8",
+    )
+    out = tmp_path / "refs.md.out"
+    merged_json = tmp_path / "refs.json"
+
+    assert audit_main(["run", str(source), "--out", str(out), "--json", str(merged_json)]) == 0
+    payload = json.loads(merged_json.read_text(encoding="utf-8"))
+    tool_ids = {finding["tool_id"] for result in payload["results"] for finding in result["findings"]}
+
+    assert "reference_audit" in tool_ids
+    assert "citation_claim_check" in tool_ids
+    assert "papermill_light_signals" in tool_ids
+
+
+def test_audit_project_runs_multimaterial_audit(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr("pcr_audit.tool_system.rscript_available", lambda: True)
+    monkeypatch.setattr("pcr_audit.tool_system.r_package_available", lambda _package: False)
+    project = tmp_path / "project"
+    project.mkdir()
+    (project / "paper.md").write_text(
+        "References\n[1] Smith J. A useful paper. doi:10.1234/example.2026.\n"
+        "This claim is supported by prior work [1].\n",
+        encoding="utf-8",
+    )
+    pd.DataFrame({"subject": ["S1", "S2", "S3"], "value": [1.0, 1.2, 1.4]}).to_csv(project / "data.csv", index=False)
+    (project / "analysis.py").write_text("import pandas as pd\ndf = pd.read_csv('data.csv').dropna()\n", encoding="utf-8")
+    out = tmp_path / "project-report.md"
+    merged_json = tmp_path / "project-report.json"
+
+    assert audit_main(["project", str(project), "--out", str(out), "--json", str(merged_json)]) == 0
+    payload = json.loads(merged_json.read_text(encoding="utf-8"))
+    tool_ids = {finding["tool_id"] for result in payload["results"] for finding in result["findings"]}
+
+    assert "provenance_hash" in tool_ids
+    assert "code_rerun_audit" in tool_ids
+    assert "reference_audit" in tool_ids
+
+
+def test_audit_project_example_and_flags(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr("pcr_audit.tool_system.rscript_available", lambda: True)
+    monkeypatch.setattr("pcr_audit.tool_system.r_package_available", lambda _package: False)
+    source = ROOT / "examples" / "project_minimal"
+    out = tmp_path / "example-project.md"
+    merged_json = tmp_path / "example-project.json"
+    workdir = tmp_path / "work"
+
+    assert audit_main(
+        [
+            "project",
+            str(source),
+            "--out",
+            str(out),
+            "--json",
+            str(merged_json),
+            "--workdir",
+            str(workdir),
+            "--grobid-url",
+            "http://localhost:8070",
+            "--contact-email",
+            "audit@example.org",
+        ]
+    ) == 0
+    payload = json.loads(merged_json.read_text(encoding="utf-8"))
+    route = json.loads((workdir / "project-route.json").read_text(encoding="utf-8"))
+    report = out.read_text(encoding="utf-8")
+    tool_ids = {finding["tool_id"] for result in payload["results"] for finding in result["findings"]}
+
+    assert route["project_id"] == "project-minimal"
+    assert route["policy"]["grobid_url"] == "http://localhost:8070"
+    assert route["policy"]["contact_email"] == "audit@example.org"
+    assert "作者整改清单" in report
+    assert "工具运行与材料覆盖" in report
+    assert "reference_audit" in tool_ids
+    assert "provenance_hash" in tool_ids
+
+
+def test_project_inspect_without_running_detectors(tmp_path: Path) -> None:
+    source = ROOT / "examples" / "project_minimal"
+    inspect_json = tmp_path / "inspect.json"
+
+    assert audit_main(["project", str(source), "--inspect", "--json", str(inspect_json)]) == 0
+    payload = json.loads(inspect_json.read_text(encoding="utf-8"))
+
+    assert payload["project_id"] == "project-minimal"
+    assert payload["role_counts"]["manuscript"] == 1
+    assert payload["role_counts"]["raw_data"] == 1
+    assert payload["missing_core_roles"] == []
+
+
+def test_project_init_manifest(tmp_path: Path) -> None:
+    project = tmp_path / "new_project"
+    project.mkdir()
+    (project / "paper.md").write_text("References\n", encoding="utf-8")
+    (project / "data.csv").write_text("id,value\n1,2\n", encoding="utf-8")
+    out_json = tmp_path / "init.json"
+
+    assert audit_main(["project", str(project), "--init-manifest", "--json", str(out_json)]) == 0
+    manifest = project / "pcr-project.json"
+    payload = json.loads(manifest.read_text(encoding="utf-8"))
+
+    assert manifest.exists()
+    assert any(item["role"] == "manuscript" for item in payload["materials"])
+    assert any(item["role"] == "raw_data" for item in payload["materials"])
+
+
+def test_project_sample_reports_are_stable_enough_for_golden_checks(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr("pcr_audit.tool_system.rscript_available", lambda: True)
+    monkeypatch.setattr("pcr_audit.tool_system.r_package_available", lambda _package: False)
+    samples = ["project_minimal", "project_questionnaire", "project_biomed"]
+    for sample in samples:
+        source = ROOT / "examples" / sample
+        out = tmp_path / f"{sample}.md"
+        merged_json = tmp_path / f"{sample}.json"
+        assert audit_main(["project", str(source), "--out", str(out), "--json", str(merged_json)]) == 0
+        report = out.read_text(encoding="utf-8")
+        payload = json.loads(merged_json.read_text(encoding="utf-8"))
+        tool_ids = {finding["tool_id"] for result in payload["results"] for finding in result["findings"]}
+
+        assert "导师摘要" in report
+        assert "材料覆盖矩阵" in report
+        assert "工具运行与材料覆盖" in report
+        assert "reference_audit" in tool_ids
+        assert "provenance_hash" in tool_ids
+        if sample == "project_biomed":
+            assert "image_extract" in tool_ids
+            assert "image_metadata_audit" in tool_ids
+
+
 def test_audit_auto_multisheet_runs_only_route_ready_tables(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setattr("pcr_audit.tool_system.rscript_available", lambda: True)
     monkeypatch.setattr("pcr_audit.tool_system.r_package_available", lambda _package: False)

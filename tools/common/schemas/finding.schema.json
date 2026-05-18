@@ -53,7 +53,13 @@
           "tool_id": { "type": "string" },
           "tool_name": { "type": "string" },
           "detector_runtime": { "type": "string" },
-          "dependency_status": { "type": "string" }
+          "dependency_status": { "type": "string" },
+          "evidence_id": { "type": "string" },
+          "location": { "type": "string" },
+          "calculation_trace": { "type": "string" },
+          "external_records": { "type": "string" },
+          "review_actions": { "type": "string" },
+          "confidence_basis": { "type": "string" }
         }
       }
     }

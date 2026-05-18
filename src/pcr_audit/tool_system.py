@@ -128,6 +128,129 @@ TOOL_REGISTRY: dict[str, ToolSpec] = {
         reliability="弱信号",
         method_limitations="图像取证结果不能单独作为强结论；重复纹理、压缩流程和排版软件都可能导致误报。",
     ),
+    "reference_audit": ToolSpec(
+        tool_id="reference_audit",
+        display_name="参考文献核验",
+        category="文献与外部信号",
+        description="解析 DOI/PMID，并在显式启用时查询 Crossref、OpenAlex、NCBI 元数据和撤稿信号。",
+        accepted_input_types=("reference_list", "paper_document", "plain_text", "apa_statistical_text"),
+        default_enabled=False,
+        reliability="稳定/外部查询需启用",
+        method_limitations="默认不向外部 API 发送材料；外部元数据可能不完整，撤稿与争议信号需人工确认。",
+    ),
+    "citation_claim_check": ToolSpec(
+        tool_id="citation_claim_check",
+        display_name="引用支持关系辅助复核",
+        category="文献与外部信号",
+        description="抽取带引用的正文主张，生成需要人工或受控 RAG 复核的清单。",
+        accepted_input_types=("reference_list", "paper_document", "plain_text", "apa_statistical_text"),
+        default_enabled=False,
+        reliability="辅助",
+        method_limitations="轻量抽取不判断引用是否真正支持主张；必须保留证据片段并人工确认。",
+    ),
+    "image_extract": ToolSpec(
+        tool_id="image_extract",
+        display_name="图像抽取",
+        category="图像",
+        description="从 DOCX 或图片目录中发现/抽取 figure 和基础元数据。",
+        accepted_input_types=("scientific_image", "scientific_figure", "paper_document"),
+        default_enabled=False,
+        reliability="稳定",
+        method_limitations="PDF 图像抽取在当前版本仅作为后续能力记录；复杂版式需要人工复核。",
+    ),
+    "image_duplicate_internal": ToolSpec(
+        tool_id="image_duplicate_internal",
+        display_name="稿件内部重复图初筛",
+        category="图像",
+        description="使用多种本地图像指纹和 ORB 特征筛查同稿件内部高度相似图片。",
+        accepted_input_types=("scientific_image", "scientific_figure", "western_blot_or_gel_image"),
+        default_enabled=False,
+        dependency_module="PIL",
+        reliability="弱信号",
+        method_limitations="只能提示重复/复用复核线索，不能证明篡改；复杂裁剪、低质量压缩和重复纹理可能影响结果。",
+    ),
+    "image_copy_move_internal": ToolSpec(
+        tool_id="image_copy_move_internal",
+        display_name="图像局部复制初筛",
+        category="图像",
+        description="使用本地 ORB 特征在单张图内部筛查疑似 copy-move 局部复制信号。",
+        accepted_input_types=("scientific_image", "scientific_figure", "western_blot_or_gel_image"),
+        default_enabled=False,
+        dependency_module="cv2",
+        reliability="弱信号",
+        method_limitations="局部复制初筛对重复纹理、图表元素和压缩噪声敏感；命中区域必须由人工结合原图复核。",
+    ),
+    "image_metadata_audit": ToolSpec(
+        tool_id="image_metadata_audit",
+        display_name="图像元数据与质量初筛",
+        category="图像",
+        description="读取图像格式、尺寸、EXIF、色彩模式和亮度动态范围等基础元数据。",
+        accepted_input_types=("scientific_image", "scientific_figure", "western_blot_or_gel_image"),
+        default_enabled=False,
+        dependency_module="PIL",
+        reliability="辅助",
+        method_limitations="元数据容易被清除或被软件重写，只能作为文件流程复核线索。",
+    ),
+    "western_blot_review_list": ToolSpec(
+        tool_id="western_blot_review_list",
+        display_name="Western blot复核清单",
+        category="图像",
+        description="识别 blot/gel 候选图并生成原始材料复核清单。",
+        accepted_input_types=("scientific_image", "western_blot_or_gel_image", "scientific_figure"),
+        default_enabled=False,
+        reliability="辅助",
+        method_limitations="基于文件名和材料类型生成清单，不做专业图像取证结论。",
+    ),
+    "papermill_light_signals": ToolSpec(
+        tool_id="papermill_light_signals",
+        display_name="论文工厂轻量信号",
+        category="论文工厂",
+        description="扫描 tortured phrases、模板化文本等轻量信号。",
+        accepted_input_types=("plain_text", "apa_statistical_text", "paper_document"),
+        default_enabled=False,
+        reliability="弱信号",
+        method_limitations="轻量文本信号不能替代跨论文数据库、投稿行为和作者网络审查。",
+    ),
+    "papermill_network_signals": ToolSpec(
+        tool_id="papermill_network_signals",
+        display_name="本地论文工厂跨库信号",
+        category="论文工厂",
+        description="基于本地 corpus 索引筛查文本、引用、作者机构和图像指纹相似性。",
+        accepted_input_types=("project_manifest", "paper_document", "raw_file_bundle"),
+        default_enabled=False,
+        reliability="弱信号/需本地语料",
+        method_limitations="跨库信号强依赖本地语料覆盖；相似模板、共同方法和同团队系列研究都可能产生正常相似。",
+    ),
+    "provenance_hash": ToolSpec(
+        tool_id="provenance_hash",
+        display_name="原始文件哈希存证",
+        category="溯源",
+        description="计算 SHA-256、文件大小和时间戳，生成版本链证据。",
+        accepted_input_types=("raw_file_bundle", "project_manifest", "raw_observation_table", "paper_document", "scientific_image"),
+        default_enabled=False,
+        reliability="稳定",
+        method_limitations="哈希只能证明文件后续未变化，不能证明实验真实发生或上传文件就是最早原始文件。",
+    ),
+    "provenance_chain_verify": ToolSpec(
+        tool_id="provenance_chain_verify",
+        display_name="哈希版本链核验",
+        category="溯源",
+        description="读取追加式 JSONL 账本并核验项目文件 matched/changed/missing/new 状态。",
+        accepted_input_types=("raw_file_bundle", "project_manifest"),
+        default_enabled=False,
+        reliability="稳定",
+        method_limitations="版本链只能证明登记后的文件完整性变化，不能证明登记前材料来源真实。",
+    ),
+    "code_rerun_audit": ToolSpec(
+        tool_id="code_rerun_audit",
+        display_name="分析代码复跑审计",
+        category="代码复核",
+        description="只读扫描 R/Python/Stata/SPSS/SAS 脚本中的路径、输入、剔除和显著性筛选线索。",
+        accepted_input_types=("analysis_code", "project_manifest"),
+        default_enabled=False,
+        reliability="辅助",
+        method_limitations="当前版本不执行脚本，只检查复跑准备风险；关键统计量复算需隔离环境和完整输入。",
+    ),
 }
 
 
@@ -236,14 +359,25 @@ APA_STAT_RE = re.compile(
     r"\b(?:t|F|r|z|Q)\s*[\(（][^)）]{1,40}[\)）]\s*[=<>]\s*-?\d+(?:\.\d+)?|[χx]\s*[²2]\s*[\(（][^)）]{1,40}[\)）]\s*[=<>]\s*\d",
     re.IGNORECASE,
 )
+DOI_RE = re.compile(r"\b10\.\d{4,9}/[-._;()/:A-Z0-9]+\b", re.I)
+PMID_RE = re.compile(r"\bPMID\s*:?\s*\d{5,10}\b", re.I)
 
 
 def classify_text(text: str) -> dict[str, Any]:
     has_apa = bool(APA_STAT_RE.search(text or ""))
+    has_reference = bool(DOI_RE.search(text or "") or PMID_RE.search(text or "") or re.search(r"^\s*(references|参考文献)\s*$", text or "", re.I | re.M))
+    primary = "apa_statistical_text" if has_apa else ("reference_list" if has_reference else "plain_text")
+    input_types = []
+    if has_apa:
+        input_types.append("apa_statistical_text")
+    if has_reference:
+        input_types.append("reference_list")
+    if not input_types:
+        input_types.append("plain_text")
     return {
-        "primary_type": "apa_statistical_text" if has_apa else "plain_text",
-        "input_types": ["apa_statistical_text"] if has_apa else ["plain_text"],
-        "signals": {"apa_statistical_expressions": has_apa},
+        "primary_type": primary,
+        "input_types": input_types,
+        "signals": {"apa_statistical_expressions": has_apa, "reference_identifiers": has_reference},
     }
 
 
@@ -300,9 +434,15 @@ def route_all_tools(
 
 
 def source_kind(path: Path) -> str:
+    if path.is_dir():
+        return "project"
     suffix = path.suffix.lower()
+    if suffix == ".json":
+        return "manifest"
     if suffix in {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".webp"}:
         return "image"
+    if suffix in {".py", ".r", ".do", ".sps", ".sas"}:
+        return "code"
     if suffix in {".pdf", ".docx"}:
         return "document"
     return "table"

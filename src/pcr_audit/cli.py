@@ -10,7 +10,7 @@ from pcr_audit.detectors.raw import analyze_raw_data_rules
 from pcr_audit.io import extract_file, load_tables, markdown_out, source_path, write_json
 from pcr_audit.reporting import merge_reports, render_markdown, save_json
 from pcr_audit.router import build_route_payload
-from pcr_audit.runner import run_audit
+from pcr_audit.runner import run_audit, run_project_audit
 
 
 SCENARIOS = ["auto", "raw", "summary", "text", "r-advanced"]
@@ -142,11 +142,47 @@ def audit_main(argv: list[str] | None = None) -> int:
     run.add_argument("--workdir", help="Temporary output directory. Defaults to <out>.parts.")
     run.add_argument("--dry-run", action="store_true", help="Only print deterministic routing decisions; do not run detectors.")
 
+    project = sub.add_parser("project", help="Run a multi-material project audit over a folder or manifest JSON.")
+    project.add_argument("input")
+    project.add_argument("--out")
+    project.add_argument("--json", help="Optional merged JSON output path.")
+    project.add_argument("--workdir", help="Temporary output directory. Defaults to <out>.parts.")
+    project.add_argument("--external-lookups", action="store_true", help="Opt in to Crossref/OpenAlex/NCBI lookups.")
+    project.add_argument("--grobid-url", default="", help="Optional GROBID REST base URL, e.g. http://localhost:8070.")
+    project.add_argument("--contact-email", default="", help="Contact email for polite scholarly metadata API requests.")
+    project.add_argument("--inspect", action="store_true", help="Inspect project materials and print JSON without running detectors.")
+    project.add_argument("--init-manifest", action="store_true", help="Create pcr-project.json for a project folder and exit.")
+    project.add_argument("--overwrite", action="store_true", help="Allow --init-manifest to overwrite an existing pcr-project.json.")
+
+    provenance = sub.add_parser("provenance", help="Manage local append-only SHA-256 provenance ledgers.")
+    provenance_sub = provenance.add_subparsers(dest="provenance_command", required=True)
+    for name in ("init", "record", "verify", "diff"):
+        item = provenance_sub.add_parser(name)
+        item.add_argument("input")
+        item.add_argument("--ledger", help="JSONL ledger path. Defaults to <project>/.pcr/provenance-ledger.jsonl.")
+        item.add_argument("--json", help="Optional JSON output path.")
+        if name == "record":
+            item.add_argument("--operator", default="", help="Optional operator identifier recorded in ledger entries.")
+        if name == "diff":
+            item.add_argument("--left-batch", default="", help="Older batch id. Defaults to previous batch.")
+            item.add_argument("--right-batch", default="", help="Newer batch id. Defaults to latest batch.")
+
+    corpus = sub.add_parser("corpus", help="Build and screen local papermill-style corpus indexes.")
+    corpus_sub = corpus.add_subparsers(dest="corpus_command", required=True)
+    corpus_build = corpus_sub.add_parser("build")
+    corpus_build.add_argument("input")
+    corpus_build.add_argument("--out", required=True, help="Output corpus-index.json path.")
+    corpus_screen = corpus_sub.add_parser("screen")
+    corpus_screen.add_argument("input")
+    corpus_screen.add_argument("--index", required=True, help="Corpus index JSON produced by pcr-audit corpus build.")
+    corpus_screen.add_argument("--out", required=True)
+    corpus_screen.add_argument("--json", help="Optional finding JSON output path.")
+
     args = parser.parse_args(argv)
     if args.version:
         print(__version__)
         return 0
-    if args.command not in {"run", "route"}:
+    if args.command not in {"run", "route", "project", "provenance", "corpus"}:
         parser.print_help()
         return 2
     try:
@@ -154,6 +190,95 @@ def audit_main(argv: list[str] | None = None) -> int:
     except FileNotFoundError as exc:
         print(exc, file=sys.stderr)
         return 2
+
+    if args.command == "provenance":
+        from pcr_audit.product_detectors import (
+            provenance_diff,
+            provenance_init,
+            provenance_payload_to_result,
+            provenance_record,
+            provenance_verify,
+        )
+
+        ledger = Path(args.ledger).expanduser().resolve() if args.ledger else None
+        if args.provenance_command == "init":
+            payload = provenance_init(source, ledger)
+        elif args.provenance_command == "record":
+            payload = provenance_record(source, ledger, args.operator)
+        elif args.provenance_command == "verify":
+            payload = provenance_verify(source, ledger)
+        else:
+            payload = provenance_diff(source, ledger, args.left_batch, args.right_batch)
+        if args.json:
+            json_path = Path(args.json).expanduser().resolve()
+            if args.provenance_command in {"verify", "diff"}:
+                save_json(json_path, source, [provenance_payload_to_result(source, payload)])
+            else:
+                write_json(json_path, payload)
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+        return 0
+
+    if args.command == "corpus":
+        from pcr_audit.io import read_json
+        from pcr_audit.product_detectors import analyze_papermill_network_signals, build_corpus_index
+
+        if args.corpus_command == "build":
+            out = Path(args.out).expanduser().resolve()
+            payload = build_corpus_index(source)
+            write_json(out, payload)
+            print(f"本地语料索引已生成：{out}")
+            return 0
+        index = read_json(Path(args.index).expanduser().resolve())
+        result = analyze_papermill_network_signals(source, index)
+        out = markdown_out(args.out)
+        out.write_text(render_markdown(source, [result], ["本报告基于本地 corpus-index.json 进行跨稿件弱信号筛查。"]), encoding="utf-8")
+        if args.json:
+            save_json(Path(args.json).expanduser().resolve(), source, [result])
+        print(f"本地语料筛查报告已生成：{out}")
+        return 0
+
+    if args.command == "project":
+        if args.inspect:
+            from pcr_audit.product_detectors import inspect_project_payload
+
+            workdir = Path(args.workdir).expanduser().resolve() if args.workdir else None
+            payload = inspect_project_payload(source, workdir)
+            if args.json:
+                write_json(Path(args.json).expanduser().resolve(), payload)
+            print(json.dumps(payload, ensure_ascii=False, indent=2))
+            return 0
+        if args.init_manifest:
+            from pcr_audit.product_detectors import init_manifest_payload
+
+            try:
+                payload = init_manifest_payload(source, args.overwrite)
+            except (FileExistsError, ValueError) as exc:
+                print(exc, file=sys.stderr)
+                return 1
+            if args.json:
+                write_json(Path(args.json).expanduser().resolve(), payload)
+            print(json.dumps(payload, ensure_ascii=False, indent=2))
+            return 0
+        if not args.out:
+            print("project 审计需要 --out；若只想预检材料，请使用 --inspect。", file=sys.stderr)
+            return 2
+        out = markdown_out(args.out)
+        workdir = Path(args.workdir).expanduser().resolve() if args.workdir else None
+        json_out = Path(args.json).expanduser().resolve() if args.json else None
+        code = run_project_audit(
+            source,
+            out,
+            json_out,
+            workdir,
+            external_lookups=args.external_lookups,
+            grobid_url=args.grobid_url,
+            contact_email=args.contact_email,
+        )
+        if code != 0:
+            print("没有生成任何可合并结果。", file=sys.stderr)
+            return code
+        print(f"项目审计报告已生成：{out}")
+        return 0
 
     if args.command == "route" or args.dry_run:
         payload = build_route_payload(source, args.scenario)

@@ -45,6 +45,14 @@ def test_classify_apa_statistical_text() -> None:
     assert result["signals"]["apa_statistical_expressions"] is True
 
 
+def test_classify_reference_text() -> None:
+    result = classify_text("References\nSmith J. Important study. doi:10.1234/example.2025. PMID: 12345678")
+
+    assert result["primary_type"] == "reference_list"
+    assert "reference_list" in result["input_types"]
+    assert result["signals"]["reference_identifiers"] is True
+
+
 def test_route_reports_insufficient_material() -> None:
     decision = route_tool(
         TOOL_REGISTRY["raw_data_rules"],

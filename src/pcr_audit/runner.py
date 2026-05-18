@@ -106,6 +106,11 @@ def _run_crosscheck_payload(source: Path, json_path: Path, route_payload: dict[s
     return read_json(json_path)
 
 
+def _run_product_result_payload(source: Path, json_path: Path, results: list[TableResult]) -> dict[str, Any]:
+    save_json(json_path, source, results)
+    return read_json(json_path)
+
+
 def _run_r_tool_payload(source: Path, tool_id: str, input_path: Path, workdir: Path, payloads: list[dict[str, Any]]) -> None:
     tool_key = R_TOOL_BY_ID[tool_id]
     tool = _find_r_tool(tool_key)
@@ -182,6 +187,37 @@ def run_audit(
     if "crosscheck" in ready_tools:
         payloads.append(_run_crosscheck_payload(source, workdir / "crosscheck.json", route_payload))
 
+    product_results: list[TableResult] = []
+    if ready_tools.intersection({"reference_audit", "citation_claim_check", "papermill_light_signals", "papermill_network_signals"}):
+        from pcr_audit.product_detectors import analyze_citation_claims, analyze_papermill_network_signals, analyze_papermill_signals, analyze_references
+
+        if "reference_audit" in ready_tools:
+            product_results.append(analyze_references(source))
+        if "citation_claim_check" in ready_tools:
+            product_results.append(analyze_citation_claims(source))
+        if "papermill_light_signals" in ready_tools:
+            product_results.append(analyze_papermill_signals(source))
+        if "papermill_network_signals" in ready_tools:
+            product_results.append(analyze_papermill_network_signals(source))
+    if ready_tools.intersection({"image_extract", "image_duplicate_internal", "image_copy_move_internal", "image_metadata_audit", "western_blot_review_list"}):
+        from pcr_audit.product_detectors import analyze_images
+
+        product_results.extend(analyze_images(source, workdir / "images"))
+    if "provenance_hash" in ready_tools:
+        from pcr_audit.product_detectors import analyze_provenance
+
+        product_results.append(analyze_provenance(source))
+    if "provenance_chain_verify" in ready_tools:
+        from pcr_audit.product_detectors import provenance_payload_to_result, provenance_verify
+
+        product_results.append(provenance_payload_to_result(source, provenance_verify(source)))
+    if "code_rerun_audit" in ready_tools:
+        from pcr_audit.product_detectors import analyze_code_files
+
+        product_results.append(analyze_code_files(source))
+    if product_results:
+        payloads.append(_run_product_result_payload(source, workdir / "product-detectors.json", product_results))
+
     if "r_statcheck" in ready_tools:
         _run_r_tool_payload(source, "r_statcheck", source, workdir, payloads)
 
@@ -214,6 +250,115 @@ def run_audit(
     part_paths: list[str] = []
     for idx, payload in enumerate(payloads, start=1):
         path = workdir / f"part-{idx}.json"
+        write_json(path, payload)
+        part_paths.append(str(path))
+    merge_reports(part_paths, out, json_out)
+    return 0
+
+
+def run_project_audit(
+    source: Path,
+    out: Path,
+    json_out: Path | None = None,
+    workdir: Path | None = None,
+    external_lookups: bool = False,
+    grobid_url: str = "",
+    contact_email: str = "",
+) -> int:
+    from pcr_audit.product_detectors import (
+        AuditConfig,
+        analyze_citation_claims,
+        analyze_code_files,
+        analyze_images,
+        analyze_papermill_network_signals,
+        analyze_papermill_signals,
+        analyze_provenance,
+        analyze_provenance_paths,
+        analyze_references,
+        provenance_payload_to_result,
+        provenance_verify,
+        parse_project_spec,
+    )
+
+    workdir = workdir or out.with_suffix(".parts")
+    workdir.mkdir(parents=True, exist_ok=True)
+    config_override = AuditConfig(
+        external_lookups=external_lookups,
+        grobid_url=grobid_url,
+        contact_email=contact_email,
+        lookup_cache_dir=workdir / "lookup-cache",
+    )
+    spec, config = parse_project_spec(source, config_override, workdir)
+    sources = {
+        "documents": [m.path for m in spec.materials if m.role in {"manuscript", "references", "supplement"} and m.path.suffix.lower() in {".pdf", ".docx", ".txt", ".md"}],
+        "data": [m.path for m in spec.materials if m.role == "raw_data" or m.path.suffix.lower() in {".csv", ".xlsx", ".xls"}],
+        "images": [m.path for m in spec.materials if m.role in {"figures", "image"} or m.path.suffix.lower() in {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".webp"}],
+        "code": [m.path for m in spec.materials if m.role == "analysis_code" or m.path.suffix in {".py", ".r", ".R", ".do", ".sps", ".sas"}],
+        "all": [m.path for m in spec.materials],
+    }
+    write_json(
+        workdir / "project-route.json",
+        {
+            "source": str(source),
+            "source_kind": "project",
+            "project_id": spec.project_id,
+            "title": spec.title,
+            "counts": {key: len(value) for key, value in sources.items()},
+            "materials": [{"path": str(material.path), "role": material.role} for material in spec.materials],
+            "policy": {
+                "external_lookups": "enabled" if config.external_lookups else "disabled",
+                "grobid_url": config.grobid_url,
+                "contact_email": config.contact_email,
+                "pyMuPDF": "not_used_due_to_license_review",
+                "imagehash": "not_used; local Pillow/numpy hash only",
+            },
+        },
+    )
+    payloads: list[dict[str, Any]] = []
+
+    for idx, data_source in enumerate(sources["data"], start=1):
+        part_out = workdir / f"data-{idx}.md"
+        part_json = workdir / f"data-{idx}.json"
+        if run_audit(data_source, part_out, part_json, workdir / f"data-{idx}.parts", "auto", False) == 0:
+            payloads.append(read_json(part_json))
+
+    project_results: list[TableResult] = []
+    if spec.findings:
+        project_results.append(TableResult("project_manifest", len(spec.materials), 0, spec.findings))
+    provenance = analyze_provenance_paths(source, sources["all"]) if sources["all"] else analyze_provenance(source)
+    project_results.extend([provenance, provenance_payload_to_result(source, provenance_verify(source)), analyze_code_files(source), analyze_papermill_network_signals(source)])
+    for doc in sources["documents"][:20]:
+        project_results.extend([analyze_references(doc, config), analyze_citation_claims(doc, config), analyze_papermill_signals(doc, config)])
+        project_results.extend(analyze_images(doc, workdir / f"images-{doc.stem}"))
+    if sources["images"]:
+        project_results.extend(analyze_images(source, workdir / "images-project"))
+    if not sources["documents"] and not sources["images"] and not sources["code"]:
+        project_results.append(
+            TableResult(
+                "project_audit",
+                0,
+                0,
+                [
+                    info_finding(
+                        str(source),
+                        "project_audit",
+                        "项目级审计未发现文档、图像或代码材料。",
+                        "仍会对数据文件运行可用检测并计算哈希。",
+                        "insufficient_material",
+                        "project_manifest",
+                    )
+                ],
+            )
+        )
+    project_json = workdir / "project-detectors.json"
+    save_json(project_json, source, project_results)
+    payloads.append(read_json(project_json))
+
+    if not payloads:
+        return 1
+    part_paths: list[str] = []
+    for idx, payload in enumerate(payloads, start=1):
+        path = workdir / f"project-part-{idx}.json"
         write_json(path, payload)
         part_paths.append(str(path))
     merge_reports(part_paths, out, json_out)

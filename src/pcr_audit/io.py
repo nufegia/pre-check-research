@@ -116,7 +116,7 @@ def load_tables(path: Path) -> list[tuple[str, pd.DataFrame]]:
 
 def read_text_source(source: Path) -> str:
     suffix = source.suffix.lower()
-    if suffix in {".txt", ".md"}:
+    if suffix in {".txt", ".md", ".bib", ".ris"}:
         return source.read_text(encoding="utf-8")
     if suffix == ".docx":
         with zipfile.ZipFile(str(source)) as zf:

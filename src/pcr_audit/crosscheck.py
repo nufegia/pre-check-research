@@ -31,6 +31,7 @@ COLUMN_PATTERNS: dict[str, list[str]] = {
     "CI_high":  [r"cihigh", r"ciupper", r"ci[_\- ]?u", r"ucl", r"置信区间上限", r"上限", r"^high$"],
     "count":    [r"^count$", r"n[_\- ]?pos", r"频数", r"计数"],
     "percent":  [r"percent", r"percentage", r"^prop$", r"^rate$", r"百分比", r"比例", r"率"],
+    "effect":   [r"^or$", r"oddsratio", r"^rr$", r"riskratio", r"^hr$", r"hazardratio", r"效应量", r"比值比", r"风险比"],
     "t":        [r"^t$", r"t[_\- ]?value", r"t[_\- ]?stat", r"t统计"],
     "df":       [r"^df$", r"^dof$", r"自由度", r"degreeoffreedom"],
     "p":        [r"^p$", r"p[_\- ]?value", r"^pval$", r"p值"],
@@ -440,6 +441,97 @@ def _check_df_vs_n(
     )
 
 
+def _check_ratio_ci_p_direction(
+    row: dict,
+    row_idx: int,
+    table_name: str,
+    findings: list[Finding],
+    _tol: CrosscheckTolerances,
+) -> None:
+    effect = row.get("effect")
+    ci_low = row.get("CI_low")
+    ci_high = row.get("CI_high")
+    if effect is None or ci_low is None or ci_high is None:
+        return
+    if any(pd.isna(v) for v in (effect, ci_low, ci_high)):
+        return
+    for p_col, p_raw in row.get("_p_raw", {}).items():
+        parsed = parse_p_value(p_raw)
+        if parsed is None:
+            continue
+        op, p_val = parsed
+        significant = p_val < 0.05 if op in {"=", "<", "<="} else p_val <= 0.05
+        ci_crosses_null = ci_low <= 1.0 <= ci_high
+        if ci_crosses_null and significant:
+            add_finding(
+                findings, table_name, "high",
+                "OR/RR/HR-CI-p一致性", f"行{row_idx}",
+                "比值型效应量的95%CI包含1，但p值显示显著。",
+                f"effect={effect:.6g}, CI=[{ci_low:.6g}, {ci_high:.6g}], {p_col}={p_raw}",
+                "核对CI、p值和效应量是否来自同一模型；比值型指标的无效值通常为1。",
+            )
+        if not ci_crosses_null and not significant and op in {"=", ">", ">="}:
+            add_finding(
+                findings, table_name, "medium",
+                "OR/RR/HR-CI-p一致性", f"行{row_idx}",
+                "比值型效应量的95%CI未包含1，但p值未显示显著。",
+                f"effect={effect:.6g}, CI=[{ci_low:.6g}, {ci_high:.6g}], {p_col}={p_raw}",
+                "核对CI置信水平、p值精度和单双侧检验说明。",
+            )
+    if effect < ci_low or effect > ci_high:
+        add_finding(
+            findings, table_name, "medium",
+            "效应量/CI方向一致性", f"行{row_idx}",
+            "效应量点估计不在置信区间内。",
+            f"effect={effect:.6g}, CI=[{ci_low:.6g}, {ci_high:.6g}]",
+            "核对点估计、CI列和方向是否发生错列或复制错误。",
+        )
+
+
+def _check_mean_ci_p_direction(
+    row: dict,
+    row_idx: int,
+    table_name: str,
+    findings: list[Finding],
+    _tol: CrosscheckTolerances,
+) -> None:
+    ci_low = row.get("CI_low")
+    ci_high = row.get("CI_high")
+    if ci_low is None or ci_high is None or pd.isna(ci_low) or pd.isna(ci_high):
+        return
+    crosses_zero = ci_low <= 0.0 <= ci_high
+    for p_col, p_raw in row.get("_p_raw", {}).items():
+        parsed = parse_p_value(p_raw)
+        if parsed is None:
+            continue
+        op, p_val = parsed
+        significant = p_val < 0.05 if op in {"=", "<", "<="} else p_val <= 0.05
+        if crosses_zero and significant:
+            add_finding(
+                findings, table_name, "medium",
+                "CI-p显著性方向", f"行{row_idx}",
+                "CI包含0，但p值显示显著。",
+                f"CI=[{ci_low:.6g}, {ci_high:.6g}], {p_col}={p_raw}",
+                "若这是差值或回归系数，CI与p值结论应一致；若不是零为无效值的指标，请在方法中说明。",
+            )
+
+
+def _check_p_curve_weak_signal(name: str, p_values: list[float], findings: list[Finding]) -> None:
+    if len(p_values) < 12:
+        return
+    edge = [p for p in p_values if 0.045 <= p <= 0.05]
+    sig = [p for p in p_values if p < 0.05]
+    if len(edge) >= 3 and len(edge) / max(len(sig), 1) >= 0.30:
+        add_finding(
+            findings, name, "medium",
+            "边缘显著p值聚集", "p值集合",
+            "多个p值集中在0.045-0.050区间。",
+            f"边缘显著={len(edge)}，显著p值={len(sig)}，总p值={len(p_values)}",
+            "这只能提示选择性报告或多重比较风险；需结合方法、预注册和完整结果表人工复核。",
+            "该规则不判断p-hacking，只作为多重比较透明度复核线索。",
+        )
+
+
 # ---------------------------------------------------------------------------
 # Main analysis function
 # ---------------------------------------------------------------------------
@@ -453,6 +545,8 @@ CHECK_FUNCTIONS = [
     _check_p_validity,
     _check_p_vs_t,
     _check_df_vs_n,
+    _check_ratio_ci_p_direction,
+    _check_mean_ci_p_direction,
 ]
 
 
@@ -497,7 +591,7 @@ def crosscheck_table(
 
     # Build numeric series for detected columns
     numeric: dict[str, pd.Series | None] = {}
-    for role in ["N", "Mean", "SD", "SE", "CI_low", "CI_high", "count", "t", "df"]:
+    for role in ["N", "Mean", "SD", "SE", "CI_low", "CI_high", "count", "effect", "t", "df"]:
         col = detected.get(role)
         numeric[role] = coerce_numeric(df[col]) if col else None
 
@@ -518,6 +612,14 @@ def crosscheck_table(
 
         for check_fn in CHECK_FUNCTIONS:
             check_fn(row, row_idx + 1, name, findings, tolerances)  # 1-indexed rows
+
+    parsed_p_values: list[float] = []
+    for pc in p_cols:
+        for raw in df[pc].tolist():
+            parsed = parse_p_value(raw)
+            if parsed is not None and parsed[0] in {"=", "<", "<="} and 0 <= parsed[1] <= 1:
+                parsed_p_values.append(parsed[1])
+    _check_p_curve_weak_signal(name, parsed_p_values, findings)
 
     if not findings:
         add_finding(

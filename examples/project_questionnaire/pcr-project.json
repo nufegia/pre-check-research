@@ -1,0 +1,15 @@
+{
+  "project_id": "project-questionnaire",
+  "title": "Questionnaire audit example",
+  "materials": [
+    {"path": "paper.md", "role": "manuscript"},
+    {"path": "raw_responses.csv", "role": "raw_data"},
+    {"path": "summary_stats.csv", "role": "raw_data"},
+    {"path": "analysis.R", "role": "analysis_code"}
+  ],
+  "settings": {
+    "external_lookups": false,
+    "grobid_url": "",
+    "contact_email": ""
+  }
+}

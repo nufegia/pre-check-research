@@ -27,6 +27,12 @@ class Finding:
     review_steps: str = ""
     confidence: str = "medium"
     false_positive_risk: str = "medium"
+    evidence_id: str = ""
+    location: str = ""
+    calculation_trace: str = ""
+    external_records: str = ""
+    review_actions: str = ""
+    confidence_basis: str = ""
 
 
 @dataclass
@@ -54,6 +60,16 @@ def enrich_finding_explanation(finding: Finding) -> None:
         finding.confidence = "high" if finding.level == "high" else "medium"
     if not finding.false_positive_risk:
         finding.false_positive_risk = "low" if finding.level == "high" else "medium"
+    if not finding.evidence_id:
+        finding.evidence_id = f"{finding.tool_id}:{finding.check}:{finding.target}".replace(" ", "_")
+    if not finding.location:
+        finding.location = finding.table
+    if not finding.review_actions:
+        finding.review_actions = finding.review_steps
+    if not finding.confidence_basis:
+        finding.confidence_basis = (
+            "基于确定性规则或可复算公式生成；仍需结合研究设计、原始记录和材料抽取质量人工判断。"
+        )
 
 
 def finding_from_mapping(source: str, raw: dict) -> Finding:
@@ -77,6 +93,12 @@ def finding_from_mapping(source: str, raw: dict) -> Finding:
         review_steps=str(raw.get("review_steps") or ""),
         confidence=str(raw.get("confidence") or ""),
         false_positive_risk=str(raw.get("false_positive_risk") or ""),
+        evidence_id=str(raw.get("evidence_id") or ""),
+        location=str(raw.get("location") or ""),
+        calculation_trace=str(raw.get("calculation_trace") or ""),
+        external_records=str(raw.get("external_records") or ""),
+        review_actions=str(raw.get("review_actions") or ""),
+        confidence_basis=str(raw.get("confidence_basis") or ""),
     )
     enrich_finding_explanation(finding)
     return finding
@@ -110,5 +132,9 @@ def info_finding(
         review_steps="检查 PATH、Rscript、对应 R 包安装状态和 route JSON。",
         confidence="low",
         false_positive_risk="low",
+        evidence_id=f"{tool_id}:info:{source}",
+        location=source,
+        review_actions="检查 PATH、Rscript、对应 R 包安装状态和 route JSON。",
+        confidence_basis="该项来自工具路由或依赖检查，不是数据风险信号。",
     )
     return finding

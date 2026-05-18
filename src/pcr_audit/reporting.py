@@ -26,19 +26,23 @@ def overall_level(findings: list[Finding]) -> str:
 
 def render_markdown(source: Path, results: list[TableResult], extraction_notes: list[str]) -> str:
     all_findings = [finding for result in results for finding in result.findings]
+    risk_findings = [finding for finding in all_findings if finding.level in {"high", "medium", "low"}]
+    info_findings = [finding for finding in all_findings if finding.level == "info"]
     level = overall_level(all_findings)
     counts = Counter(finding.level for finding in all_findings)
+    tool_counts = Counter(finding.tool_id or result.name for result in results for finding in result.findings)
     lines = [
-        "# 数据审计报告",
+        "# 数据审计报告：数据完整性与统计一致性",
         "",
-        "## 结论先行",
+        "## 导师摘要",
         "",
         f"- 文件：`{source.name}`",
         f"- 总体风险：{LEVEL_CN[level]}",
-        f"- 检测表格：{len(results)} 个",
-        f"- 问题信号：高 {counts['high']} / 中 {counts['medium']} / 低 {counts['low']} / 提示 {counts['info']}",
+        f"- 检测对象：{len(results)} 组",
+        f"- 风险信号：高 {counts['high']} / 中 {counts['medium']} / 低 {counts['low']}",
+        f"- 运行提示：{counts['info']} 条",
         "",
-        "> 本报告只识别数据中的异常模式和人工痕迹信号，不构成学术不端或造假鉴定。高风险项表示需要优先回看原始记录、实验日志或统计脚本。",
+        "> 本报告只识别数据、统计、图像、文献和流程材料中的风险信号，不构成学术不端或造假鉴定。高风险项表示需要优先回看原始记录、实验日志、原始图或统计脚本。",
         "",
     ]
     if extraction_notes:
@@ -46,46 +50,88 @@ def render_markdown(source: Path, results: list[TableResult], extraction_notes: 
         lines += [f"- {note}" for note in extraction_notes]
         lines.append("")
 
-    lines += ["## 表格概览", "", "| 表格 | 行数 | 列数 | 高 | 中 | 低 |", "|---|---:|---:|---:|---:|---:|"]
+    lines += ["## 材料覆盖矩阵", "", "| 材料/模块 | 行数 | 列数 | 高 | 中 | 低 | 提示 |", "|---|---:|---:|---:|---:|---:|---:|"]
     for result in results:
         counter = Counter(finding.level for finding in result.findings)
         lines.append(
-            f"| {result.name} | {result.rows} | {result.columns} | {counter['high']} | {counter['medium']} | {counter['low']} |"
+            f"| {markdown_cell(result.name)} | {result.rows} | {result.columns} | {counter['high']} | {counter['medium']} | {counter['low']} | {counter['info']} |"
         )
     lines.append("")
 
-    lines += ["## 问题清单", ""]
-    if not all_findings:
+    lines += ["## 风险发现清单（问题清单）", ""]
+    if not risk_findings:
         lines += ["未发现明显异常模式。建议仍结合原始记录、实验设计和统计脚本进行人工复核。", ""]
     else:
-        ordered = sorted(all_findings, key=lambda finding: LEVEL_SCORE[finding.level], reverse=True)
+        ordered = sorted(risk_findings, key=lambda finding: LEVEL_SCORE[finding.level], reverse=True)
         lines += [
-            "| 风险 | 表格 | 检查项 | 对象 | 发现 | 证据 | 建议 |",
-            "|---|---|---|---|---|---|---|",
+            "| 风险 | 证据ID | 位置 | 检查项 | 对象 | 发现 | 证据 | 复核动作 |",
+            "|---|---|---|---|---|---|---|---|",
         ]
         for finding in ordered:
             lines.append(
-                f"| {LEVEL_CN[finding.level]} | {markdown_cell(finding.table)} | {markdown_cell(finding.check)} | {markdown_cell(finding.target)} | {markdown_cell(finding.summary)} | {markdown_cell(finding.evidence)} | {markdown_cell(finding.suggestion)} |"
+                f"| {LEVEL_CN[finding.level]} | {markdown_cell(finding.evidence_id)} | {markdown_cell(finding.location)} | {markdown_cell(finding.check)} | {markdown_cell(finding.target)} | {markdown_cell(finding.summary)} | {markdown_cell(finding.evidence)} | {markdown_cell(finding.review_actions or finding.suggestion)} |"
             )
         lines.append("")
-        lines += ["## 问题详情", ""]
+        lines += ["## 专家复核附录", ""]
         for idx, finding in enumerate(ordered, start=1):
             lines += [
                 f"### {idx}. {LEVEL_CN[finding.level]}风险：{finding.check}（{finding.target}）",
                 "",
-                f"- 表格：{finding.table}",
+                f"- 证据ID：{finding.evidence_id}",
+                f"- 位置：{finding.location}",
                 f"- 发现：{finding.summary}",
                 f"- 触发证据：{finding.evidence}",
             ]
             if finding.detail:
                 lines.append(f"- 详细说明：{finding.detail}")
-            lines += [f"- 复核建议：{finding.suggestion}", ""]
+            if finding.calculation_trace:
+                lines.append(f"- 计算/抽取过程：{finding.calculation_trace}")
+            if finding.external_records:
+                lines.append(f"- 外部记录：{finding.external_records}")
+            lines += [
+                f"- 可能正常解释：{finding.normal_explanations}",
+                f"- 复核动作：{finding.review_actions or finding.review_steps or finding.suggestion}",
+                f"- 方法限制：{finding.method_limitations}",
+                f"- 置信依据：{finding.confidence_basis}",
+                "",
+            ]
+
+        author_actions = []
+        seen_actions = set()
+        for finding in ordered:
+            action = finding.review_actions or finding.review_steps or finding.suggestion
+            if action and action not in seen_actions:
+                seen_actions.add(action)
+                author_actions.append(action)
+        lines += ["## 作者整改清单", ""]
+        for idx, action in enumerate(author_actions[:12], start=1):
+            lines.append(f"{idx}. {action}")
+        lines.append("")
 
     lines += [
-        "## 已运行检测",
+        "## 工具运行与材料覆盖",
+        "",
+        "| 工具 | 记录数 |",
+        "|---|---:|",
+    ]
+    for tool_id, count in sorted(tool_counts.items()):
+        lines.append(f"| {markdown_cell(tool_id)} | {count} |")
+    lines.append("")
+    if info_findings:
+        lines += ["### 运行提示（不计入风险）", ""]
+        for finding in info_findings[:30]:
+            lines.append(f"- `{finding.tool_id}`：{finding.summary}（{finding.evidence}）")
+        if len(info_findings) > 30:
+            lines.append(f"- 其余运行提示 {len(info_findings) - 30} 条见 JSON。")
+        lines.append("")
+
+    lines += [
+        "## 方法限制与合规说明",
         "",
         "- 工具运行记录来自确定性 route 结果和各 detector finding JSON。",
-        "- 缺失工具、缺失依赖和跳过检测只记录为提示，不计入数据风险。",
+        "- 缺失工具、缺失依赖、外部服务未启用和检测跳过只记录为提示，不计入数据风险。",
+        "- 默认不向外部 API 发送稿件、原始数据或参考文献信息；外部核验必须显式启用。",
+        "- 哈希存证只能证明文件后续未改动，不能证明实验真实发生。",
         "",
         "## 下一步复核动作",
         "",
