@@ -173,7 +173,7 @@ pcr-report merge build/raw.json build/scrutiny.json --out build/merged.md --json
 - 溯源：对项目内文件计算 SHA-256、文件大小和修改时间；可用 `pcr-audit provenance` 写入追加式 JSONL 版本链并验证 matched/changed/missing/new。
 - 论文工厂本地信号：可用 `pcr-audit corpus build/screen` 对本地项目语料建立索引，筛查文本模板、引用重叠、作者/邮箱域重叠和跨稿件图像指纹相似。
 
-v0.7 增加了项目预检和样例库：
+v1.0.0 作为第一版正式版，包含项目预检和样例库：
 
 ```bash
 pcr-audit project examples/project_questionnaire --inspect --json build/questionnaire.inspect.json
