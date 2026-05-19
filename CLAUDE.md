@@ -21,6 +21,16 @@ export PATH="$PWD/tools/r/pcr_statcheck:$PWD/tools/r/pcr_scrutiny:$PWD/tools/r/p
 
 Optional R packages: `install.packages(c("statcheck", "scrutiny", "rsprite2"))`
 
+## Project Skills
+
+Claude Code can invoke the project skill `data-risk-audit` via the `/data-risk-audit` slash command or by calling `Skill` with the skill name `data-risk-audit`. The skill is defined in `.agent/skills/data-risk-audit/SKILL.md` and handles the full audit workflow (route → detect → report) for single files and project folders.
+
+- **Single file audit**: `Skill("data-risk-audit", args="审计：<input> 输出到：<output>")`
+- **Output naming**: All output files must use `pcr` as the filename prefix (e.g., `pcr.audit.md`, `pcr.audit.route.json`). Never derive filenames from the input name or generate custom descriptions.
+- **Project folder audit**: Follow the SOP in the skill's SKILL.md
+
+When a user asks to audit, inspect, check, or review research data, manuscripts, images, code, or mixed project materials, **invoke this skill first** rather than running individual CLI commands directly.
+
 ## Commands
 
 | CLI | Runtime | Purpose |

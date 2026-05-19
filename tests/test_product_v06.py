@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 from pcr_audit.models import Finding, TableResult, enrich_finding_explanation
-from pcr_audit.product_detectors import AuditConfig, analyze_references, parse_project_spec
+from pcr_audit.product_detectors import AuditConfig, analyze_references, init_manifest_payload, parse_project_spec
 from pcr_audit.reporting import render_markdown
 
 
@@ -38,6 +38,41 @@ def test_manifest_v1_parses_roles_and_records_warnings(tmp_path: Path) -> None:
     assert any(f.check == "Manifest材料缺失" for f in spec.findings)
     assert any(f.check == "Manifest材料角色" for f in spec.findings)
     assert config.external_lookups is False
+
+
+def test_project_directory_ignores_hidden_and_system_files(tmp_path: Path) -> None:
+    (tmp_path / "paper.md").write_text("References\n[1] doi:10.1234/example.2026", encoding="utf-8")
+    (tmp_path / "data.csv").write_text("id,value\n1,2\n", encoding="utf-8")
+    (tmp_path / ".DS_Store").write_text("system metadata", encoding="utf-8")
+    hidden = tmp_path / ".hidden"
+    hidden.mkdir()
+    (hidden / "secret.csv").write_text("id,value\n1,9\n", encoding="utf-8")
+
+    spec, _config = parse_project_spec(tmp_path, workdir=tmp_path / "work")
+    paths = {material.path.name for material in spec.materials}
+
+    assert "paper.md" in paths
+    assert "data.csv" in paths
+    assert ".DS_Store" not in paths
+    assert "secret.csv" not in paths
+
+
+def test_init_manifest_ignores_hidden_and_system_files(tmp_path: Path) -> None:
+    (tmp_path / "paper.md").write_text("References\n", encoding="utf-8")
+    (tmp_path / "data.csv").write_text("id,value\n1,2\n", encoding="utf-8")
+    (tmp_path / ".DS_Store").write_text("system metadata", encoding="utf-8")
+    hidden = tmp_path / ".hidden"
+    hidden.mkdir()
+    (hidden / "extra.csv").write_text("id,value\n1,9\n", encoding="utf-8")
+
+    init_manifest_payload(tmp_path)
+    payload = json.loads((tmp_path / "pcr-project.json").read_text(encoding="utf-8"))
+    material_paths = {item["path"] for item in payload["materials"]}
+
+    assert "paper.md" in material_paths
+    assert "data.csv" in material_paths
+    assert ".DS_Store" not in material_paths
+    assert ".hidden/extra.csv" not in material_paths
 
 
 def test_report_separates_info_from_risk_findings(tmp_path: Path) -> None:

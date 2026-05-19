@@ -84,7 +84,7 @@ def render_markdown(source: Path, results: list[TableResult], extraction_notes: 
     for tool_id in tools_ordered:
         header += f" {tool_id} |"
         sep += "---|"
-    lines += ["## 材料覆盖矩阵", "", header, sep]
+    lines += ["## 审计矩阵", "", header, sep]
     for sheet_name in sheet_names_ordered:
         first_result = sheet_results[sheet_name][0]
         row = f"| {markdown_cell(sheet_name)} | {first_result.rows} | {first_result.columns} |"
@@ -162,20 +162,6 @@ def render_markdown(source: Path, results: list[TableResult], extraction_notes: 
             lines.append(f"- 其余运行提示 {len(info_findings) - 30} 条见 JSON。")
         lines.append("")
 
-    lines += [
-        "## 方法限制与合规说明",
-        "",
-        "- 工具运行记录来自确定性 route 结果和各 detector finding JSON。",
-        "- 缺失工具、缺失依赖、外部服务未启用和检测跳过只记录为提示，不计入数据风险。",
-        "- 单文件审计默认不向外部 API 发送材料；项目审计默认核验 DOI/PMID 元数据，可用 --no-external-lookups 关闭。",
-        "- 哈希存证只能证明文件后续未改动，不能证明实验真实发生。",
-        "",
-        "## 下一步复核动作",
-        "",
-        "1. 优先打开高风险项涉及的原始数据行、实验日志和统计脚本。",
-        "2. 对中风险项确认是否来自实验设计、仪器阈值、批量格式化或表格抽取误差。",
-        "3. 若输入来自 PDF/DOCX，建议补充原始 CSV/XLSX 后重新检测。",
-    ]
     return "\n".join(lines) + "\n"
 
 

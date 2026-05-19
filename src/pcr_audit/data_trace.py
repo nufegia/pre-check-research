@@ -251,17 +251,25 @@ def _copy_project(source: Path, sandbox_root: Path) -> Path:
     sandbox_root.mkdir(parents=True, exist_ok=True)
     dest = sandbox_root / "project"
     if source.is_dir():
-        shutil.copytree(source, dest, ignore=shutil.ignore_patterns(".git", ".pcr", "*.parts", "__pycache__"))
+        shutil.copytree(source, dest, ignore=shutil.ignore_patterns(".*", ".git", ".pcr", "*.parts", "__pycache__"))
     else:
         dest.mkdir()
         shutil.copy2(source, dest / source.name)
     return dest
 
 
+def _is_visible_path(path: Path, root: Path) -> bool:
+    try:
+        parts = path.relative_to(root).parts
+    except ValueError:
+        parts = path.parts
+    return not any(part.startswith(".") or part in {"__pycache__"} for part in parts)
+
+
 def _snapshot(root: Path) -> dict[str, tuple[int, int]]:
     data: dict[str, tuple[int, int]] = {}
     for path in root.rglob("*"):
-        if path.is_file():
+        if path.is_file() and _is_visible_path(path, root):
             stat = path.stat()
             data[str(path.relative_to(root))] = (int(stat.st_mtime_ns), int(stat.st_size))
     return data

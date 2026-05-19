@@ -27,6 +27,8 @@ DOC_SUFFIXES = {".pdf", ".docx", ".txt", ".md"}
 DATA_SUFFIXES = {".csv", ".xlsx", ".xls"}
 CODE_SUFFIXES = {".py", ".r", ".R", ".do", ".sps", ".sas"}
 MATERIAL_ROLES = {"manuscript", "raw_data", "analysis_code", "figures", "supplement", "references", "image", "unknown"}
+SYSTEM_FILE_NAMES = {".DS_Store", "Thumbs.db", "desktop.ini"}
+SYSTEM_DIR_NAMES = {".git", ".pcr", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache"}
 
 DOI_RE = re.compile(r"\b10\.\d{4,9}/[-._;()/:A-Z0-9]+\b", re.I)
 PMID_RE = re.compile(r"\bPMID\s*:?\s*(\d{5,10})\b", re.I)
@@ -75,6 +77,24 @@ class ProjectSpec:
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def is_audit_material_path(path: Path, root: Path | None = None) -> bool:
+    """Return False for hidden/system paths that should not enter audit scope."""
+    try:
+        parts = path.relative_to(root).parts if root is not None else path.parts
+    except ValueError:
+        parts = path.parts
+    for part in parts:
+        if part in SYSTEM_FILE_NAMES or part in SYSTEM_DIR_NAMES:
+            return False
+        if part.startswith("."):
+            return False
+    return True
+
+
+def iter_audit_files(root: Path) -> list[Path]:
+    return sorted(path for path in root.rglob("*") if path.is_file() and is_audit_material_path(path, root))
 
 
 def finding(
@@ -452,7 +472,7 @@ def analyze_papermill_signals(source: Path, config: AuditConfig | None = None) -
 
 def iter_image_files(source: Path) -> list[Path]:
     if source.is_dir():
-        return sorted(path for path in source.rglob("*") if path.suffix.lower() in IMAGE_SUFFIXES)
+        return [path for path in iter_audit_files(source) if path.suffix.lower() in IMAGE_SUFFIXES]
     return [source] if source.suffix.lower() in IMAGE_SUFFIXES else []
 
 
@@ -919,7 +939,7 @@ def analyze_images(source: Path, workdir: Path | None = None) -> list[TableResul
 
 
 def analyze_provenance(source: Path) -> TableResult:
-    paths = [source] if source.is_file() else sorted(path for path in source.rglob("*") if path.is_file())
+    paths = [source] if source.is_file() else iter_audit_files(source)
     return analyze_provenance_paths(source, paths)
 
 
@@ -929,10 +949,11 @@ def _project_paths_for_provenance(source: Path) -> list[Path]:
         paths = [material.path for material in spec.materials]
     elif source.is_dir():
         spec, _config = parse_project_spec(source)
-        paths = [material.path for material in spec.materials] if spec.materials else sorted(path for path in source.rglob("*") if path.is_file())
+        paths = [material.path for material in spec.materials] if spec.materials else iter_audit_files(source)
     else:
         paths = [source]
-    return sorted(path for path in paths if path.is_file() and ".pcr" not in path.parts)
+    base = source.parent if source.is_file() else source
+    return sorted(path for path in paths if path.is_file() and is_audit_material_path(path, base))
 
 
 def _relative_to_project(source: Path, path: Path) -> str:
@@ -1139,7 +1160,7 @@ def analyze_provenance_paths(source: Path, paths: list[Path]) -> TableResult:
 
 
 def analyze_code_files(source: Path) -> TableResult:
-    paths = [source] if source.is_file() else sorted(path for path in source.rglob("*") if path.suffix in CODE_SUFFIXES)
+    paths = [source] if source.is_file() else [path for path in iter_audit_files(source) if path.suffix in CODE_SUFFIXES]
     findings: list[Finding] = []
     risky_patterns = {
         r"\bsetwd\s*\(": "脚本包含 setwd，复跑环境可能依赖本机路径。",
@@ -1243,7 +1264,7 @@ def init_manifest_payload(source: Path, overwrite: bool = False) -> dict[str, An
     manifest = source / "pcr-project.json"
     if manifest.exists() and not overwrite:
         raise FileExistsError(f"manifest 已存在：{manifest}")
-    files = sorted(path for path in source.rglob("*") if path.is_file() and path.name != "pcr-project.json")
+    files = [path for path in iter_audit_files(source) if path.name != "pcr-project.json"]
     payload = {
         "project_id": source.name,
         "title": source.name,
@@ -1294,6 +1315,8 @@ def parse_project_spec(source: Path, config_overrides: AuditConfig | None = None
                 role = "unknown"
             path = Path(raw_path).expanduser()
             path = (path if path.is_absolute() else base / path).resolve()
+            if not is_audit_material_path(path, base):
+                continue
             if path in seen:
                 findings.append(
                     finding(
@@ -1320,7 +1343,7 @@ def parse_project_spec(source: Path, config_overrides: AuditConfig | None = None
                 )
                 continue
             if path.is_dir():
-                for child in sorted(p for p in path.rglob("*") if p.is_file()):
+                for child in iter_audit_files(path):
                     materials.append(Material(child.resolve(), role if role != "unknown" else infer_role(child), raw_path))
             else:
                 materials.append(Material(path, role, raw_path))
@@ -1328,7 +1351,7 @@ def parse_project_spec(source: Path, config_overrides: AuditConfig | None = None
         manifest = source / "pcr-project.json"
         if manifest.exists():
             return parse_project_spec(manifest, config_overrides, workdir)
-        paths = sorted(path for path in source.rglob("*") if path.is_file())
+        paths = iter_audit_files(source)
         materials = [Material(path.resolve(), infer_role(path), str(path.relative_to(source))) for path in paths]
     else:
         materials = [Material(source.resolve(), infer_role(source), source.name)]
@@ -1481,10 +1504,10 @@ def _corpus_project_paths(source: Path) -> list[Path]:
             paths.append((path if path.is_absolute() else base / path).resolve())
         return paths
     if source.is_dir():
-        candidates = [path for path in source.iterdir() if path.is_dir()]
+        candidates = [path for path in source.iterdir() if path.is_dir() and is_audit_material_path(path, source)]
         if (source / "pcr-project.json").exists():
             return [source]
-        return sorted(path for path in candidates if (path / "pcr-project.json").exists() or any(child.suffix.lower() in DOC_SUFFIXES | IMAGE_SUFFIXES for child in path.rglob("*") if child.is_file()))
+        return sorted(path for path in candidates if (path / "pcr-project.json").exists() or any(child.suffix.lower() in DOC_SUFFIXES | IMAGE_SUFFIXES for child in iter_audit_files(path)))
     return [source]
 
 
