@@ -49,6 +49,10 @@ def test_report_merge_combines_payloads(tmp_path: Path) -> None:
 
     text = merged.read_text(encoding="utf-8")
     assert "数据审计报告" in text
+    assert "预审范围与判读口径" in text
+    assert "材料清单" in text
+    assert "工具运行明细" in text
+    assert "覆盖缺口与未运行原因" in text
     assert "问题清单" in text
 
 
@@ -98,6 +102,11 @@ def test_audit_auto_summary_runs_crosscheck_and_records_missing_r_package(tmp_pa
     assert r_infos
     assert all(finding["level"] == "info" for finding in r_infos)
     assert all(finding["dependency_status"] == "missing_r_package" for finding in r_infos)
+    report = out.read_text(encoding="utf-8")
+    assert "工具运行明细" in report
+    assert "覆盖缺口与未运行原因" in report
+    assert "r_scrutiny" in report
+    assert "missing_r_package" in report
 
 
 def test_audit_auto_text_routes_statcheck_or_info(tmp_path: Path, monkeypatch) -> None:
@@ -205,8 +214,13 @@ def test_audit_project_example_and_flags(tmp_path: Path, monkeypatch) -> None:
     assert route["project_id"] == "project-minimal"
     assert route["policy"]["grobid_url"] == "http://localhost:8070"
     assert route["policy"]["contact_email"] == "audit@example.org"
-    assert "作者整改清单" in report
-    assert "工具运行与材料覆盖" in report
+    assert "预审范围与判读口径" in report
+    assert "材料清单" in report
+    assert "工具运行明细" in report
+    assert "覆盖缺口与未运行原因" in report
+    assert "人工复核任务表" in report
+    assert "paper.md" in report
+    assert "data.csv" in report
     assert "reference_audit" in tool_ids
     assert "provenance_hash" in tool_ids
 
@@ -254,8 +268,12 @@ def test_project_sample_reports_are_stable_enough_for_golden_checks(tmp_path: Pa
         tool_ids = {finding["tool_id"] for result in payload["results"] for finding in result["findings"]}
 
         assert "导师摘要" in report
+        assert "预审范围与判读口径" in report
+        assert "材料清单" in report
         assert "材料覆盖矩阵" in report
-        assert "工具运行与材料覆盖" in report
+        assert "工具运行明细" in report
+        assert "覆盖缺口与未运行原因" in report
+        assert "人工复核任务表" in report
         assert "reference_audit" in tool_ids
         assert "provenance_hash" in tool_ids
         if sample == "project_biomed":

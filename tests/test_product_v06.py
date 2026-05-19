@@ -105,7 +105,11 @@ def test_report_separates_info_from_risk_findings(tmp_path: Path) -> None:
     report = render_markdown(tmp_path / "source.csv", [TableResult("demo", 1, 1, [risk, info])], [])
 
     assert "导师摘要" in report
-    assert "作者整改清单" in report
+    assert "预审范围与判读口径" in report
+    assert "材料清单" in report
+    assert "工具运行明细" in report
+    assert "覆盖缺口与未运行原因" in report
+    assert "人工复核任务表" in report
     assert "运行提示（不计入风险）" in report
     assert "| 高 |" in report
     assert "R 包缺失，已跳过" in report
