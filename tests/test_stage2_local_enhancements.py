@@ -54,6 +54,20 @@ def test_image_copy_move_detects_local_patch_when_cv2_available(tmp_path: Path) 
     assert any(finding.tool_id == "image_copy_move_internal" for finding in findings)
 
 
+def test_pdf_image_extraction_flows_into_image_audit(tmp_path: Path, monkeypatch) -> None:
+    pdf = tmp_path / "paper.pdf"
+    pdf.write_bytes(b"%PDF-1.4 fake")
+    image = tmp_path / "extracted.png"
+    _write_demo_image(image)
+
+    monkeypatch.setattr("pcr_audit.product_detectors.extract_pdf_images", lambda _source, _workdir: ([image], ""))
+    results = analyze_images(pdf, tmp_path / "work")
+    findings = [finding for result in results for finding in result.findings]
+
+    assert any(finding.tool_id == "image_extract" and "已发现" in finding.summary for finding in findings)
+    assert any(finding.tool_id == "image_metadata_audit" for finding in findings)
+
+
 def test_provenance_jsonl_record_verify_and_diff(tmp_path: Path) -> None:
     project = tmp_path / "project"
     project.mkdir()
@@ -111,8 +125,21 @@ def test_route_selects_stage2_stage3_tools_for_project_and_image(tmp_path: Path)
     image_tools = image_route["image"]["routing_decisions"]
     assert project_tools["papermill_network_signals"]["selected_by_user"] is True
     assert project_tools["provenance_chain_verify"]["selected_by_user"] is True
+    assert project_tools["data_trace_crosscheck"]["selected_by_user"] is True
+    assert project_tools["code_rerun_execute"]["selected_by_user"] is True
     assert image_tools["image_copy_move_internal"]["selected_by_user"] is True
     assert image_tools["image_metadata_audit"]["selected_by_user"] is True
+
+
+def test_auto_route_selects_digit_distribution_for_raw_data(tmp_path: Path) -> None:
+    source = tmp_path / "raw.csv"
+    source.write_text("id,value\n" + "\n".join(f"{idx},{idx * 1.1}" for idx in range(40)), encoding="utf-8")
+
+    route = build_route_payload(source)
+    decisions = route["tables"][0]["routing_decisions"]
+
+    assert decisions["raw_data_rules"]["selected_by_user"] is True
+    assert decisions["digit_distribution"]["selected_by_user"] is True
 
 
 def test_new_cli_commands_generate_json_and_reports(tmp_path: Path) -> None:
@@ -136,3 +163,63 @@ def test_new_cli_commands_generate_json_and_reports(tmp_path: Path) -> None:
     assert json.loads(index_json.read_text(encoding="utf-8"))["projects"]
     assert screen_md.exists()
     assert json.loads(screen_json.read_text(encoding="utf-8"))["results"]
+
+
+def test_project_data_trace_and_code_sandbox_outputs(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr("pcr_audit.tool_system.rscript_available", lambda: True)
+    monkeypatch.setattr("pcr_audit.tool_system.r_package_available", lambda _package: False)
+    project = tmp_path / "project"
+    project.mkdir()
+    pd = pytest.importorskip("pandas")
+    pd.DataFrame({"variable": ["value"], "n": [4], "mean": [99.0], "sd": [1.0]}).to_excel(project / "paper_tables.xlsx", index=False)
+    pd.DataFrame({"value": [1.0, 2.0, 3.0, 4.0]}).to_csv(project / "data.csv", index=False)
+    (project / "analysis.py").write_text(
+        "import pandas as pd\n"
+        "df = pd.read_csv('data.csv')\n"
+        "pd.DataFrame({'variable':['value'], 'n':[len(df)], 'mean':[df.value.mean()], 'sd':[df.value.std()]}).to_csv('script_summary.csv', index=False)\n",
+        encoding="utf-8",
+    )
+    manifest = project / "pcr-project.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "project_id": "trace-demo",
+                "materials": [
+                    {"path": "paper_tables.xlsx", "role": "supplement"},
+                    {"path": "data.csv", "role": "raw_data"},
+                    {"path": "analysis.py", "role": "analysis_code"},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    out = tmp_path / "trace.md"
+    merged_json = tmp_path / "trace.json"
+
+    assert audit_main(["project", str(project), "--out", str(out), "--json", str(merged_json), "--no-external-lookups"]) == 0
+    payload = json.loads(merged_json.read_text(encoding="utf-8"))
+    findings = [finding for result in payload["results"] for finding in result["findings"]]
+
+    assert any(finding["tool_id"] == "code_rerun_execute" and "完成" in finding["summary"] for finding in findings)
+    assert any(finding["tool_id"] == "data_trace_crosscheck" and finding["level"] == "high" for finding in findings)
+
+
+def test_project_default_external_lookup_can_be_disabled(tmp_path: Path, monkeypatch) -> None:
+    calls: list[str] = []
+
+    def fake_http_json(url: str, timeout: float = 8.0, contact_email: str = ""):
+        calls.append(url)
+        return {"status": "ok", "message": {"title": ["Demo"]}} if "crossref" in url else {"id": "W1", "is_retracted": False}
+
+    monkeypatch.setattr("pcr_audit.product_detectors._http_json", fake_http_json)
+    project = tmp_path / "project"
+    project.mkdir()
+    (project / "paper.md").write_text("References\ndoi:10.1234/example.2026\n", encoding="utf-8")
+    out = tmp_path / "external.md"
+    merged_json = tmp_path / "external.json"
+
+    assert audit_main(["project", str(project), "--out", str(out), "--json", str(merged_json), "--no-rerun-code"]) == 0
+    assert calls
+    calls.clear()
+    assert audit_main(["project", str(project), "--out", str(out), "--json", str(merged_json), "--no-rerun-code", "--no-external-lookups"]) == 0
+    assert calls == []

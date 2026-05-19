@@ -106,6 +106,19 @@ def _run_crosscheck_payload(source: Path, json_path: Path, route_payload: dict[s
     return read_json(json_path)
 
 
+def _run_digit_payload(source: Path, json_path: Path, route_payload: dict[str, Any]) -> dict[str, Any]:
+    from pcr_audit.detectors.raw_legacy import analyze_digit_distribution_rules
+    from pcr_audit.models import finding_from_mapping
+
+    results = []
+    for name, df in _ready_tables_for_tool(source, route_payload, "digit_distribution"):
+        legacy = analyze_digit_distribution_rules(name, df)
+        findings = [finding_from_mapping(name, asdict(item)) for item in legacy.findings]
+        results.append(TableResult(name, legacy.rows, legacy.columns, findings))
+    save_json(json_path, source, results)
+    return read_json(json_path)
+
+
 def _run_product_result_payload(source: Path, json_path: Path, results: list[TableResult]) -> dict[str, Any]:
     save_json(json_path, source, results)
     return read_json(json_path)
@@ -184,6 +197,9 @@ def run_audit(
     if "raw_data_rules" in ready_tools:
         payloads.append(_run_raw_payload(source, workdir / "raw-audit.json", route_payload))
 
+    if "digit_distribution" in ready_tools:
+        payloads.append(_run_digit_payload(source, workdir / "digit-distribution.json", route_payload))
+
     if "crosscheck" in ready_tools:
         payloads.append(_run_crosscheck_payload(source, workdir / "crosscheck.json", route_payload))
 
@@ -261,9 +277,11 @@ def run_project_audit(
     out: Path,
     json_out: Path | None = None,
     workdir: Path | None = None,
-    external_lookups: bool = False,
+    external_lookups: bool = True,
     grobid_url: str = "",
     contact_email: str = "",
+    rerun_code: bool = True,
+    code_timeout: int = 60,
 ) -> int:
     from pcr_audit.product_detectors import (
         AuditConfig,
@@ -279,6 +297,7 @@ def run_project_audit(
         provenance_verify,
         parse_project_spec,
     )
+    from pcr_audit.data_trace import analyze_data_trace, run_code_sandbox
 
     workdir = workdir or out.with_suffix(".parts")
     workdir.mkdir(parents=True, exist_ok=True)
@@ -289,8 +308,9 @@ def run_project_audit(
         lookup_cache_dir=workdir / "lookup-cache",
     )
     spec, config = parse_project_spec(source, config_override, workdir)
+    config.external_lookups = external_lookups
     sources = {
-        "documents": [m.path for m in spec.materials if m.role in {"manuscript", "references", "supplement"} and m.path.suffix.lower() in {".pdf", ".docx", ".txt", ".md"}],
+        "documents": [m.path for m in spec.materials if m.role in {"manuscript", "references", "supplement"} and m.path.suffix.lower() in {".pdf", ".docx", ".txt", ".md", ".csv", ".xlsx", ".xls"}],
         "data": [m.path for m in spec.materials if m.role == "raw_data" or m.path.suffix.lower() in {".csv", ".xlsx", ".xls"}],
         "images": [m.path for m in spec.materials if m.role in {"figures", "image"} or m.path.suffix.lower() in {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".webp"}],
         "code": [m.path for m in spec.materials if m.role == "analysis_code" or m.path.suffix in {".py", ".r", ".R", ".do", ".sps", ".sas"}],
@@ -326,10 +346,22 @@ def run_project_audit(
     if spec.findings:
         project_results.append(TableResult("project_manifest", len(spec.materials), 0, spec.findings))
     provenance = analyze_provenance_paths(source, sources["all"]) if sources["all"] else analyze_provenance(source)
-    project_results.extend([provenance, provenance_payload_to_result(source, provenance_verify(source)), analyze_code_files(source), analyze_papermill_network_signals(source)])
+    sandbox_source = source.parent if source.is_file() else source
+    code_result, derived_outputs = run_code_sandbox(sandbox_source, sources["code"], workdir, code_timeout, rerun_code)
+    project_results.extend(
+        [
+            provenance,
+            provenance_payload_to_result(source, provenance_verify(source)),
+            analyze_code_files(source),
+            code_result,
+            analyze_data_trace(sources["documents"], sources["data"], derived_outputs),
+            analyze_papermill_network_signals(source),
+        ]
+    )
     for doc in sources["documents"][:20]:
-        project_results.extend([analyze_references(doc, config), analyze_citation_claims(doc, config), analyze_papermill_signals(doc, config)])
-        project_results.extend(analyze_images(doc, workdir / f"images-{doc.stem}"))
+        if doc.suffix.lower() in {".pdf", ".docx", ".txt", ".md"}:
+            project_results.extend([analyze_references(doc, config), analyze_citation_claims(doc, config), analyze_papermill_signals(doc, config)])
+            project_results.extend(analyze_images(doc, workdir / f"images-{doc.stem}"))
     if sources["images"]:
         project_results.extend(analyze_images(source, workdir / "images-project"))
     if not sources["documents"] and not sources["images"] and not sources["code"]:

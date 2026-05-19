@@ -50,12 +50,49 @@ def render_markdown(source: Path, results: list[TableResult], extraction_notes: 
         lines += [f"- {note}" for note in extraction_notes]
         lines.append("")
 
-    lines += ["## 材料覆盖矩阵", "", "| 材料/模块 | 行数 | 列数 | 高 | 中 | 低 | 提示 |", "|---|---:|---:|---:|---:|---:|---:|"]
+    # Group results by sheet name
+    sheet_names_ordered = []
+    sheet_results: dict[str, list[TableResult]] = {}
     for result in results:
-        counter = Counter(finding.level for finding in result.findings)
-        lines.append(
-            f"| {markdown_cell(result.name)} | {result.rows} | {result.columns} | {counter['high']} | {counter['medium']} | {counter['low']} | {counter['info']} |"
-        )
+        if result.name not in sheet_results:
+            sheet_names_ordered.append(result.name)
+            sheet_results[result.name] = []
+        sheet_results[result.name].append(result)
+
+    # Collect all tool IDs across all results
+    all_tools: set[str] = set()
+    for result in results:
+        for finding in result.findings:
+            if finding.tool_id:
+                all_tools.add(finding.tool_id)
+    tools_ordered = sorted(all_tools)
+
+    # Build tool-level counts per sheet: {sheet: {tool: Counter}}
+    sheet_tool_counts: dict[str, dict[str, Counter]] = {}
+    for sheet_name in sheet_names_ordered:
+        sheet_tool_counts[sheet_name] = {}
+        for tool_id in tools_ordered:
+            sheet_tool_counts[sheet_name][tool_id] = Counter()
+        for result in sheet_results[sheet_name]:
+            for finding in result.findings:
+                if finding.tool_id:
+                    sheet_tool_counts[sheet_name][finding.tool_id][finding.level] += 1
+
+    # Render matrix: sheet × tool
+    header = "| 材料/模块 | 行数 | 列数 |"
+    sep = "|---|---:|---:|"
+    for tool_id in tools_ordered:
+        header += f" {tool_id} |"
+        sep += "---|"
+    lines += ["## 材料覆盖矩阵", "", header, sep]
+    for sheet_name in sheet_names_ordered:
+        first_result = sheet_results[sheet_name][0]
+        row = f"| {markdown_cell(sheet_name)} | {first_result.rows} | {first_result.columns} |"
+        for tool_id in tools_ordered:
+            c = sheet_tool_counts[sheet_name][tool_id]
+            cell = f"高{c['high']} 中{c['medium']} 低{c['low']}"
+            row += f" {cell} |"
+        lines.append(row)
     lines.append("")
 
     lines += ["## 风险发现清单（问题清单）", ""]
@@ -130,7 +167,7 @@ def render_markdown(source: Path, results: list[TableResult], extraction_notes: 
         "",
         "- 工具运行记录来自确定性 route 结果和各 detector finding JSON。",
         "- 缺失工具、缺失依赖、外部服务未启用和检测跳过只记录为提示，不计入数据风险。",
-        "- 默认不向外部 API 发送稿件、原始数据或参考文献信息；外部核验必须显式启用。",
+        "- 单文件审计默认不向外部 API 发送材料；项目审计默认核验 DOI/PMID 元数据，可用 --no-external-lookups 关闭。",
         "- 哈希存证只能证明文件后续未改动，不能证明实验真实发生。",
         "",
         "## 下一步复核动作",

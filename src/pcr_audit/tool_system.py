@@ -249,7 +249,27 @@ TOOL_REGISTRY: dict[str, ToolSpec] = {
         accepted_input_types=("analysis_code", "project_manifest"),
         default_enabled=False,
         reliability="辅助",
-        method_limitations="当前版本不执行脚本，只检查复跑准备风险；关键统计量复算需隔离环境和完整输入。",
+        method_limitations="该工具只读扫描复跑准备风险；实际 Python/R 执行由 code_rerun_execute 在临时项目副本中处理。",
+    ),
+    "code_rerun_execute": ToolSpec(
+        tool_id="code_rerun_execute",
+        display_name="分析脚本沙箱复跑",
+        category="代码复核",
+        description="在临时项目副本中执行 Python/R 脚本，捕获输出并把生成表格纳入跨材料对账。",
+        accepted_input_types=("analysis_code", "project_manifest"),
+        default_enabled=False,
+        reliability="辅助/本地沙箱",
+        method_limitations="本地临时目录隔离不能替代强安全容器；脚本失败、超时或缺包只记录为运行提示。",
+    ),
+    "data_trace_crosscheck": ToolSpec(
+        tool_id="data_trace_crosscheck",
+        display_name="跨材料数据对账",
+        category="统计一致性",
+        description="对稿件/补充材料摘要统计、原始数据自动汇总和脚本输出表做确定性对账。",
+        accepted_input_types=("project_manifest",),
+        default_enabled=False,
+        reliability="稳定",
+        method_limitations="只对可可靠匹配的变量和统计量对账；复杂分组、派生变量和抽取错误需要人工确认。",
     ),
 }
 

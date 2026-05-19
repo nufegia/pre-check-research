@@ -3,9 +3,18 @@ pyproject.toml
 src/pcr_audit/__init__.py
 src/pcr_audit/cli.py
 src/pcr_audit/crosscheck.py
+src/pcr_audit/data_trace.py
 src/pcr_audit/data_trace_mvp.py
+src/pcr_audit/io.py
+src/pcr_audit/models.py
+src/pcr_audit/product_detectors.py
+src/pcr_audit/reporting.py
+src/pcr_audit/router.py
+src/pcr_audit/runner.py
 src/pcr_audit/tool_system.py
 src/pcr_audit/detectors/__init__.py
+src/pcr_audit/detectors/raw.py
+src/pcr_audit/detectors/raw_legacy.py
 src/pcr_audit/detectors/r/__init__.py
 src/pcr_audit/detectors/r/adapters.py
 src/pcr_mvp2.egg-info/PKG-INFO
@@ -15,5 +24,8 @@ src/pcr_mvp2.egg-info/entry_points.txt
 src/pcr_mvp2.egg-info/requires.txt
 src/pcr_mvp2.egg-info/top_level.txt
 tests/test_crosscheck.py
+tests/test_product_v06.py
 tests/test_python_cli.py
 tests/test_r_clis.py
+tests/test_stage2_local_enhancements.py
+tests/test_tool_system.py

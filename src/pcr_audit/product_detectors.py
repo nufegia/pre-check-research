@@ -12,6 +12,7 @@ import zipfile
 from collections import Counter
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
+from io import BytesIO
 from pathlib import Path
 from typing import Any
 from xml.etree import ElementTree
@@ -473,6 +474,49 @@ def extract_docx_images(source: Path, out_dir: Path) -> list[Path]:
     return images
 
 
+def extract_pdf_images(source: Path, out_dir: Path) -> tuple[list[Path], str]:
+    images: list[Path] = []
+    if source.suffix.lower() != ".pdf":
+        return images, ""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        import pdfplumber
+    except Exception as exc:
+        return images, f"pdfplumber_unavailable={exc}"
+    Image = _pil_image_module()
+    if Image is None:
+        return images, "pillow_unavailable"
+    notes: list[str] = []
+    try:
+        with pdfplumber.open(str(source)) as pdf:
+            for page_no, page in enumerate(pdf.pages, start=1):
+                for image_no, item in enumerate(page.images or [], start=1):
+                    out = out_dir / f"{source.stem}_p{page_no}_img{image_no}.png"
+                    saved = False
+                    stream = item.get("stream")
+                    if stream is not None:
+                        try:
+                            data = stream.get_data()
+                            with Image.open(BytesIO(data)) as img:
+                                img.save(out)
+                            saved = True
+                        except Exception:
+                            pass
+                    if not saved:
+                        try:
+                            bbox = (item["x0"], item["top"], item["x1"], item["bottom"])
+                            rendered = page.crop(bbox).to_image(resolution=150).original
+                            rendered.save(out)
+                            saved = True
+                        except Exception as exc:
+                            notes.append(f"p{page_no}/img{image_no}:{exc}")
+                    if saved:
+                        images.append(out)
+    except Exception as exc:
+        return images, str(exc)
+    return images, "; ".join(notes[:5])
+
+
 def _pil_image_module():
     try:
         from PIL import Image
@@ -717,6 +761,9 @@ def analyze_images(source: Path, workdir: Path | None = None) -> list[TableResul
     images = iter_image_files(source)
     if source.suffix.lower() == ".docx":
         images = extract_docx_images(source, workdir)
+    pdf_note = ""
+    if source.suffix.lower() == ".pdf":
+        images, pdf_note = extract_pdf_images(source, workdir)
     findings_extract: list[Finding] = []
     findings_dup: list[Finding] = []
     findings_copy: list[Finding] = []
@@ -728,7 +775,7 @@ def analyze_images(source: Path, workdir: Path | None = None) -> list[TableResul
             finding(
                 str(source), "info", "图像抽取", "figure",
                 "未发现可直接检测的图片文件。",
-                "PDF 图像抽取当前记录为规划能力；DOCX 可抽取 word/media 下图片。",
+                f"PDF 图像抽取为 best-effort；DOCX 可抽取 word/media 下图片。{pdf_note}",
                 "若需要图像完整性初筛，请提供原始图、DOCX稿件或单独图片目录。",
                 tool_id="image_extract", tool_name="图像抽取", input_type="scientific_figure",
                 dependency_status="insufficient_material",
@@ -1206,7 +1253,7 @@ def init_manifest_payload(source: Path, overwrite: bool = False) -> dict[str, An
             if infer_role(path) != "unknown"
         ],
         "settings": {
-            "external_lookups": False,
+            "external_lookups": True,
             "grobid_url": "",
             "contact_email": "",
         },

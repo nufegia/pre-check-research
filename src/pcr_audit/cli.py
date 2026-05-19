@@ -147,9 +147,13 @@ def audit_main(argv: list[str] | None = None) -> int:
     project.add_argument("--out")
     project.add_argument("--json", help="Optional merged JSON output path.")
     project.add_argument("--workdir", help="Temporary output directory. Defaults to <out>.parts.")
-    project.add_argument("--external-lookups", action="store_true", help="Opt in to Crossref/OpenAlex/NCBI lookups.")
+    project.add_argument("--external-lookups", action="store_true", help="Enable Crossref/OpenAlex/NCBI lookups. Project audits enable this by default.")
+    project.add_argument("--no-external-lookups", action="store_true", help="Disable default Crossref/OpenAlex/NCBI lookups for project audits.")
     project.add_argument("--grobid-url", default="", help="Optional GROBID REST base URL, e.g. http://localhost:8070.")
     project.add_argument("--contact-email", default="", help="Contact email for polite scholarly metadata API requests.")
+    project.add_argument("--rerun-code", dest="rerun_code", action="store_true", default=True, help="Rerun Python/R analysis scripts in a temporary local sandbox. Default.")
+    project.add_argument("--no-rerun-code", dest="rerun_code", action="store_false", help="Skip script reruns and only scan analysis code.")
+    project.add_argument("--code-timeout", type=int, default=60, help="Per-script sandbox timeout in seconds. Defaults to 60.")
     project.add_argument("--inspect", action="store_true", help="Inspect project materials and print JSON without running detectors.")
     project.add_argument("--init-manifest", action="store_true", help="Create pcr-project.json for a project folder and exit.")
     project.add_argument("--overwrite", action="store_true", help="Allow --init-manifest to overwrite an existing pcr-project.json.")
@@ -270,9 +274,11 @@ def audit_main(argv: list[str] | None = None) -> int:
             out,
             json_out,
             workdir,
-            external_lookups=args.external_lookups,
+            external_lookups=False if args.no_external_lookups else True,
             grobid_url=args.grobid_url,
             contact_email=args.contact_email,
+            rerun_code=args.rerun_code,
+            code_timeout=args.code_timeout,
         )
         if code != 0:
             print("没有生成任何可合并结果。", file=sys.stderr)

@@ -13,7 +13,7 @@ def selected_tools_for_scenario(scenario: str, input_types: list[str]) -> set[st
     if scenario == "auto":
         selected: set[str] = set()
         if "raw_observation_table" in input_types or "figure_source_data" in input_types:
-            selected.add("raw_data_rules")
+            selected.update({"raw_data_rules", "digit_distribution"})
         if "summary_statistics_table" in input_types or "continuous_measure_summary" in input_types:
             selected.update({"r_scrutiny", "crosscheck"})
         if "likert_or_integer_scale_summary" in input_types:
@@ -54,7 +54,7 @@ def build_route_payload(source: Path, scenario: str = "auto") -> dict[str, Any]:
     if source.is_dir():
         classification = {"primary_type": "project_manifest", "input_types": ["project_manifest", "raw_file_bundle"], "signals": {}}
         selected = selected_tools_for_scenario(scenario, classification["input_types"])
-        selected.update({"provenance_hash", "provenance_chain_verify", "code_rerun_audit", "reference_audit", "citation_claim_check", "papermill_light_signals", "papermill_network_signals", "image_extract", "image_duplicate_internal", "image_copy_move_internal", "image_metadata_audit", "western_blot_review_list", "raw_data_rules", "crosscheck"})
+        selected.update({"provenance_hash", "provenance_chain_verify", "code_rerun_audit", "code_rerun_execute", "data_trace_crosscheck", "reference_audit", "citation_claim_check", "papermill_light_signals", "papermill_network_signals", "image_extract", "image_duplicate_internal", "image_copy_move_internal", "image_metadata_audit", "western_blot_review_list", "raw_data_rules", "crosscheck", "digit_distribution"})
         decisions = route_all_tools(selected, classification["input_types"], 0, [])
         payload["project"] = {
             "classification": classification,
@@ -74,7 +74,7 @@ def build_route_payload(source: Path, scenario: str = "auto") -> dict[str, Any]:
             "signals": {"corpus_manifest": is_corpus},
         }
         selected = selected_tools_for_scenario(scenario, classification["input_types"])
-        selected.update({"provenance_hash", "provenance_chain_verify", "papermill_network_signals"})
+        selected.update({"provenance_hash", "provenance_chain_verify", "papermill_network_signals", "data_trace_crosscheck", "code_rerun_execute"})
         decisions = route_all_tools(selected, classification["input_types"], 0, [])
         payload["project"] = {
             "classification": classification,

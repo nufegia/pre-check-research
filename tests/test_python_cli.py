@@ -163,7 +163,7 @@ def test_audit_project_runs_multimaterial_audit(tmp_path: Path, monkeypatch) -> 
     out = tmp_path / "project-report.md"
     merged_json = tmp_path / "project-report.json"
 
-    assert audit_main(["project", str(project), "--out", str(out), "--json", str(merged_json)]) == 0
+    assert audit_main(["project", str(project), "--out", str(out), "--json", str(merged_json), "--no-external-lookups"]) == 0
     payload = json.loads(merged_json.read_text(encoding="utf-8"))
     tool_ids = {finding["tool_id"] for result in payload["results"] for finding in result["findings"]}
 
@@ -194,6 +194,7 @@ def test_audit_project_example_and_flags(tmp_path: Path, monkeypatch) -> None:
             "http://localhost:8070",
             "--contact-email",
             "audit@example.org",
+            "--no-external-lookups",
         ]
     ) == 0
     payload = json.loads(merged_json.read_text(encoding="utf-8"))
@@ -247,7 +248,7 @@ def test_project_sample_reports_are_stable_enough_for_golden_checks(tmp_path: Pa
         source = ROOT / "examples" / sample
         out = tmp_path / f"{sample}.md"
         merged_json = tmp_path / f"{sample}.json"
-        assert audit_main(["project", str(source), "--out", str(out), "--json", str(merged_json)]) == 0
+        assert audit_main(["project", str(source), "--out", str(out), "--json", str(merged_json), "--no-external-lookups"]) == 0
         report = out.read_text(encoding="utf-8")
         payload = json.loads(merged_json.read_text(encoding="utf-8"))
         tool_ids = {finding["tool_id"] for result in payload["results"] for finding in result["findings"]}
