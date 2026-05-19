@@ -167,7 +167,7 @@ TOOL_REGISTRY: dict[str, ToolSpec] = {
         default_enabled=False,
         dependency_module="PIL",
         reliability="弱信号",
-        method_limitations="只能提示重复/复用复核线索，不能证明篡改；复杂裁剪、低质量压缩和重复纹理可能影响结果。",
+        method_limitations="只能提示重复/复用复核线索，仅提示复核线索，不做判定；复杂裁剪、低质量压缩和重复纹理可能影响结果。",
     ),
     "image_copy_move_internal": ToolSpec(
         tool_id="image_copy_move_internal",

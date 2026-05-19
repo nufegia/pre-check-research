@@ -42,7 +42,7 @@ def render_markdown(source: Path, results: list[TableResult], extraction_notes: 
         f"- 风险信号：高 {counts['high']} / 中 {counts['medium']} / 低 {counts['low']}",
         f"- 运行提示：{counts['info']} 条",
         "",
-        "> 本报告只识别数据、统计、图像、文献和流程材料中的风险信号，不构成学术不端或造假鉴定。高风险项表示需要优先回看原始记录、实验日志、原始图或统计脚本。",
+        "> 本报告只识别数据、统计、图像、文献和流程材料中的风险信号，不构成数据风险校验结论。高风险项表示需要优先回看原始记录、实验日志、原始图或统计脚本。",
         "",
     ]
     if extraction_notes:

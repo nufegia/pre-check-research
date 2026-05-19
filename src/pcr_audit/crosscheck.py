@@ -585,7 +585,7 @@ def crosscheck_table(
             module="crosscheck",
             input_type="summary_statistics_table",
             routing_reason="摘要统计表逐行数学交叉验证。",
-            method_limitations="交叉验证基于统计量的数学定义（SE=SD/√N、CI=mean±t×SE等），不判断学术不端。离群值需人工复核。",
+            method_limitations="交叉验证基于统计量的数学定义（SE=SD/√N、CI=mean±t×SE等），不做结论性判定。离群值需人工复核。",
         )
         return TableResult(name=name, rows=0, columns=len(df.columns), findings=findings)
 
@@ -637,6 +637,6 @@ def crosscheck_table(
         module="crosscheck",
         input_type="summary_statistics_table",
         routing_reason="摘要统计表逐行数学交叉验证。",
-        method_limitations="交叉验证基于统计量的数学定义（SE=SD/√N、CI=mean±t×SE等），不判断学术不端。离群值需人工复核。",
+        method_limitations="交叉验证基于统计量的数学定义（SE=SD/√N、CI=mean±t×SE等），不做结论性判定。离群值需人工复核。",
     )
     return TableResult(name=name, rows=len(df), columns=len(df.columns), findings=findings)

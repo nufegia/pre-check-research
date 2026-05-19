@@ -18,7 +18,7 @@ class Finding:
     module: str = "unknown"
     input_type: str = "unknown"
     routing_reason: str = "由确定性路由选择该工具。"
-    method_limitations: str = "该结果只提示需要复核的风险信号，不构成学术不端判断。"
+    method_limitations: str = "该结果只提示需要复核的风险信号，不构成数据风险校验判定。"
     raw_output_ref: str = ""
     detector_runtime: str = "python"
     dependency_status: str = "ready"

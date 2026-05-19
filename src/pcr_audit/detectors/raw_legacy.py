@@ -41,7 +41,7 @@ class Finding:
     module: str = "legacy"
     input_type: str = "unknown"
     routing_reason: str = "旧版命令行综合检测流程。"
-    method_limitations: str = "该结果来自规则筛查，只提示需要复核的风险信号，不构成学术不端判断。"
+    method_limitations: str = "该结果来自规则筛查，只提示需要复核的风险信号，不构成数据风险校验判定。"
     raw_output_ref: str = ""
     detector_runtime: str = "python"
     dependency_status: str = "ready"
@@ -645,7 +645,7 @@ def check_outliers(table_name: str, col: str, values: pd.Series, findings: list[
             col,
             "发现多个稳健 Z 分数较高的离群值。",
             f"离群点={outliers}/{len(clean)}，median={median:.6g}，MAD={mad:.6g}",
-            "离群值不等于造假；建议结合实验记录确认是否为真实极端值、单位错误或录入错误。",
+            "离群值需结合实验记录确认是否为真实极端值、单位错误或录入错误。",
             f"离群样例：{sample_text}",
         )
 
@@ -1368,7 +1368,7 @@ def render_markdown(source: Path, results: list[TableResult], extraction_notes: 
         f"- 检测表格：{len(results)} 个",
         f"- 问题信号：高 {counts['high']} / 中 {counts['medium']} / 低 {counts['low']} / 提示 {counts['info']}",
         "",
-        "> 本报告只识别数据中的异常模式和人工痕迹信号，不构成学术不端或造假鉴定。高风险项表示需要优先回看原始记录、实验日志或统计脚本。",
+        "> 本报告只识别数据中的异常模式和人工痕迹信号，不构成数据风险校验结论。高风险项表示需要优先回看原始记录、实验日志或统计脚本。",
         "",
     ]
     if extraction_notes:
