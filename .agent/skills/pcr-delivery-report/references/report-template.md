@@ -4,7 +4,7 @@ Use this template for a full Markdown pre-submission decision report. Adapt sect
 
 ## 标题
 
-`# 投稿前研究数据复核交付报告：<项目/稿件名称>`
+# 投稿前研究数据复核交付报告："项目/稿件名称"
 
 Metadata block:
 
@@ -32,14 +32,14 @@ Use a compact decision table:
 Include:
 
 - Materials reviewed and detector coverage.
-- Counts by review priority: high / medium / low; `info` run notes separately.
+- Counts by review priority: high / medium / low; "info" run notes separately.
 - One sentence on the main signal clusters.
 - One sentence on what the audit cannot conclude.
 - Immediate pre-submission action.
 
 Example wording:
 
-`本次预审在已提供材料中未出现高优先级复核信号；投稿前主要建议补充确认 <cluster>. 这些结果提示需要回看原始记录和处理流程，但不构成对数据真实性、研究诚信或投稿结果的结论。`
+"本次预审在已提供材料中未出现高优先级复核信号；投稿前主要建议补充确认“信号簇”。这些结果提示需要回看原始记录和处理流程，但不构成对数据真实性、研究诚信或投稿结果的结论。"
 
 ## 预审范围
 
@@ -71,7 +71,7 @@ Present unavailable checks as service boundaries, not system failure. Separate t
 
 Use wording:
 
-`该项表示当前服务未覆盖或材料尚不足，不能解释为相应问题不存在，也不代表系统失败。`
+"该项表示当前服务未覆盖或材料尚不足，不能解释为相应问题不存在，也不代表系统失败。"
 
 Recommended table:
 
@@ -109,9 +109,9 @@ Include this table even if some materials are already present. Mark unavailable 
 
 Phrase as neutral questions:
 
-- 请说明 `<variable>` 的量表范围、计分方式、四舍五入规则和是否存在阈值截断。
+- 请说明“变量名”的量表范围、计分方式、四舍五入规则和是否存在阈值截断。
 - 请提供用于生成论文表格的原始数据版本、清洗脚本和统计输出。
-- 请确认分组变量 `<group>` 是否为分析分层变量、随机分组变量或人口学变量。
+- 请确认分组变量“组别变量名”是否为分析分层变量、随机分组变量或人口学变量。
 - 请说明当前投稿主稿中哪些表格直接来自本次提供的数据文件。
 - 如存在图像或实验照片，请确认原始文件、处理步骤和投稿图版本是否可追溯。
 
@@ -139,4 +139,4 @@ Keep exact evidence values. Full local paths may appear here when needed.
 
 Include a short statement:
 
-`本报告基于自动化预审工具和当前提供材料形成，仅用于支持投稿前复核和材料补充决策。复核信号不等同于学术不端认定、伦理调查结论、统计审稿意见或投稿结果保证；最终判断需结合原始记录、伦理/试验流程、统计脚本、数据字典、图像源文件和作者说明。`
+"本报告基于自动化预审工具和当前提供材料形成，仅用于支持投稿前复核和材料补充决策。复核信号不等同于学术不端认定、伦理调查结论、统计审稿意见或投稿结果保证；最终判断需结合原始记录、伦理/试验流程、统计脚本、数据字典、图像源文件和作者说明。"

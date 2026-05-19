@@ -74,6 +74,7 @@ When both JSON and Markdown disagree, treat JSON as the evidence source and Mark
    - Verify the report contains a clear non-verdict statement.
    - Verify `info` items are not counted as risk findings.
    - Verify "风险等级" has been rewritten as "复核优先级" in client-facing Chinese output.
+   - Verify client-facing report text does not use Markdown code styling. Replace code spans or code blocks with quotation marks.
    - Verify the strict boundary statement remains present.
 
 ## Pre-Submission Status Rules
@@ -141,6 +142,7 @@ Keep the main body short enough for a non-technical PI to read quickly. Put long
 - For repeated digit-distribution findings, explain possible measurement/rounding/scale effects before recommending source-data review.
 - For provenance hash or chain status, explain that hashing supports file integrity/version tracking but does not prove experimental authenticity.
 - For manuscript-facing reports, avoid exposing unnecessary absolute local paths in the executive body; put full paths in the appendix only if useful.
+- Do not use Markdown code styling in report deliverables, including inline code spans or fenced code blocks. When a field name, variable name, file name, tool ID, evidence ID, or exact phrase needs emphasis, use quotation marks instead, such as "info", "tool_id", or "pcr.audit.json".
 - Include a "下一步建议补充材料" table when materials are missing or when submission decisions depend on additional verification. Common rows: CRF/问卷记录, 数据字典, 投稿主稿, 统计脚本, 图像原始文件.
 - Include "建议作者确认的问题" as neutral questions that a PI can forward directly to students or authors.
 - Include "可选后续复核" to bridge to next-stage services such as manuscript-data crosscheck, statistic rerun, image-source review, code rerun, or author response review.
