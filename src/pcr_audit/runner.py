@@ -5,6 +5,7 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
+from pcr_audit.adapters import AuditRunContext, adapter_for, register_adapter
 from pcr_audit.detectors.raw import analyze_raw_data_rules
 from pcr_audit.io import extract_file, load_tables, read_json, write_extracted_text, write_json
 from pcr_audit.models import TableResult, info_finding
@@ -28,6 +29,27 @@ R_TOOL_BY_ID = {
     "r_scrutiny": "scrutiny",
     "r_rsprite2": "sprite",
 }
+
+PYTHON_ADAPTER_ORDER = [
+    "raw_data_rules",
+    "digit_distribution",
+    "p_value_distribution",
+    "crosscheck",
+    "reference_audit",
+    "citation_claim_check",
+    "papermill_light_signals",
+    "papermill_network_signals",
+    "image_extract",
+    "image_duplicate_internal",
+    "image_copy_move_internal",
+    "image_metadata_audit",
+    "western_blot_review_list",
+    "provenance_hash",
+    "provenance_chain_verify",
+    "code_rerun_audit",
+    "code_rerun_execute",
+]
+R_ADAPTER_ORDER = ["r_statcheck", "r_scrutiny", "r_rsprite2"]
 
 
 def info_payload(
@@ -179,6 +201,84 @@ def _csv_inputs_for_r_tool(
     return paths, extraction_manifest
 
 
+def _raw_adapter(context: AuditRunContext, _tool_id: str) -> None:
+    context.payloads.append(_run_raw_payload(context.source, context.workdir / "raw-audit.json", context.route_payload))
+
+
+def _digit_adapter(context: AuditRunContext, _tool_id: str) -> None:
+    context.payloads.append(_run_digit_payload(context.source, context.workdir / "digit-distribution.json", context.route_payload))
+
+
+def _p_value_adapter(context: AuditRunContext, _tool_id: str) -> None:
+    context.payloads.append(_run_p_value_payload(context.source, context.workdir / "p-value-distribution.json", context.route_payload))
+
+
+def _crosscheck_adapter(context: AuditRunContext, _tool_id: str) -> None:
+    context.payloads.append(_run_crosscheck_payload(context.source, context.workdir / "crosscheck.json", context.route_payload))
+
+
+def _product_adapter(context: AuditRunContext, tool_id: str) -> None:
+    from pcr_audit.data_trace import run_code_sandbox
+    from pcr_audit.product import code_audit, corpus_signals, image_audit, provenance, reference_audit
+
+    if tool_id == "reference_audit":
+        context.product_results.append(reference_audit.analyze_references(context.source))
+    elif tool_id == "citation_claim_check":
+        context.product_results.append(reference_audit.analyze_citation_claims(context.source))
+    elif tool_id == "papermill_light_signals":
+        context.product_results.append(reference_audit.analyze_papermill_signals(context.source))
+    elif tool_id == "papermill_network_signals":
+        context.product_results.append(corpus_signals.analyze_papermill_network_signals(context.source))
+    elif tool_id in {"image_extract", "image_duplicate_internal", "image_copy_move_internal", "image_metadata_audit", "western_blot_review_list"}:
+        if not any(result.name in {"image_extract", "image_duplicate_internal", "image_copy_move_internal", "image_metadata_audit", "western_blot_review_list"} for result in context.product_results):
+            context.product_results.extend(image_audit.analyze_images(context.source, context.workdir / "images"))
+    elif tool_id == "provenance_hash":
+        context.product_results.append(provenance.analyze_provenance(context.source))
+    elif tool_id == "provenance_chain_verify":
+        context.product_results.append(provenance.provenance_payload_to_result(context.source, provenance.provenance_verify(context.source)))
+    elif tool_id == "code_rerun_audit":
+        context.product_results.append(code_audit.analyze_code_files(context.source))
+    elif tool_id == "code_rerun_execute":
+        code_result, _derived_outputs = run_code_sandbox(context.source, [context.source], context.workdir, 60, True)
+        context.product_results.append(code_result)
+
+
+def _r_adapter(context: AuditRunContext, tool_id: str) -> None:
+    if tool_id == "r_statcheck":
+        _run_r_tool_payload(context.source, tool_id, context.source, context.workdir, context.payloads)
+        return
+    try:
+        r_inputs, context.extraction_manifest = _csv_inputs_for_r_tool(
+            context.source,
+            context.workdir,
+            context.route_payload,
+            tool_id,
+            context.extraction_manifest,
+        )
+    except Exception as exc:
+        context.payloads.append(info_payload(context.source, tool_id, "表格抽取失败，R CLI 已跳过。", str(exc), "extract_failed"))
+        return
+    for idx, r_input in enumerate(r_inputs, start=1):
+        tool_workdir = context.workdir / f"{tool_id}_{idx}"
+        tool_workdir.mkdir(parents=True, exist_ok=True)
+        _run_r_tool_payload(context.source, tool_id, r_input, tool_workdir, context.payloads)
+
+
+def _register_builtin_adapters() -> None:
+    register_adapter("raw_data_rules", _raw_adapter)
+    register_adapter("digit_distribution", _digit_adapter)
+    register_adapter("p_value_distribution", _p_value_adapter)
+    register_adapter("crosscheck", _crosscheck_adapter)
+    for tool_id in PYTHON_ADAPTER_ORDER:
+        if tool_id not in {"raw_data_rules", "digit_distribution", "p_value_distribution", "crosscheck"}:
+            register_adapter(tool_id, _product_adapter)
+    for tool_id in R_ADAPTER_ORDER:
+        register_adapter(tool_id, _r_adapter)
+
+
+_register_builtin_adapters()
+
+
 def run_audit(
     source: Path,
     out: Path,
@@ -201,69 +301,25 @@ def run_audit(
     selected = selected_route_decisions(route_payload)
     ready_tools = ready_tool_ids(route_payload)
     payloads: list[dict[str, Any]] = []
-
-    if "raw_data_rules" in ready_tools:
-        payloads.append(_run_raw_payload(source, workdir / "raw-audit.json", route_payload))
-
-    if "digit_distribution" in ready_tools:
-        payloads.append(_run_digit_payload(source, workdir / "digit-distribution.json", route_payload))
-
-    if "p_value_distribution" in ready_tools:
-        payloads.append(_run_p_value_payload(source, workdir / "p-value-distribution.json", route_payload))
-
-    if "crosscheck" in ready_tools:
-        payloads.append(_run_crosscheck_payload(source, workdir / "crosscheck.json", route_payload))
-
-    product_results: list[TableResult] = []
-    if ready_tools.intersection({"reference_audit", "citation_claim_check", "papermill_light_signals", "papermill_network_signals"}):
-        from pcr_audit.product_detectors import analyze_citation_claims, analyze_papermill_network_signals, analyze_papermill_signals, analyze_references
-
-        if "reference_audit" in ready_tools:
-            product_results.append(analyze_references(source))
-        if "citation_claim_check" in ready_tools:
-            product_results.append(analyze_citation_claims(source))
-        if "papermill_light_signals" in ready_tools:
-            product_results.append(analyze_papermill_signals(source))
-        if "papermill_network_signals" in ready_tools:
-            product_results.append(analyze_papermill_network_signals(source))
-    if ready_tools.intersection({"image_extract", "image_duplicate_internal", "image_copy_move_internal", "image_metadata_audit", "western_blot_review_list"}):
-        from pcr_audit.product_detectors import analyze_images
-
-        product_results.extend(analyze_images(source, workdir / "images"))
-    if "provenance_hash" in ready_tools:
-        from pcr_audit.product_detectors import analyze_provenance
-
-        product_results.append(analyze_provenance(source))
-    if "provenance_chain_verify" in ready_tools:
-        from pcr_audit.product_detectors import provenance_payload_to_result, provenance_verify
-
-        product_results.append(provenance_payload_to_result(source, provenance_verify(source)))
-    if "code_rerun_audit" in ready_tools:
-        from pcr_audit.product_detectors import analyze_code_files
-
-        product_results.append(analyze_code_files(source))
-    if "code_rerun_execute" in ready_tools:
-        from pcr_audit.data_trace import run_code_sandbox
-
-        code_result, _derived_outputs = run_code_sandbox(source, [source], workdir, 60, True)
-        product_results.append(code_result)
-    if product_results:
-        payloads.append(_run_product_result_payload(source, workdir / "product-detectors.json", product_results))
-
-    if "r_statcheck" in ready_tools:
-        _run_r_tool_payload(source, "r_statcheck", source, workdir, payloads)
-
-    extraction_manifest: dict[str, Any] | None = None
-    for tool_id in sorted(ready_tools.intersection({"r_scrutiny", "r_rsprite2"})):
-        try:
-            r_inputs, extraction_manifest = _csv_inputs_for_r_tool(source, workdir, route_payload, tool_id, extraction_manifest)
-        except Exception as exc:
-            payloads.append(info_payload(source, tool_id, "表格抽取失败，R CLI 已跳过。", str(exc), "extract_failed"))
+    context = AuditRunContext(source=source, workdir=workdir, route_payload=route_payload, payloads=payloads)
+    for tool_id in PYTHON_ADAPTER_ORDER:
+        if tool_id not in ready_tools:
             continue
-        for idx, r_input in enumerate(r_inputs, start=1):
-            tool_workdir = workdir / f"{tool_id}_{idx}"
-            tool_workdir.mkdir(parents=True, exist_ok=True)
-            _run_r_tool_payload(source, tool_id, r_input, tool_workdir, payloads)
+        adapter = adapter_for(tool_id)
+        if adapter is None:
+            payloads.append(info_payload(source, tool_id, "工具 adapter 未注册，已跳过。", tool_id, "adapter_missing"))
+            continue
+        adapter(context, tool_id)
+    if context.product_results:
+        payloads.append(_run_product_result_payload(source, workdir / "product-detectors.json", context.product_results))
+    for tool_id in R_ADAPTER_ORDER:
+        if tool_id not in ready_tools:
+            continue
+        adapter = adapter_for(tool_id)
+        if adapter is None:
+            payloads.append(info_payload(source, tool_id, "工具 adapter 未注册，已跳过。", tool_id, "adapter_missing"))
+            continue
+        adapter(context, tool_id)
 
     _append_non_ready_route_infos(source, payloads, selected)
     if not selected:

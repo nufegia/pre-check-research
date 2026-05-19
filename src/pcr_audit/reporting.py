@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from pcr_audit.io import read_json, write_json
-from pcr_audit.models import Finding, LEVEL_CN, LEVEL_SCORE, TableResult, finding_from_mapping
+from pcr_audit.models import Finding, LEVEL_CN, LEVEL_SCORE, TableResult, finding_from_mapping, validate_results
 
 
 def markdown_cell(value: str) -> str:
@@ -411,6 +411,7 @@ def render_markdown(
 
 
 def save_json(path: Path, source: Path, results: list[TableResult]) -> None:
+    validate_results(results)
     payload = {
         "source": str(source),
         "results": [
@@ -466,6 +467,7 @@ def merge_reports(finding_json: list[str], out: Path, json_out: Path | None = No
         encoding="utf-8",
     )
     if json_out:
+        validate_results(all_results)
         write_json(
             json_out,
             {

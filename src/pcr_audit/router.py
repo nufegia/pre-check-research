@@ -9,35 +9,53 @@ from pcr_audit.io import load_tables, read_text_source
 from pcr_audit.tool_system import classify_table, classify_text, route_all_tools, source_kind
 
 
+AUTO_TOOL_RULES: tuple[tuple[tuple[str, ...], tuple[str, ...]], ...] = (
+    (("raw_observation_table", "figure_source_data"), ("raw_data_rules", "digit_distribution")),
+    (("summary_statistics_table", "continuous_measure_summary"), ("r_scrutiny", "crosscheck")),
+    (("likert_or_integer_scale_summary",), ("r_scrutiny", "r_rsprite2", "crosscheck")),
+    (("apa_statistical_text",), ("r_statcheck",)),
+    (("reference_list", "paper_document"), ("reference_audit", "citation_claim_check", "papermill_light_signals")),
+    (("scientific_image", "scientific_figure", "western_blot_or_gel_image"), ("image_extract", "image_duplicate_internal", "image_copy_move_internal", "image_metadata_audit", "western_blot_review_list")),
+    (("analysis_code",), ("code_rerun_audit", "code_rerun_execute")),
+    (("p_value_collection",), ("p_value_distribution",)),
+)
+
+SCENARIO_TOOL_SELECTIONS: dict[str, set[str]] = {
+    "raw": {"raw_data_rules"},
+    "summary": {"r_scrutiny", "crosscheck"},
+    "r-advanced": {"r_rsprite2"},
+    "text": {"r_statcheck", "reference_audit", "citation_claim_check", "papermill_light_signals"},
+}
+
+PROJECT_LEVEL_TOOLS = {
+    "provenance_hash",
+    "provenance_chain_verify",
+    "code_rerun_audit",
+    "code_rerun_execute",
+    "data_trace_crosscheck",
+    "papermill_network_signals",
+}
+
+PROJECT_DELEGATED_MATERIAL_TOOLS = {
+    "tables": ["raw_data_rules", "digit_distribution", "crosscheck", "r_scrutiny", "r_rsprite2", "p_value_distribution"],
+    "documents": ["r_statcheck", "reference_audit", "citation_claim_check", "papermill_light_signals", "image_extract"],
+    "images": ["image_extract", "image_duplicate_internal", "image_copy_move_internal", "image_metadata_audit", "western_blot_review_list"],
+    "code": ["code_rerun_audit", "code_rerun_execute"],
+}
+
+
 def selected_tools_for_scenario(scenario: str, input_types: list[str]) -> set[str]:
     if scenario == "auto":
         selected: set[str] = set()
-        if "raw_observation_table" in input_types or "figure_source_data" in input_types:
-            selected.update({"raw_data_rules", "digit_distribution"})
-        if "summary_statistics_table" in input_types or "continuous_measure_summary" in input_types:
-            selected.update({"r_scrutiny", "crosscheck"})
-        if "likert_or_integer_scale_summary" in input_types:
-            selected.update({"r_scrutiny", "r_rsprite2", "crosscheck"})
-        if "apa_statistical_text" in input_types:
-            selected.add("r_statcheck")
-        if "reference_list" in input_types or "paper_document" in input_types:
-            selected.update({"reference_audit", "citation_claim_check", "papermill_light_signals"})
-        if any(item in input_types for item in ("scientific_image", "scientific_figure", "western_blot_or_gel_image")):
-            selected.update({"image_extract", "image_duplicate_internal", "image_copy_move_internal", "image_metadata_audit", "western_blot_review_list"})
-        if "analysis_code" in input_types:
-            selected.update({"code_rerun_audit", "code_rerun_execute"})
-        if "p_value_collection" in input_types:
-            selected.add("p_value_distribution")
+        for matched_types, tool_ids in AUTO_TOOL_RULES:
+            if any(input_type in input_types for input_type in matched_types):
+                selected.update(tool_ids)
         return selected
-    if scenario == "raw":
-        return {"raw_data_rules"}
-    if scenario == "summary":
-        return {"r_scrutiny", "crosscheck"}
-    if scenario == "r-advanced":
-        return {"r_rsprite2"}
-    if scenario == "text":
-        return {"r_statcheck", "reference_audit", "citation_claim_check", "papermill_light_signals"}
-    return set()
+    return set(SCENARIO_TOOL_SELECTIONS.get(scenario, set()))
+
+
+def project_delegated_material_tools() -> dict[str, list[str]]:
+    return {key: list(value) for key, value in PROJECT_DELEGATED_MATERIAL_TOOLS.items()}
 
 
 def routing_decisions_payload(decisions: dict[str, Any]) -> dict[str, Any]:
@@ -56,17 +74,11 @@ def build_route_payload(source: Path, scenario: str = "auto") -> dict[str, Any]:
     if source.is_dir():
         classification = {"primary_type": "project_manifest", "input_types": ["project_manifest", "raw_file_bundle"], "signals": {}}
         selected = selected_tools_for_scenario(scenario, classification["input_types"])
-        delegated = {
-            "tables": ["raw_data_rules", "digit_distribution", "crosscheck", "r_scrutiny", "r_rsprite2", "p_value_distribution"],
-            "documents": ["r_statcheck", "reference_audit", "citation_claim_check", "papermill_light_signals", "image_extract"],
-            "images": ["image_extract", "image_duplicate_internal", "image_copy_move_internal", "image_metadata_audit", "western_blot_review_list"],
-            "code": ["code_rerun_audit", "code_rerun_execute"],
-        }
-        selected.update({"provenance_hash", "provenance_chain_verify", "code_rerun_audit", "code_rerun_execute", "data_trace_crosscheck", "papermill_network_signals"})
+        selected.update(PROJECT_LEVEL_TOOLS)
         decisions = route_all_tools(selected, classification["input_types"], 0, [])
         payload["project"] = {
             "classification": classification,
-            "delegated_material_tools": delegated,
+            "delegated_material_tools": project_delegated_material_tools(),
             "delegation_note": "项目审计会先解析材料清单，再按每个文件的数据类型委派表格、文本、图像和代码工具；这里的 routing_decisions 只表示项目级工具。",
             "routing_decisions": routing_decisions_payload(decisions),
         }
@@ -83,18 +95,12 @@ def build_route_payload(source: Path, scenario: str = "auto") -> dict[str, Any]:
             "input_types": ["project_manifest", "raw_file_bundle"] if not is_corpus else ["project_manifest", "raw_file_bundle", "corpus_manifest"],
             "signals": {"corpus_manifest": is_corpus},
         }
-        delegated = {
-            "tables": ["raw_data_rules", "digit_distribution", "crosscheck", "r_scrutiny", "r_rsprite2", "p_value_distribution"],
-            "documents": ["r_statcheck", "reference_audit", "citation_claim_check", "papermill_light_signals", "image_extract"],
-            "images": ["image_extract", "image_duplicate_internal", "image_copy_move_internal", "image_metadata_audit", "western_blot_review_list"],
-            "code": ["code_rerun_audit", "code_rerun_execute"],
-        }
         selected = selected_tools_for_scenario(scenario, classification["input_types"])
-        selected.update({"provenance_hash", "provenance_chain_verify", "papermill_network_signals", "data_trace_crosscheck", "code_rerun_audit", "code_rerun_execute"})
+        selected.update(PROJECT_LEVEL_TOOLS)
         decisions = route_all_tools(selected, classification["input_types"], 0, [])
         payload["project"] = {
             "classification": classification,
-            "delegated_material_tools": delegated,
+            "delegated_material_tools": project_delegated_material_tools(),
             "delegation_note": "项目审计会先解析材料清单，再按每个文件的数据类型委派表格、文本、图像和代码工具；这里的 routing_decisions 只表示项目级工具。",
             "routing_decisions": routing_decisions_payload(decisions),
         }

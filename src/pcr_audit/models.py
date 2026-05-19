@@ -3,6 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 
+VALID_LEVELS = {"high", "medium", "low", "info"}
+VALID_DETECTOR_RUNTIMES = {"python", "r", "cli"}
+
+
 @dataclass
 class Finding:
     table: str
@@ -45,6 +49,23 @@ class TableResult:
 
 LEVEL_SCORE = {"high": 3, "medium": 2, "low": 1, "info": 0}
 LEVEL_CN = {"high": "高", "medium": "中", "low": "低", "info": "提示"}
+
+
+def validate_finding(finding: Finding) -> None:
+    """Validate stable Finding contract fields before JSON serialization."""
+    if finding.level not in VALID_LEVELS:
+        raise ValueError(f"Invalid finding level: {finding.level!r}")
+    if finding.detector_runtime and finding.detector_runtime not in VALID_DETECTOR_RUNTIMES:
+        raise ValueError(f"Invalid detector runtime: {finding.detector_runtime!r}")
+    for field_name in ("check", "target", "summary", "evidence", "detail", "suggestion"):
+        if getattr(finding, field_name) is None:
+            raise ValueError(f"Finding field {field_name} must not be None")
+
+
+def validate_results(results: list[TableResult]) -> None:
+    for result in results:
+        for finding in result.findings:
+            validate_finding(finding)
 
 
 def enrich_finding_explanation(finding: Finding) -> None:
