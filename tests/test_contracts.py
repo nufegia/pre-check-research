@@ -6,8 +6,11 @@ from typing import Any
 
 import pandas as pd
 
-from pcr_audit.adapters import adapter_for
+from pcr_audit.adapters import AuditRunContext, adapter_for, registered_tool_ids
+from pcr_audit.adapter_runtime import PYTHON_ADAPTER_ORDER, R_ADAPTER_ORDER
+from pcr_audit.adapter_runtime.product import IMAGE_TOOL_IDS, product_adapter
 from pcr_audit.cli import audit_main, raw_audit_main, report_main
+from pcr_audit.models import TableResult
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -102,6 +105,55 @@ def test_route_dry_run_and_adapter_registry_contract(tmp_path: Path) -> None:
     assert all(adapter_for(tool_id) is not None for tool_id in ready_tool_ids)
 
 
+def test_adapter_facade_and_order_contract() -> None:
+    import pcr_audit.adapters as legacy_adapters
+    from pcr_audit.adapter_runtime import AuditRunContext as RuntimeContext
+
+    assert legacy_adapters.AuditRunContext is RuntimeContext
+    assert set(PYTHON_ADAPTER_ORDER).isdisjoint(R_ADAPTER_ORDER)
+    assert PYTHON_ADAPTER_ORDER[:4] == ["raw_data_rules", "digit_distribution", "p_value_distribution", "crosscheck"]
+    assert R_ADAPTER_ORDER == ["r_statcheck", "r_scrutiny", "r_rsprite2"]
+    assert set(PYTHON_ADAPTER_ORDER + R_ADAPTER_ORDER).issubset(registered_tool_ids())
+
+
+def test_missing_adapter_is_reported_as_info(tmp_path: Path, monkeypatch) -> None:
+    source = ROOT / "examples" / "summary_stat_sample.csv"
+    out = tmp_path / "missing-adapter.md"
+    run_json = tmp_path / "missing-adapter.json"
+
+    monkeypatch.setattr("pcr_audit.runner.adapter_for", lambda _tool_id: None)
+
+    assert audit_main(["run", str(source), "--out", str(out), "--json", str(run_json)]) == 0
+    payload = json.loads(run_json.read_text(encoding="utf-8"))
+    findings = [finding for result in payload["results"] for finding in result.get("findings", [])]
+    adapter_findings = [finding for finding in findings if finding["dependency_status"] == "adapter_missing"]
+
+    assert adapter_findings
+    assert {finding["level"] for finding in adapter_findings} == {"info"}
+
+
+def test_product_image_adapter_runs_image_audit_once(tmp_path: Path, monkeypatch) -> None:
+    calls = []
+
+    def fake_analyze_images(source: Path, image_dir: Path) -> list[TableResult]:
+        calls.append((source, image_dir))
+        return [TableResult("image_extract", 0, 0, [])]
+
+    monkeypatch.setattr("pcr_audit.product.image_audit.analyze_images", fake_analyze_images)
+    context = AuditRunContext(
+        source=ROOT / "examples" / "project_minimal",
+        workdir=tmp_path,
+        route_payload={},
+        payloads=[],
+    )
+
+    for tool_id in sorted(IMAGE_TOOL_IDS):
+        product_adapter(context, tool_id)
+
+    assert len(calls) == 1
+    assert len(context.product_results) == 1
+
+
 def test_product_domain_modules_match_legacy_imports() -> None:
     from pcr_audit import product_detectors
     from pcr_audit.product import code_audit, corpus_signals, image_audit, project_manifest, provenance, reference_audit
@@ -112,4 +164,3 @@ def test_product_domain_modules_match_legacy_imports() -> None:
     assert code_audit.analyze_code_files is product_detectors.analyze_code_files
     assert project_manifest.parse_project_spec is product_detectors.parse_project_spec
     assert corpus_signals.build_corpus_index is product_detectors.build_corpus_index
-

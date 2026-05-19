@@ -196,7 +196,7 @@ def audit_main(argv: list[str] | None = None) -> int:
         return 2
 
     if args.command == "provenance":
-        from pcr_audit.product_detectors import (
+        from pcr_audit.product.provenance import (
             provenance_diff,
             provenance_init,
             provenance_payload_to_result,
@@ -224,7 +224,7 @@ def audit_main(argv: list[str] | None = None) -> int:
 
     if args.command == "corpus":
         from pcr_audit.io import read_json
-        from pcr_audit.product_detectors import analyze_papermill_network_signals, build_corpus_index
+        from pcr_audit.product.corpus_signals import analyze_papermill_network_signals, build_corpus_index
 
         if args.corpus_command == "build":
             out = Path(args.out).expanduser().resolve()
@@ -243,7 +243,7 @@ def audit_main(argv: list[str] | None = None) -> int:
 
     if args.command == "project":
         if args.inspect:
-            from pcr_audit.product_detectors import inspect_project_payload
+            from pcr_audit.product.project_manifest import inspect_project_payload
 
             workdir = Path(args.workdir).expanduser().resolve() if args.workdir else None
             payload = inspect_project_payload(source, workdir)
@@ -252,7 +252,7 @@ def audit_main(argv: list[str] | None = None) -> int:
             print(json.dumps(payload, ensure_ascii=False, indent=2))
             return 0
         if args.init_manifest:
-            from pcr_audit.product_detectors import init_manifest_payload
+            from pcr_audit.product.project_manifest import init_manifest_payload
 
             try:
                 payload = init_manifest_payload(source, args.overwrite)
