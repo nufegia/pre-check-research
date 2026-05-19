@@ -1,0 +1,7 @@
+interface:
+  display_name: "PCR Delivery Report"
+  short_description: "将PCR预审结果转为投稿前决策报告"
+  default_prompt: "Use $pcr-delivery-report to turn a PCR audit Markdown or JSON result into a PI-facing pre-submission decision report."
+
+policy:
+  allow_implicit_invocation: true
