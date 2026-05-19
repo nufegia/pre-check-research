@@ -119,6 +119,14 @@ def _run_digit_payload(source: Path, json_path: Path, route_payload: dict[str, A
     return read_json(json_path)
 
 
+def _run_p_value_payload(source: Path, json_path: Path, route_payload: dict[str, Any]) -> dict[str, Any]:
+    from pcr_audit.detectors.p_values import analyze_p_value_collection
+
+    results = [analyze_p_value_collection(name, df) for name, df in _ready_tables_for_tool(source, route_payload, "p_value_distribution")]
+    save_json(json_path, source, results)
+    return read_json(json_path)
+
+
 def _run_product_result_payload(source: Path, json_path: Path, results: list[TableResult]) -> dict[str, Any]:
     save_json(json_path, source, results)
     return read_json(json_path)
@@ -200,6 +208,9 @@ def run_audit(
     if "digit_distribution" in ready_tools:
         payloads.append(_run_digit_payload(source, workdir / "digit-distribution.json", route_payload))
 
+    if "p_value_distribution" in ready_tools:
+        payloads.append(_run_p_value_payload(source, workdir / "p-value-distribution.json", route_payload))
+
     if "crosscheck" in ready_tools:
         payloads.append(_run_crosscheck_payload(source, workdir / "crosscheck.json", route_payload))
 
@@ -231,6 +242,11 @@ def run_audit(
         from pcr_audit.product_detectors import analyze_code_files
 
         product_results.append(analyze_code_files(source))
+    if "code_rerun_execute" in ready_tools:
+        from pcr_audit.data_trace import run_code_sandbox
+
+        code_result, _derived_outputs = run_code_sandbox(source, [source], workdir, 60, True)
+        product_results.append(code_result)
     if product_results:
         payloads.append(_run_product_result_payload(source, workdir / "product-detectors.json", product_results))
 

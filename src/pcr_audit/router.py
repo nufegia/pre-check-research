@@ -25,7 +25,9 @@ def selected_tools_for_scenario(scenario: str, input_types: list[str]) -> set[st
         if any(item in input_types for item in ("scientific_image", "scientific_figure", "western_blot_or_gel_image")):
             selected.update({"image_extract", "image_duplicate_internal", "image_copy_move_internal", "image_metadata_audit", "western_blot_review_list"})
         if "analysis_code" in input_types:
-            selected.add("code_rerun_audit")
+            selected.update({"code_rerun_audit", "code_rerun_execute"})
+        if "p_value_collection" in input_types:
+            selected.add("p_value_distribution")
         return selected
     if scenario == "raw":
         return {"raw_data_rules"}
@@ -54,10 +56,18 @@ def build_route_payload(source: Path, scenario: str = "auto") -> dict[str, Any]:
     if source.is_dir():
         classification = {"primary_type": "project_manifest", "input_types": ["project_manifest", "raw_file_bundle"], "signals": {}}
         selected = selected_tools_for_scenario(scenario, classification["input_types"])
-        selected.update({"provenance_hash", "provenance_chain_verify", "code_rerun_audit", "code_rerun_execute", "data_trace_crosscheck", "reference_audit", "citation_claim_check", "papermill_light_signals", "papermill_network_signals", "image_extract", "image_duplicate_internal", "image_copy_move_internal", "image_metadata_audit", "western_blot_review_list", "raw_data_rules", "crosscheck", "digit_distribution"})
+        delegated = {
+            "tables": ["raw_data_rules", "digit_distribution", "crosscheck", "r_scrutiny", "r_rsprite2", "p_value_distribution"],
+            "documents": ["r_statcheck", "reference_audit", "citation_claim_check", "papermill_light_signals", "image_extract"],
+            "images": ["image_extract", "image_duplicate_internal", "image_copy_move_internal", "image_metadata_audit", "western_blot_review_list"],
+            "code": ["code_rerun_audit", "code_rerun_execute"],
+        }
+        selected.update({"provenance_hash", "provenance_chain_verify", "code_rerun_audit", "code_rerun_execute", "data_trace_crosscheck", "papermill_network_signals"})
         decisions = route_all_tools(selected, classification["input_types"], 0, [])
         payload["project"] = {
             "classification": classification,
+            "delegated_material_tools": delegated,
+            "delegation_note": "项目审计会先解析材料清单，再按每个文件的数据类型委派表格、文本、图像和代码工具；这里的 routing_decisions 只表示项目级工具。",
             "routing_decisions": routing_decisions_payload(decisions),
         }
         return payload
@@ -73,11 +83,19 @@ def build_route_payload(source: Path, scenario: str = "auto") -> dict[str, Any]:
             "input_types": ["project_manifest", "raw_file_bundle"] if not is_corpus else ["project_manifest", "raw_file_bundle", "corpus_manifest"],
             "signals": {"corpus_manifest": is_corpus},
         }
+        delegated = {
+            "tables": ["raw_data_rules", "digit_distribution", "crosscheck", "r_scrutiny", "r_rsprite2", "p_value_distribution"],
+            "documents": ["r_statcheck", "reference_audit", "citation_claim_check", "papermill_light_signals", "image_extract"],
+            "images": ["image_extract", "image_duplicate_internal", "image_copy_move_internal", "image_metadata_audit", "western_blot_review_list"],
+            "code": ["code_rerun_audit", "code_rerun_execute"],
+        }
         selected = selected_tools_for_scenario(scenario, classification["input_types"])
-        selected.update({"provenance_hash", "provenance_chain_verify", "papermill_network_signals", "data_trace_crosscheck", "code_rerun_execute"})
+        selected.update({"provenance_hash", "provenance_chain_verify", "papermill_network_signals", "data_trace_crosscheck", "code_rerun_audit", "code_rerun_execute"})
         decisions = route_all_tools(selected, classification["input_types"], 0, [])
         payload["project"] = {
             "classification": classification,
+            "delegated_material_tools": delegated,
+            "delegation_note": "项目审计会先解析材料清单，再按每个文件的数据类型委派表格、文本、图像和代码工具；这里的 routing_decisions 只表示项目级工具。",
             "routing_decisions": routing_decisions_payload(decisions),
         }
         return payload

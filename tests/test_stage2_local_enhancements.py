@@ -127,6 +127,10 @@ def test_route_selects_stage2_stage3_tools_for_project_and_image(tmp_path: Path)
     assert project_tools["provenance_chain_verify"]["selected_by_user"] is True
     assert project_tools["data_trace_crosscheck"]["selected_by_user"] is True
     assert project_tools["code_rerun_execute"]["selected_by_user"] is True
+    assert project_tools["reference_audit"]["selected_by_user"] is False
+    assert "delegated_material_tools" in project_route["project"]
+    assert "reference_audit" in project_route["project"]["delegated_material_tools"]["documents"]
+    assert "image_duplicate_internal" in project_route["project"]["delegated_material_tools"]["images"]
     assert image_tools["image_copy_move_internal"]["selected_by_user"] is True
     assert image_tools["image_metadata_audit"]["selected_by_user"] is True
 
@@ -140,6 +144,19 @@ def test_auto_route_selects_digit_distribution_for_raw_data(tmp_path: Path) -> N
 
     assert decisions["raw_data_rules"]["selected_by_user"] is True
     assert decisions["digit_distribution"]["selected_by_user"] is True
+
+
+def test_auto_route_selects_p_value_collection_detector(tmp_path: Path) -> None:
+    source = tmp_path / "p_values.csv"
+    source.write_text("test,p\n" + "\n".join(f"T{idx},0.0{idx % 9 + 1}" for idx in range(12)), encoding="utf-8")
+
+    route = build_route_payload(source)
+    table = route["tables"][0]
+    decisions = table["routing_decisions"]
+
+    assert table["classification"]["primary_type"] == "p_value_collection"
+    assert decisions["p_value_distribution"]["selected_by_user"] is True
+    assert decisions["p_value_distribution"]["status"] == "ready"
 
 
 def test_new_cli_commands_generate_json_and_reports(tmp_path: Path) -> None:

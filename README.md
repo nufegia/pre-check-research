@@ -32,7 +32,7 @@ Agent 编排层
 ## Install
 
 ```bash
-python -m pip install -e ".[dev]"
+python3 -m pip install -e ".[dev]"  # use python if your environment exposes it
 ```
 
 R CLIs are executable `Rscript` files under `tools/r/`. Add them to `PATH`:
@@ -50,7 +50,7 @@ install.packages(c("statcheck", "scrutiny", "rsprite2"))
 Optional local image forensics dependencies:
 
 ```bash
-python -m pip install -e ".[image]"
+python3 -m pip install -e ".[image]"
 ```
 
 ## 使用方式
@@ -70,7 +70,9 @@ pcr-audit run examples/summary_stat_sample.csv --scenario auto --out build/audit
 | 原始观测表、图表源数据 | 运行 Python 原始数据规则 `raw_data_rules` 和弱信号数字分布 `digit_distribution` |
 | 摘要统计表 | 运行行级数学交叉校验 `crosscheck`，并在 R 依赖可用时运行 `scrutiny` |
 | Likert/整数评分摘要 | 运行 `crosscheck`、`scrutiny`，并在 R 依赖可用时运行 `rsprite2` |
+| 纯 p 值集合 | 运行 `p_value_distribution`，检查 p 值定义域和边缘显著聚集弱信号 |
 | APA/NHST 正文统计文本 | 在 R 依赖可用时运行 `statcheck` |
+| 分析代码文件 | 运行轻量只读代码扫描；Python/R 会在临时副本中复跑，Stata/SPSS/SAS 记录为 `info` 并提示人工复跑 |
 
 也可以显式指定场景：
 
@@ -107,6 +109,7 @@ pcr-report merge build/raw.json build/crosscheck.json --out build/merged.md --js
 - `level: info` 通常表示工具运行记录、缺少依赖、材料不足或跳过原因，不应当当作风险发现。
 - `medium` / `high` 表示需要人工复核的风险信号，不是学术不端、造假或舞弊结论。
 - PDF/DOCX 抽取可能引入表格识别错误；重要发现应优先回到原始 CSV/XLSX、统计脚本或原始数据复测。
+- 图像检测是弱信号初筛；PDF 图像抽取为 best-effort，复杂版式建议提供原始图片或 DOCX。
 
 ## Commands
 
@@ -155,18 +158,18 @@ pcr-report merge build/raw.json build/scrutiny.json --out build/merged.md --json
 - `runner.py`：执行 route-ready 工具并合并结果。
 - `reporting.py`：Markdown/JSON 报告渲染与合并。
 - `detectors/` 与 `crosscheck.py`：具体检测器实现。
-- `product_detectors.py`：最终产品版增量能力，包括参考文献核验、引用主张抽取、论文工厂轻量信号、图像内部重复初筛、哈希存证和代码复跑准备检查。
+- `product_detectors.py`：最终产品版增量能力，包括参考文献核验、引用主张抽取、论文工厂轻量信号、图像内部重复初筛、哈希存证和轻量代码复跑准备检查。
 - `data_trace.py`：跨材料摘要统计对账与 Python/R 脚本临时沙箱复跑。
 
 ## 最终产品版增量能力
 
 `pcr-audit project <folder-or-manifest>` 会对一个项目包执行多材料审计：
 
-- 数据文件：继续使用确定性路由运行原始数据规则、数字分布弱信号、交叉验证和可用 R 工具。
+- 数据文件：继续使用确定性路由运行原始数据规则、数字分布弱信号、p 值集合弱信号、交叉验证和可用 R 工具。
 - 文档/参考文献：解析 DOI/PMID、默认查询 Crossref/OpenAlex/NCBI 元数据、抽取带引用主张、扫描轻量论文工厂短语信号；可用 `--no-external-lookups` 关闭联网。
 - 跨材料对账：从稿件/补充材料表格、原始数据自动汇总和脚本输出表中对比 N、mean、SD、SE、count、percent 等可确定统计量。
-- 图像：从 DOCX、PDF 或图片目录发现/抽取图片，使用 Pillow/numpy/scipy 的 aHash/dHash/pHash 和可选 OpenCV ORB 做同稿件内部重复、旋转/翻转相似、局部 copy-move 初筛，并生成 blot/gel 复核清单。
-- 代码：只读扫描 R/Python/Stata/SPSS/SAS 脚本中的路径、输入、缺失剔除和显著性筛选线索；默认在临时项目副本中复跑 Python/R 脚本，捕获输出并纳入跨材料对账，可用 `--no-rerun-code` 关闭。
+- 图像：从图片文件、DOCX、PDF 或图片目录发现/抽取图片，使用 Pillow/numpy/scipy 的 aHash/dHash/pHash 和可选 OpenCV ORB 做同稿件内部重复、旋转/翻转相似、局部 copy-move 初筛，并生成 blot/gel 复核清单。PDF 图片抽取为 best-effort，复杂版式建议提供原始图片或 DOCX。
+- 代码：轻量只读扫描 R/Python/Stata/SPSS/SAS 脚本中的路径、输入、缺失剔除和显著性筛选线索；默认在临时项目副本中复跑 Python/R 脚本，捕获输出并纳入跨材料对账，可用 `--no-rerun-code` 关闭。Stata/SPSS/SAS 不自动执行，只记录 `info` 并提示在受控环境人工复跑。
 - 溯源：对项目内文件计算 SHA-256、文件大小和修改时间；可用 `pcr-audit provenance` 写入追加式 JSONL 版本链并验证 matched/changed/missing/new。
 - 论文工厂本地信号：可用 `pcr-audit corpus build/screen` 对本地项目语料建立索引，筛查文本模板、引用重叠、作者/邮箱域重叠和跨稿件图像指纹相似。
 
@@ -216,7 +219,7 @@ pcr-audit project examples/project_minimal --out build/project-offline.md --json
 pcr-audit project examples/project_minimal --out build/project.md --json build/project.json --grobid-url http://localhost:8070
 ```
 
-商业/私有化部署默认不引入 PyMuPDF、grobid-client、imagehash、unstructured、tabula-py；PDF 图片抽取为 pdfplumber/Pillow best-effort，GROBID 以独立 REST 服务接入，外部查询会在 workdir 中记录缓存和合规元数据，不缓存完整稿件正文。脚本复跑使用临时项目副本、最小环境变量和超时限制，不会写回原项目；这不是强安全容器，未知代码仍建议在受控机器上运行。
+商业/私有化部署默认不引入 PyMuPDF、grobid-client、imagehash、unstructured、tabula-py；PDF 图片抽取为 pdfplumber/Pillow best-effort，GROBID 以独立 REST 服务接入，外部查询会在 workdir 中记录缓存和合规元数据，不缓存完整稿件正文。脚本复跑使用临时项目副本、最小环境变量和超时限制，不会写回原项目；这不是强安全容器，未知代码仍建议在受控机器上运行。项目审计运行全部适用模块；缺依赖、材料不足、外部查询关闭和不支持的脚本语言均记录为 `info`，不计入风险发现。
 
 ## 扩展原则
 

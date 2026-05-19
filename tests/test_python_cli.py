@@ -157,6 +157,53 @@ def test_audit_auto_reference_text_runs_local_reference_tools(tmp_path: Path) ->
     assert "papermill_light_signals" in tool_ids
 
 
+def test_audit_auto_p_value_collection_runs_detector(tmp_path: Path) -> None:
+    source = tmp_path / "p_values.csv"
+    values = [0.046, 0.047, 0.048, 0.049, 0.12, 0.2, 0.3, 0.4, 0.5, 0.6, 1.2, 0.8]
+    source.write_text("label,p\n" + "\n".join(f"H{idx},{value}" for idx, value in enumerate(values, start=1)), encoding="utf-8")
+    out = tmp_path / "p-values.md"
+    merged_json = tmp_path / "p-values.json"
+
+    assert audit_main(["run", str(source), "--out", str(out), "--json", str(merged_json)]) == 0
+    payload = json.loads(merged_json.read_text(encoding="utf-8"))
+    findings = [finding for result in payload["results"] for finding in result["findings"]]
+
+    assert any(finding["tool_id"] == "p_value_distribution" and finding["check"] == "p值定义域" for finding in findings)
+    assert any(finding["tool_id"] == "p_value_distribution" and finding["check"] == "边缘显著p值聚集" for finding in findings)
+
+
+def test_audit_auto_single_python_code_runs_sandbox(tmp_path: Path) -> None:
+    source = tmp_path / "analysis.py"
+    source.write_text("print('single file rerun ok')\n", encoding="utf-8")
+    out = tmp_path / "code.md"
+    merged_json = tmp_path / "code.json"
+
+    assert audit_main(["run", str(source), "--out", str(out), "--json", str(merged_json)]) == 0
+    payload = json.loads(merged_json.read_text(encoding="utf-8"))
+    findings = [finding for result in payload["results"] for finding in result["findings"]]
+
+    assert any(finding["tool_id"] == "code_rerun_audit" for finding in findings)
+    assert any(finding["tool_id"] == "code_rerun_execute" and "完成" in finding["summary"] for finding in findings)
+
+
+def test_audit_auto_unsupported_code_records_info(tmp_path: Path) -> None:
+    source = tmp_path / "analysis.do"
+    source.write_text("display \"hello\"\n", encoding="utf-8")
+    out = tmp_path / "stata.md"
+    merged_json = tmp_path / "stata.json"
+
+    assert audit_main(["run", str(source), "--out", str(out), "--json", str(merged_json)]) == 0
+    payload = json.loads(merged_json.read_text(encoding="utf-8"))
+    findings = [finding for result in payload["results"] for finding in result["findings"]]
+
+    assert any(
+        finding["tool_id"] == "code_rerun_execute"
+        and finding["level"] == "info"
+        and "不支持" in finding["check"]
+        for finding in findings
+    )
+
+
 def test_audit_project_runs_multimaterial_audit(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setattr("pcr_audit.tool_system.rscript_available", lambda: True)
     monkeypatch.setattr("pcr_audit.tool_system.r_package_available", lambda _package: False)
