@@ -111,7 +111,7 @@ def test_adapter_facade_and_order_contract() -> None:
 
     assert legacy_adapters.AuditRunContext is RuntimeContext
     assert set(PYTHON_ADAPTER_ORDER).isdisjoint(R_ADAPTER_ORDER)
-    assert PYTHON_ADAPTER_ORDER[:4] == ["raw_data_rules", "digit_distribution", "p_value_distribution", "crosscheck"]
+    assert PYTHON_ADAPTER_ORDER[:3] == ["raw_data_rules", "p_value_distribution", "crosscheck"]
     assert R_ADAPTER_ORDER == ["r_statcheck", "r_scrutiny", "r_rsprite2"]
     assert set(PYTHON_ADAPTER_ORDER + R_ADAPTER_ORDER).issubset(registered_tool_ids())
 

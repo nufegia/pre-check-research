@@ -19,6 +19,58 @@ from pcr_audit.models import Finding, TableResult, enrich_finding_explanation
 from pcr_audit.tool_system import TOOL_REGISTRY
 
 
+def _sample_size_score(n: int) -> float:
+    if n >= 100:
+        return 1.0
+    if n >= 60:
+        return 0.8
+    if n >= 30:
+        return 0.6
+    if n >= 15:
+        return 0.4
+    return 0.2
+
+
+def _weighted_confidence(parts: list[tuple[str, float, float]]) -> tuple[float, str]:
+    total_weight = sum(weight for _, _, weight in parts) or 1.0
+    score = sum(value * weight for _, value, weight in parts) / total_weight
+    score = max(0.0, min(1.0, float(score)))
+    basis = ", ".join(f"{name}={value:.2g}(权重{weight:.0%})" for name, value, weight in parts)
+    return score, f"{basis}; 加权总分={score:.2f}"
+
+
+def _r_confidence(tool_id: str, level: str, effective_n: int, status: str = "", parse_quality: float = 1.0) -> tuple[float, str]:
+    tool_score = {
+        "r_statcheck": 0.85,
+        "r_scrutiny": 0.90,
+        "r_rsprite2": 0.75,
+    }.get(tool_id, 0.70)
+    status_score = {
+        "decision_error": 1.0,
+        "error": 0.45,
+        "inconsistent": 0.95,
+        "impossible": 0.85,
+        "not_found": 0.80,
+        "ran": 0.25,
+        "skipped": 0.15,
+        "ready": 0.20,
+    }.get(status, 0.70 if level != "info" else 0.20)
+    severity_score = {"high": 0.90, "medium": 0.70, "low": 0.45, "info": 0.20}.get(level, 0.60)
+    score, basis = _weighted_confidence(
+        [
+            ("R包方法确定性", tool_score, 0.35),
+            ("有效输入量", _sample_size_score(effective_n), 0.20),
+            ("状态证据强度", status_score, 0.25),
+            ("解析质量", parse_quality, 0.10),
+            ("风险等级一致性", severity_score, 0.10),
+        ]
+    )
+    if effective_n < 15 and level != "info":
+        score = min(score, 0.40)
+        basis += "; 小样本n<15置信度封顶0.40"
+    return score, basis
+
+
 def _info_finding(
     source_name: str,
     tool_id: str,
@@ -29,6 +81,7 @@ def _info_finding(
     dependency_status: str = "error",
 ) -> Finding:
     spec = TOOL_REGISTRY[tool_id]
+    score, basis = _r_confidence(tool_id, "info", 0, dependency_status, 0.5 if dependency_status != "ready" else 1.0)
     finding = Finding(
         table=source_name,
         level="info",
@@ -47,6 +100,8 @@ def _info_finding(
         detector_runtime="r",
         dependency_status=dependency_status,
         confidence="low",
+        confidence_score=score,
+        confidence_basis=basis,
         false_positive_risk="low",
     )
     enrich_finding_explanation(finding)
@@ -112,6 +167,13 @@ write.csv(res, stdout(), row.names=FALSE, na="")
             continue
         level = "high" if decision_error else "medium"
         raw = row.get("Raw", row.get("raw", "")) or row.get("Source", "")
+        score, basis = _r_confidence(
+            "r_statcheck",
+            level,
+            max(1, len(rows)),
+            "decision_error" if decision_error else "inconsistent",
+            1.0 if raw else 0.7,
+        )
         finding = Finding(
             table=source_name,
             level=level,
@@ -130,6 +192,8 @@ write.csv(res, stdout(), row.names=FALSE, na="")
             detector_runtime="r",
             dependency_status="ready",
             confidence="high" if decision_error else "medium",
+            confidence_score=score,
+            confidence_basis=basis,
             false_positive_risk="medium",
         )
         enrich_finding_explanation(finding)
@@ -247,12 +311,23 @@ write.csv(out, stdout(), row.names=FALSE, na="")
         if status == "inconsistent":
             level = "high"
             summary = f"R scrutiny 的 {check} 检查发现摘要统计在数学上不可行。"
+            confidence_status = "inconsistent"
         elif status == "error":
             level = "info"
             summary = f"R scrutiny 的 {check} 检查未能判断该行。"
+            confidence_status = "error"
         else:
             level = "info"
             summary = f"R scrutiny 记录：{check} 已自动运行。"
+            confidence_status = "ran"
+        row_count = int(df.shape[0])
+        score, basis = _r_confidence(
+            "r_scrutiny",
+            level,
+            row_count,
+            confidence_status,
+            1.0 if row.get("detail", "") else 0.7,
+        )
         finding = Finding(
             table=name,
             level=level,
@@ -271,6 +346,8 @@ write.csv(out, stdout(), row.names=FALSE, na="")
             detector_runtime="r",
             dependency_status="ready",
             confidence="high" if level == "high" else "low",
+            confidence_score=score,
+            confidence_basis=basis,
             false_positive_risk="medium",
         )
         enrich_finding_explanation(finding)
@@ -372,6 +449,13 @@ write.csv(out, stdout(), row.names=FALSE, na="")
             summary = "R rsprite2 SPRITE 已实际运行。"
             confidence = "low"
             false_positive_risk = "medium"
+        score, basis = _r_confidence(
+            "r_rsprite2",
+            level,
+            int(df.shape[0]),
+            status or "ran",
+            1.0 if row.get("detail", "") else 0.7,
+        )
         finding = Finding(
             table=name,
             level=level,
@@ -390,6 +474,8 @@ write.csv(out, stdout(), row.names=FALSE, na="")
             detector_runtime="r",
             dependency_status="ready",
             confidence=confidence,
+            confidence_score=score,
+            confidence_basis=basis,
             false_positive_risk=false_positive_risk,
         )
         enrich_finding_explanation(finding)

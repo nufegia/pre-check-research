@@ -67,7 +67,7 @@ pcr-audit run examples/summary_stat_sample.csv --scenario auto --out build/audit
 
 | 输入形态 | auto 场景默认动作 |
 |----------|-------------------|
-| 原始观测表、图表源数据 | 运行 Python 原始数据规则 `raw_data_rules` 和弱信号数字分布 `digit_distribution` |
+| 原始观测表、图表源数据 | 运行 Python 基础表格规则 `raw_data_rules`，覆盖数字分布、行列高度重复、列间关系、非连续变量异常等检查 |
 | 摘要统计表 | 运行行级数学交叉校验 `crosscheck`，并在 R 依赖可用时运行 `scrutiny` |
 | Likert/整数评分摘要 | 运行 `crosscheck`、`scrutiny`，并在 R 依赖可用时运行 `rsprite2` |
 | 纯 p 值集合 | 运行 `p_value_distribution`，检查 p 值定义域和边缘显著聚集弱信号 |
@@ -173,7 +173,7 @@ pcr-report merge build/raw.json build/scrutiny.json --out build/merged.md --json
 - 溯源：对项目内文件计算 SHA-256、文件大小和修改时间；可用 `pcr-audit provenance` 写入追加式 JSONL 版本链并验证 matched/changed/missing/new。
 - 论文工厂本地信号：可用 `pcr-audit corpus build/screen` 对本地项目语料建立索引，筛查文本模板、引用重叠、作者/邮箱域重叠和跨稿件图像指纹相似。
 
-v1.0.2 作为第一版正式版的工程优化版本，包含项目预检、样例库和更稳健的内部扩展结构：
+v1.1.0 包含当前基础表格规则、置信度评分、项目预检、样例库和内部扩展结构：
 
 ```bash
 pcr-audit project examples/project_questionnaire --inspect --json build/questionnaire.inspect.json

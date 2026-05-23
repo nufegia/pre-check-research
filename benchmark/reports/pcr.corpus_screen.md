@@ -47,12 +47,20 @@
 
 ## 风险发现清单（问题清单）
 
-| 风险 | 证据ID | 位置 | 检查项 | 对象 | 发现 | 证据 | 复核动作 |
-|---|---|---|---|---|---|---|---|
-| 中 | papermill_network_signals:跨稿件文本高度相似:project_a | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/project_full | 跨稿件文本高度相似 | project_a | 当前项目与本地语料中的另一稿件存在较高文本模板相似性。 | jaccard=1.000; simhash_distance=0; other=/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/corpus/project_a | 人工比较摘要/方法/结果段，确认是否为合理系列研究、模板写作或异常复用。 |
-| 中 | papermill_network_signals:跨稿件文本高度相似:project_b | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/project_full | 跨稿件文本高度相似 | project_b | 当前项目与本地语料中的另一稿件存在较高文本模板相似性。 | jaccard=1.000; simhash_distance=0; other=/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/corpus/project_b | 人工比较摘要/方法/结果段，确认是否为合理系列研究、模板写作或异常复用。 |
-| 低 | papermill_network_signals:作者/邮箱域网络重叠:project_a | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/project_full | 作者/邮箱域网络重叠 | project_a | 本地语料中存在作者或邮箱域重叠，需结合机构和投稿背景复核。 | author_overlap=alice zhang, bob li; email_domain_overlap= | 确认是否为同一团队系列研究、通讯作者邮箱习惯或异常批量投稿线索。 |
-| 低 | papermill_network_signals:作者/邮箱域网络重叠:project_b | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/project_full | 作者/邮箱域网络重叠 | project_b | 本地语料中存在作者或邮箱域重叠，需结合机构和投稿背景复核。 | author_overlap=alice zhang, bob li; email_domain_overlap= | 确认是否为同一团队系列研究、通讯作者邮箱习惯或异常批量投稿线索。 |
+| 风险 | 置信度 | 证据ID | 位置 | 检查项 | 对象 | 发现 | 证据 | 复核动作 |
+|---|---:|---|---|---|---|---|---|---|
+| 中 | 60% | papermill_network_signals:跨稿件文本高度相似:project_a | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/project_full | 跨稿件文本高度相似 | project_a | 当前项目与本地语料中的另一稿件存在较高文本模板相似性。 | jaccard=1.000; simhash_distance=0; other=/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/corpus/project_a | 人工比较摘要/方法/结果段，确认是否为合理系列研究、模板写作或异常复用。 |
+| 中 | 60% | papermill_network_signals:跨稿件文本高度相似:project_b | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/project_full | 跨稿件文本高度相似 | project_b | 当前项目与本地语料中的另一稿件存在较高文本模板相似性。 | jaccard=1.000; simhash_distance=0; other=/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/corpus/project_b | 人工比较摘要/方法/结果段，确认是否为合理系列研究、模板写作或异常复用。 |
+| 低 | 30%（低置信度，建议补充数据后重检） | papermill_network_signals:作者/邮箱域网络重叠:project_a | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/project_full | 作者/邮箱域网络重叠 | project_a | 本地语料中存在作者或邮箱域重叠，需结合机构和投稿背景复核。 | author_overlap=alice zhang, bob li; email_domain_overlap= | 确认是否为同一团队系列研究、通讯作者邮箱习惯或异常批量投稿线索。 |
+| 低 | 30%（低置信度，建议补充数据后重检） | papermill_network_signals:作者/邮箱域网络重叠:project_b | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/project_full | 作者/邮箱域网络重叠 | project_b | 本地语料中存在作者或邮箱域重叠，需结合机构和投稿背景复核。 | author_overlap=alice zhang, bob li; email_domain_overlap= | 确认是否为同一团队系列研究、通讯作者邮箱习惯或异常批量投稿线索。 |
+
+## 审计置信度摘要
+
+| 方法学置信度 | 发现数 |
+|---|---:|
+| 高(>=75%) | 0 |
+| 中(40%-75%) | 2 |
+| 低(<40%) | 2 |
 
 ## 专家复核附录
 
@@ -65,7 +73,7 @@
 - 工具：本地论文工厂跨库信号（papermill_network_signals）
 - 运行时/依赖：python / ready
 - 输入类型：project_manifest
-- 置信度/误报风险：medium / medium
+- 置信度/误报风险：60%（medium） / medium
 - 路由依据：由确定性路由选择该工具。
 - 可能正常解释：可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。
 - 复核动作：人工比较摘要/方法/结果段，确认是否为合理系列研究、模板写作或异常复用。
@@ -81,7 +89,7 @@
 - 工具：本地论文工厂跨库信号（papermill_network_signals）
 - 运行时/依赖：python / ready
 - 输入类型：project_manifest
-- 置信度/误报风险：medium / medium
+- 置信度/误报风险：60%（medium） / medium
 - 路由依据：由确定性路由选择该工具。
 - 可能正常解释：可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。
 - 复核动作：人工比较摘要/方法/结果段，确认是否为合理系列研究、模板写作或异常复用。
@@ -97,7 +105,8 @@
 - 工具：本地论文工厂跨库信号（papermill_network_signals）
 - 运行时/依赖：python / ready
 - 输入类型：project_manifest
-- 置信度/误报风险：medium / medium
+- 置信度/误报风险：30%（low） / medium
+- 低置信度提示：该信号置信度较低，建议补充数据后重新检测。
 - 路由依据：由确定性路由选择该工具。
 - 可能正常解释：可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。
 - 复核动作：确认是否为同一团队系列研究、通讯作者邮箱习惯或异常批量投稿线索。
@@ -113,7 +122,8 @@
 - 工具：本地论文工厂跨库信号（papermill_network_signals）
 - 运行时/依赖：python / ready
 - 输入类型：project_manifest
-- 置信度/误报风险：medium / medium
+- 置信度/误报风险：30%（low） / medium
+- 低置信度提示：该信号置信度较低，建议补充数据后重新检测。
 - 路由依据：由确定性路由选择该工具。
 - 可能正常解释：可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。
 - 复核动作：确认是否为同一团队系列研究、通讯作者邮箱习惯或异常批量投稿线索。

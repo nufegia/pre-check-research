@@ -2,7 +2,7 @@
   "service": "ncbi",
   "identifier": "23538808",
   "url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=23538808&retmode=json",
-  "timestamp": "2026-05-23T01:34:54+00:00",
+  "timestamp": "2026-05-23T10:47:38+00:00",
   "status": "ok",
   "summary": "Open access: The true cost of science publishing.",
   "response": {

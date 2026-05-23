@@ -4,7 +4,7 @@
   "detector_runtime": "python",
   "dependency_status": "ready",
   "source": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/corpus",
-  "built_at": "2026-05-23T01:34:47+00:00",
+  "built_at": "2026-05-23T10:47:31+00:00",
   "projects": [
     {
       "project_id": "project_a",
@@ -48,7 +48,7 @@
         "pmids": []
       },
       "images": [],
-      "indexed_at": "2026-05-23T01:34:47+00:00"
+      "indexed_at": "2026-05-23T10:47:31+00:00"
     },
     {
       "project_id": "project_b",
@@ -92,7 +92,7 @@
         "pmids": []
       },
       "images": [],
-      "indexed_at": "2026-05-23T01:34:47+00:00"
+      "indexed_at": "2026-05-23T10:47:31+00:00"
     }
   ]
 }

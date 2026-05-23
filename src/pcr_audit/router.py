@@ -10,7 +10,7 @@ from pcr_audit.tool_system import classify_table, classify_text, route_all_tools
 
 
 AUTO_TOOL_RULES: tuple[tuple[tuple[str, ...], tuple[str, ...]], ...] = (
-    (("raw_observation_table", "figure_source_data"), ("raw_data_rules", "digit_distribution")),
+    (("raw_observation_table", "figure_source_data"), ("raw_data_rules",)),
     (("summary_statistics_table", "continuous_measure_summary"), ("r_scrutiny", "crosscheck")),
     (("likert_or_integer_scale_summary",), ("r_scrutiny", "r_rsprite2", "crosscheck")),
     (("apa_statistical_text",), ("r_statcheck",)),
@@ -37,7 +37,7 @@ PROJECT_LEVEL_TOOLS = {
 }
 
 PROJECT_DELEGATED_MATERIAL_TOOLS = {
-    "tables": ["raw_data_rules", "digit_distribution", "crosscheck", "r_scrutiny", "r_rsprite2", "p_value_distribution"],
+    "tables": ["raw_data_rules", "crosscheck", "r_scrutiny", "r_rsprite2", "p_value_distribution"],
     "documents": ["r_statcheck", "reference_audit", "citation_claim_check", "papermill_light_signals", "image_extract"],
     "images": ["image_extract", "image_duplicate_internal", "image_copy_move_internal", "image_metadata_audit", "western_blot_review_list"],
     "code": ["code_rerun_audit", "code_rerun_execute"],

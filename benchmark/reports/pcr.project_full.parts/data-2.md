@@ -2,11 +2,11 @@
 
 ## 导师摘要
 
-- 文件：`merged-findings.json`
+- 文件：`data.csv`
 - 总体风险：低
-- 检测对象：2 组
+- 检测对象：1 组
 - 风险信号：高 0 / 中 0 / 低 0
-- 运行提示：1 条
+- 运行提示：0 条
 
 > 本报告只识别数据、统计、图像、文献和流程材料中的风险信号，不构成数据风险校验结论。高风险项表示需要优先回看原始记录、实验日志、原始图或统计脚本。
 
@@ -29,23 +29,19 @@
 
 ## 材料覆盖矩阵
 
-| 材料/模块 | 行数 | 列数 | digit_distribution |
-|---|---:|---:|---|
-| data | 4 | 1 | 高0 中0 低0 |
-| /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/project_full/data.csv | 0 | 0 | 高0 中0 低0 |
+| 材料/模块 | 行数 | 列数 |
+|---|---:|---:|
+| data | 4 | 1 |
 
 ## 工具运行明细
 
 | 工具 | 名称 | 材料/模块 | 状态 | 依赖状态 | 运行时 | 输入类型 | 路由/运行依据 | 方法限制 |
 |---|---|---|---|---|---|---|---|---|
-| raw_data_rules | 基础表格规则 | data.csv:data | ready | ready | python | raw_observation_table | 确定性路由判定该工具适用于当前材料。 | 用于发现数据形态异常；实验设计变量、仪器阈值、批量导出格式可能触发误报。 |
-| digit_distribution | 数字分布检测 | data.csv:data | insufficient_material | insufficient_material | python | raw_observation_table | 样本量/行数不足：需要至少 30 行，当前 4 行。 | 只适合样本量足够、变量类型合适的数值列；ID、百分比、评分、小样本和截断范围数据不适用。 |
+| raw_data_rules | 基础表格规则 | data.csv:data | ready | ready | python | raw_observation_table | 确定性路由判定该工具适用于当前材料。 | 用于发现数据形态、数字分布和列间关系异常；实验设计变量、仪器阈值、批量导出格式、合法派生变量可能触发误报。 |
 
 ## 覆盖缺口与未运行原因
 
-| 工具 | 材料/模块 | 状态 | 依赖状态 | 原因 | 对预审的影响 |
-|---|---|---|---|---|---|
-| digit_distribution | data.csv:data | insufficient_material | insufficient_material | 样本量/行数不足：需要至少 30 行，当前 4 行。 | 该工具本次未形成风险发现；需补齐材料或依赖后复跑，才能覆盖对应检查。 |
+本次路由上下文中未记录需要单列说明的未运行、依赖缺失或材料不足状态。
 
 ## 风险发现清单（问题清单）
 
@@ -63,7 +59,6 @@
 
 | 工具 | 记录数 |
 |---|---:|
-| digit_distribution | 1 |
 
-- `digit_distribution`：数字分布检测 未运行：insufficient_material（样本量/行数不足：需要至少 30 行，当前 4 行。；依赖状态=insufficient_material；输入类型=raw_observation_table）
+无运行提示。
 

@@ -83,19 +83,27 @@
 
 ## 风险发现清单（问题清单）
 
-| 风险 | 证据ID | 位置 | 检查项 | 对象 | 发现 | 证据 | 复核动作 |
-|---|---|---|---|---|---|---|---|
-| 中 | image_duplicate_internal:内部重复图像:copy_move_panel.png_/_western_blot_panel_a.png | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/figures | 内部重复图像 | copy_move_panel.png / western_blot_panel_a.png | 两张图片的本地图像指纹或局部特征高度相似，需人工复核是否为重复、裁剪、翻转或复用。 | best_hash=ahash:0; transform=original:18; orb_good=6, keypoints=15/42; hashes_left={ahash:ffff00000081ffff, dhash:004d6d6d6d6d0300, phash:ee3e91c1a5c56e3e}; hashes_right={ahash:ffff00000081ffff, dhash:00494551514d0000, phash:ea6a959569c13a7a} | 检查图注、实验条件和原始图；相似图可能来自同一样本、排版缩略图或真实重复实验。 |
-| 中 | image_duplicate_internal:内部重复图像:copy_move_panel.png_/_western_blot_panel_b.png | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/figures | 内部重复图像 | copy_move_panel.png / western_blot_panel_b.png | 两张图片的本地图像指纹或局部特征高度相似，需人工复核是否为重复、裁剪、翻转或复用。 | best_hash=ahash:0; transform=original:18; orb_good=6, keypoints=15/42; hashes_left={ahash:ffff00000081ffff, dhash:004d6d6d6d6d0300, phash:ee3e91c1a5c56e3e}; hashes_right={ahash:ffff00000081ffff, dhash:00494551514d0000, phash:ea6a959569c13a7a} | 检查图注、实验条件和原始图；相似图可能来自同一样本、排版缩略图或真实重复实验。 |
-| 中 | image_duplicate_internal:内部重复图像:western_blot_panel_a.png_/_western_blot_panel_b.png | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/figures | 内部重复图像 | western_blot_panel_a.png / western_blot_panel_b.png | 两张图片的本地图像指纹或局部特征高度相似，需人工复核是否为重复、裁剪、翻转或复用。 | best_hash=ahash:0; transform=original:0; orb_good=42, keypoints=42/42; hashes_left={ahash:ffff00000081ffff, dhash:00494551514d0000, phash:ea6a959569c13a7a}; hashes_right={ahash:ffff00000081ffff, dhash:00494551514d0000, phash:ea6a959569c13a7a} | 检查图注、实验条件和原始图；相似图可能来自同一样本、排版缩略图或真实重复实验。 |
-| 中 | image_copy_move_internal:疑似局部复制区域:western_blot_panel_a.png | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/figures | 疑似局部复制区域 | western_blot_panel_a.png | 单张图内部存在多组相似局部特征，需人工复核是否为 copy-move、重复纹理或图表元素。 | matches=20; clustered_matches=6; keypoints=42; samples=[{"from": [172.8, 43.2], "to": [158.4, 93.6], "distance": 31.0}, {"from": [158.4, 93.6], "to": [172.8, 43.2], "distance": 31.0}, {"from": [58.8, 104.4], "to": [115.2, 104.4], "distance": 7.0}, {"from": [76.8, 104.4], "to": [104.4, 104.4], "distance": 5.0}, {"from": [104.4, 104.4], "to": [76.8, 104.4], "distance": 5.0}, {"from": [115.2, 104.4], "to": [58.8, 104.4], "distance": 7.0}] | 打开原图检查命中坐标附近区域，要求作者提供原始未裁剪图和处理说明。 |
-| 中 | image_copy_move_internal:疑似局部复制区域:western_blot_panel_b.png | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/figures | 疑似局部复制区域 | western_blot_panel_b.png | 单张图内部存在多组相似局部特征，需人工复核是否为 copy-move、重复纹理或图表元素。 | matches=20; clustered_matches=6; keypoints=42; samples=[{"from": [172.8, 43.2], "to": [158.4, 93.6], "distance": 31.0}, {"from": [158.4, 93.6], "to": [172.8, 43.2], "distance": 31.0}, {"from": [58.8, 104.4], "to": [115.2, 104.4], "distance": 7.0}, {"from": [76.8, 104.4], "to": [104.4, 104.4], "distance": 5.0}, {"from": [104.4, 104.4], "to": [76.8, 104.4], "distance": 5.0}, {"from": [115.2, 104.4], "to": [58.8, 104.4], "distance": 7.0}] | 打开原图检查命中坐标附近区域，要求作者提供原始未裁剪图和处理说明。 |
-| 低 | provenance_chain_verify:哈希版本链核验:copy_move_panel.png | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/figures | 哈希版本链核验 | copy_move_panel.png | 哈希版本链状态：new | {"relative_path": "copy_move_panel.png", "sha256": "bc62648e696e3f6136b615ee1bc8d7598068d35c05e4be414a2ba3760f2e5c3d", "size": 563, "status": "new"} | 对 changed/modified/missing/new 文件核对原始记录、上传批次和操作者说明。 |
-| 低 | provenance_chain_verify:哈希版本链核验:low_resolution_control.png | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/figures | 哈希版本链核验 | low_resolution_control.png | 哈希版本链状态：new | {"relative_path": "low_resolution_control.png", "sha256": "efe28a2296d36cd51e70030ed482726f7c8e2969e3625e1eb3fb26ca9ac49239", "size": 160, "status": "new"} | 对 changed/modified/missing/new 文件核对原始记录、上传批次和操作者说明。 |
-| 低 | provenance_chain_verify:哈希版本链核验:western_blot_panel_a.png | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/figures | 哈希版本链核验 | western_blot_panel_a.png | 哈希版本链状态：new | {"relative_path": "western_blot_panel_a.png", "sha256": "0e202e24af20cbfe14f09ee413e0728ab9d7ff54819b1ef321b3ceb1ed3214ca", "size": 759, "status": "new"} | 对 changed/modified/missing/new 文件核对原始记录、上传批次和操作者说明。 |
-| 低 | provenance_chain_verify:哈希版本链核验:western_blot_panel_b.png | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/figures | 哈希版本链核验 | western_blot_panel_b.png | 哈希版本链状态：new | {"relative_path": "western_blot_panel_b.png", "sha256": "0e202e24af20cbfe14f09ee413e0728ab9d7ff54819b1ef321b3ceb1ed3214ca", "size": 759, "status": "new"} | 对 changed/modified/missing/new 文件核对原始记录、上传批次和操作者说明。 |
-| 低 | image_metadata_audit:图像元数据与质量:low_resolution_control.png | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/figures | 图像元数据与质量 | low_resolution_control.png | 图片分辨率较低，可能限制图像取证和人工复核。 | format=PNG; size=50x50; mode=RGB; exif_fields=0; gray_mean=255.0; gray_std=0.0 | 结合原始仪器文件、导出流程和未压缩原图人工复核。 |
-| 低 | western_blot_review_list:Western_blot/凝胶复核清单:图像文件名 | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/figures | Western blot/凝胶复核清单 | 图像文件名 | 发现疑似 Western blot 或凝胶图片文件名。 | western_blot_panel_a.png, western_blot_panel_b.png | 请作者提供原始 uncropped blot、曝光参数、拼接说明、loading control 和重复实验记录。 |
+| 风险 | 置信度 | 证据ID | 位置 | 检查项 | 对象 | 发现 | 证据 | 复核动作 |
+|---|---:|---|---|---|---|---|---|---|
+| 中 | 60% | image_duplicate_internal:内部重复图像:copy_move_panel.png_/_western_blot_panel_a.png | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/figures | 内部重复图像 | copy_move_panel.png / western_blot_panel_a.png | 两张图片的本地图像指纹或局部特征高度相似，需人工复核是否为重复、裁剪、翻转或复用。 | best_hash=ahash:0; transform=original:18; orb_good=6, keypoints=15/42; hashes_left={ahash:ffff00000081ffff, dhash:004d6d6d6d6d0300, phash:ee3e91c1a5c56e3e}; hashes_right={ahash:ffff00000081ffff, dhash:00494551514d0000, phash:ea6a959569c13a7a} | 检查图注、实验条件和原始图；相似图可能来自同一样本、排版缩略图或真实重复实验。 |
+| 中 | 60% | image_duplicate_internal:内部重复图像:copy_move_panel.png_/_western_blot_panel_b.png | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/figures | 内部重复图像 | copy_move_panel.png / western_blot_panel_b.png | 两张图片的本地图像指纹或局部特征高度相似，需人工复核是否为重复、裁剪、翻转或复用。 | best_hash=ahash:0; transform=original:18; orb_good=6, keypoints=15/42; hashes_left={ahash:ffff00000081ffff, dhash:004d6d6d6d6d0300, phash:ee3e91c1a5c56e3e}; hashes_right={ahash:ffff00000081ffff, dhash:00494551514d0000, phash:ea6a959569c13a7a} | 检查图注、实验条件和原始图；相似图可能来自同一样本、排版缩略图或真实重复实验。 |
+| 中 | 60% | image_duplicate_internal:内部重复图像:western_blot_panel_a.png_/_western_blot_panel_b.png | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/figures | 内部重复图像 | western_blot_panel_a.png / western_blot_panel_b.png | 两张图片的本地图像指纹或局部特征高度相似，需人工复核是否为重复、裁剪、翻转或复用。 | best_hash=ahash:0; transform=original:0; orb_good=42, keypoints=42/42; hashes_left={ahash:ffff00000081ffff, dhash:00494551514d0000, phash:ea6a959569c13a7a}; hashes_right={ahash:ffff00000081ffff, dhash:00494551514d0000, phash:ea6a959569c13a7a} | 检查图注、实验条件和原始图；相似图可能来自同一样本、排版缩略图或真实重复实验。 |
+| 中 | 60% | image_copy_move_internal:疑似局部复制区域:western_blot_panel_a.png | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/figures | 疑似局部复制区域 | western_blot_panel_a.png | 单张图内部存在多组相似局部特征，需人工复核是否为 copy-move、重复纹理或图表元素。 | matches=20; clustered_matches=6; keypoints=42; samples=[{"from": [172.8, 43.2], "to": [158.4, 93.6], "distance": 31.0}, {"from": [158.4, 93.6], "to": [172.8, 43.2], "distance": 31.0}, {"from": [58.8, 104.4], "to": [115.2, 104.4], "distance": 7.0}, {"from": [76.8, 104.4], "to": [104.4, 104.4], "distance": 5.0}, {"from": [104.4, 104.4], "to": [76.8, 104.4], "distance": 5.0}, {"from": [115.2, 104.4], "to": [58.8, 104.4], "distance": 7.0}] | 打开原图检查命中坐标附近区域，要求作者提供原始未裁剪图和处理说明。 |
+| 中 | 60% | image_copy_move_internal:疑似局部复制区域:western_blot_panel_b.png | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/figures | 疑似局部复制区域 | western_blot_panel_b.png | 单张图内部存在多组相似局部特征，需人工复核是否为 copy-move、重复纹理或图表元素。 | matches=20; clustered_matches=6; keypoints=42; samples=[{"from": [172.8, 43.2], "to": [158.4, 93.6], "distance": 31.0}, {"from": [158.4, 93.6], "to": [172.8, 43.2], "distance": 31.0}, {"from": [58.8, 104.4], "to": [115.2, 104.4], "distance": 7.0}, {"from": [76.8, 104.4], "to": [104.4, 104.4], "distance": 5.0}, {"from": [104.4, 104.4], "to": [76.8, 104.4], "distance": 5.0}, {"from": [115.2, 104.4], "to": [58.8, 104.4], "distance": 7.0}] | 打开原图检查命中坐标附近区域，要求作者提供原始未裁剪图和处理说明。 |
+| 低 | 30%（低置信度，建议补充数据后重检） | provenance_chain_verify:哈希版本链核验:copy_move_panel.png | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/figures | 哈希版本链核验 | copy_move_panel.png | 哈希版本链状态：new | {"relative_path": "copy_move_panel.png", "sha256": "bc62648e696e3f6136b615ee1bc8d7598068d35c05e4be414a2ba3760f2e5c3d", "size": 563, "status": "new"} | 对 changed/modified/missing/new 文件核对原始记录、上传批次和操作者说明。 |
+| 低 | 30%（低置信度，建议补充数据后重检） | provenance_chain_verify:哈希版本链核验:low_resolution_control.png | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/figures | 哈希版本链核验 | low_resolution_control.png | 哈希版本链状态：new | {"relative_path": "low_resolution_control.png", "sha256": "efe28a2296d36cd51e70030ed482726f7c8e2969e3625e1eb3fb26ca9ac49239", "size": 160, "status": "new"} | 对 changed/modified/missing/new 文件核对原始记录、上传批次和操作者说明。 |
+| 低 | 30%（低置信度，建议补充数据后重检） | provenance_chain_verify:哈希版本链核验:western_blot_panel_a.png | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/figures | 哈希版本链核验 | western_blot_panel_a.png | 哈希版本链状态：new | {"relative_path": "western_blot_panel_a.png", "sha256": "0e202e24af20cbfe14f09ee413e0728ab9d7ff54819b1ef321b3ceb1ed3214ca", "size": 759, "status": "new"} | 对 changed/modified/missing/new 文件核对原始记录、上传批次和操作者说明。 |
+| 低 | 30%（低置信度，建议补充数据后重检） | provenance_chain_verify:哈希版本链核验:western_blot_panel_b.png | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/figures | 哈希版本链核验 | western_blot_panel_b.png | 哈希版本链状态：new | {"relative_path": "western_blot_panel_b.png", "sha256": "0e202e24af20cbfe14f09ee413e0728ab9d7ff54819b1ef321b3ceb1ed3214ca", "size": 759, "status": "new"} | 对 changed/modified/missing/new 文件核对原始记录、上传批次和操作者说明。 |
+| 低 | 30%（低置信度，建议补充数据后重检） | image_metadata_audit:图像元数据与质量:low_resolution_control.png | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/figures | 图像元数据与质量 | low_resolution_control.png | 图片分辨率较低，可能限制图像取证和人工复核。 | format=PNG; size=50x50; mode=RGB; exif_fields=0; gray_mean=255.0; gray_std=0.0 | 结合原始仪器文件、导出流程和未压缩原图人工复核。 |
+| 低 | 30%（低置信度，建议补充数据后重检） | western_blot_review_list:Western_blot/凝胶复核清单:图像文件名 | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/figures | Western blot/凝胶复核清单 | 图像文件名 | 发现疑似 Western blot 或凝胶图片文件名。 | western_blot_panel_a.png, western_blot_panel_b.png | 请作者提供原始 uncropped blot、曝光参数、拼接说明、loading control 和重复实验记录。 |
+
+## 审计置信度摘要
+
+| 方法学置信度 | 发现数 |
+|---|---:|
+| 高(>=75%) | 0 |
+| 中(40%-75%) | 5 |
+| 低(<40%) | 6 |
 
 ## 专家复核附录
 
@@ -108,7 +116,7 @@
 - 工具：稿件内部重复图初筛（image_duplicate_internal）
 - 运行时/依赖：python / ready
 - 输入类型：scientific_figure
-- 置信度/误报风险：medium / medium
+- 置信度/误报风险：60%（medium） / medium
 - 计算/抽取过程：Pillow/numpy 本地 aHash/dHash/pHash；若 cv2 可用则附加 ORB 局部特征匹配；不上传图片。
 - 路由依据：由确定性路由选择该工具。
 - 可能正常解释：可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。
@@ -125,7 +133,7 @@
 - 工具：稿件内部重复图初筛（image_duplicate_internal）
 - 运行时/依赖：python / ready
 - 输入类型：scientific_figure
-- 置信度/误报风险：medium / medium
+- 置信度/误报风险：60%（medium） / medium
 - 计算/抽取过程：Pillow/numpy 本地 aHash/dHash/pHash；若 cv2 可用则附加 ORB 局部特征匹配；不上传图片。
 - 路由依据：由确定性路由选择该工具。
 - 可能正常解释：可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。
@@ -142,7 +150,7 @@
 - 工具：稿件内部重复图初筛（image_duplicate_internal）
 - 运行时/依赖：python / ready
 - 输入类型：scientific_figure
-- 置信度/误报风险：medium / medium
+- 置信度/误报风险：60%（medium） / medium
 - 计算/抽取过程：Pillow/numpy 本地 aHash/dHash/pHash；若 cv2 可用则附加 ORB 局部特征匹配；不上传图片。
 - 路由依据：由确定性路由选择该工具。
 - 可能正常解释：可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。
@@ -159,7 +167,7 @@
 - 工具：图像局部复制初筛（image_copy_move_internal）
 - 运行时/依赖：python / ready
 - 输入类型：scientific_figure
-- 置信度/误报风险：medium / medium
+- 置信度/误报风险：60%（medium） / medium
 - 计算/抽取过程：OpenCV ORB 特征在同一图内部自匹配，过滤近邻点后按位移向量聚类。
 - 路由依据：由确定性路由选择该工具。
 - 可能正常解释：可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。
@@ -176,7 +184,7 @@
 - 工具：图像局部复制初筛（image_copy_move_internal）
 - 运行时/依赖：python / ready
 - 输入类型：scientific_figure
-- 置信度/误报风险：medium / medium
+- 置信度/误报风险：60%（medium） / medium
 - 计算/抽取过程：OpenCV ORB 特征在同一图内部自匹配，过滤近邻点后按位移向量聚类。
 - 路由依据：由确定性路由选择该工具。
 - 可能正常解释：可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。
@@ -193,7 +201,8 @@
 - 工具：哈希版本链核验（provenance_chain_verify）
 - 运行时/依赖：python / ready
 - 输入类型：raw_file_bundle
-- 置信度/误报风险：medium / medium
+- 置信度/误报风险：30%（low） / medium
+- 低置信度提示：该信号置信度较低，建议补充数据后重新检测。
 - 计算/抽取过程：读取 JSONL 账本最新记录并对当前文件重新计算 SHA-256。
 - 路由依据：由确定性路由选择该工具。
 - 可能正常解释：可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。
@@ -210,7 +219,8 @@
 - 工具：哈希版本链核验（provenance_chain_verify）
 - 运行时/依赖：python / ready
 - 输入类型：raw_file_bundle
-- 置信度/误报风险：medium / medium
+- 置信度/误报风险：30%（low） / medium
+- 低置信度提示：该信号置信度较低，建议补充数据后重新检测。
 - 计算/抽取过程：读取 JSONL 账本最新记录并对当前文件重新计算 SHA-256。
 - 路由依据：由确定性路由选择该工具。
 - 可能正常解释：可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。
@@ -227,7 +237,8 @@
 - 工具：哈希版本链核验（provenance_chain_verify）
 - 运行时/依赖：python / ready
 - 输入类型：raw_file_bundle
-- 置信度/误报风险：medium / medium
+- 置信度/误报风险：30%（low） / medium
+- 低置信度提示：该信号置信度较低，建议补充数据后重新检测。
 - 计算/抽取过程：读取 JSONL 账本最新记录并对当前文件重新计算 SHA-256。
 - 路由依据：由确定性路由选择该工具。
 - 可能正常解释：可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。
@@ -244,7 +255,8 @@
 - 工具：哈希版本链核验（provenance_chain_verify）
 - 运行时/依赖：python / ready
 - 输入类型：raw_file_bundle
-- 置信度/误报风险：medium / medium
+- 置信度/误报风险：30%（low） / medium
+- 低置信度提示：该信号置信度较低，建议补充数据后重新检测。
 - 计算/抽取过程：读取 JSONL 账本最新记录并对当前文件重新计算 SHA-256。
 - 路由依据：由确定性路由选择该工具。
 - 可能正常解释：可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。
@@ -261,7 +273,8 @@
 - 工具：图像元数据与质量初筛（image_metadata_audit）
 - 运行时/依赖：python / ready
 - 输入类型：scientific_figure
-- 置信度/误报风险：medium / medium
+- 置信度/误报风险：30%（low） / medium
+- 低置信度提示：该信号置信度较低，建议补充数据后重新检测。
 - 路由依据：由确定性路由选择该工具。
 - 可能正常解释：可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。
 - 复核动作：结合原始仪器文件、导出流程和未压缩原图人工复核。
@@ -277,7 +290,8 @@
 - 工具：Western blot复核清单（western_blot_review_list）
 - 运行时/依赖：python / ready
 - 输入类型：western_blot_or_gel_image
-- 置信度/误报风险：medium / medium
+- 置信度/误报风险：30%（low） / medium
+- 低置信度提示：该信号置信度较低，建议补充数据后重新检测。
 - 路由依据：由确定性路由选择该工具。
 - 可能正常解释：可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。
 - 复核动作：请作者提供原始 uncropped blot、曝光参数、拼接说明、loading control 和重复实验记录。

@@ -1,15 +1,8 @@
 {
   "source": [
-    "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/raw_clean_control.csv",
     "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/raw_clean_control.csv"
   ],
   "results": [
-    {
-      "name": "raw_clean_control",
-      "rows": 80,
-      "columns": 5,
-      "findings": []
-    },
     {
       "name": "raw_clean_control",
       "rows": 80,

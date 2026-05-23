@@ -16,6 +16,13 @@ json_escape <- function(x) {
   x
 }
 jstr <- function(x) paste0("\"", json_escape(x), "\"")
+confidence_score <- function(confidence, level) {
+  if (confidence == "high") return(0.85)
+  if (confidence == "medium") return(0.60)
+  if (confidence == "low") return(0.30)
+  if (level == "info") return(0.10)
+  0.60
+}
 arg_value <- function(flag, default = NULL) {
   if (!(flag %in% args)) return(default)
   pos <- match(flag, args)
@@ -37,11 +44,13 @@ finding_json <- function(level, check, target, summary, evidence, detail, sugges
     "\"normal_explanations\":", jstr("可能的正常原因包括变量不是离散/整数评分、量表范围设定错误、四舍五入规则不同或表格抽取错误。"), ",",
     "\"review_steps\":", jstr(suggestion), ",",
     "\"confidence\":", jstr(confidence), ",",
+    "\"confidence_score\":", sprintf("%.2f", confidence_score(confidence, level)), ",",
     "\"false_positive_risk\":", jstr(false_positive_risk), ",",
     "\"tool_id\":\"r_scrutiny\",",
     "\"tool_name\":\"R scrutiny\",",
     "\"detector_runtime\":\"r\",",
-    "\"dependency_status\":", jstr(dependency_status),
+    "\"dependency_status\":", jstr(dependency_status), ",",
+    "\"confidence_basis\":", jstr("基于 R scrutiny 可行性检验、样本量/量表字段可解析性和依赖状态生成；需确认量表范围、四舍五入规则和变量类型。"),
   "}")
 }
 write_payload <- function(source, dependency_status, findings, json_path) {

@@ -1,6 +1,5 @@
 {
   "source": [
-    "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/project_full/data.csv",
     "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/project_full/data.csv"
   ],
   "results": [
@@ -9,43 +8,6 @@
       "rows": 4,
       "columns": 1,
       "findings": []
-    },
-    {
-      "name": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/project_full/data.csv",
-      "rows": 0,
-      "columns": 0,
-      "findings": [
-        {
-          "table": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/project_full/data.csv",
-          "level": "info",
-          "check": "工具运行记录",
-          "target": "digit_distribution",
-          "summary": "数字分布检测 未运行：insufficient_material",
-          "evidence": "样本量/行数不足：需要至少 30 行，当前 4 行。",
-          "detail": "",
-          "suggestion": "安装或修复该 CLI 后重试；其他可用工具的结果不受影响。",
-          "tool_id": "digit_distribution",
-          "tool_name": "digit_distribution",
-          "module": "routing",
-          "input_type": "raw_observation_table",
-          "routing_reason": "由确定性路由选择该工具。",
-          "method_limitations": "该结果只提示需要复核的风险信号，不构成数据风险校验判定。",
-          "raw_output_ref": "",
-          "detector_runtime": "cli",
-          "dependency_status": "insufficient_material",
-          "meaning": "数字分布检测 未运行：insufficient_material",
-          "normal_explanations": "工具缺失、依赖缺失或路由跳过不是数据风险。",
-          "review_steps": "检查 PATH、Rscript、对应 R 包安装状态和 route JSON。",
-          "confidence": "low",
-          "false_positive_risk": "low",
-          "evidence_id": "digit_distribution:info:/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/project_full/data.csv",
-          "location": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/project_full/data.csv",
-          "calculation_trace": "",
-          "external_records": "",
-          "review_actions": "检查 PATH、Rscript、对应 R 包安装状态和 route JSON。",
-          "confidence_basis": "该项来自工具路由或依赖检查，不是数据风险信号。"
-        }
-      ]
     }
   ]
 }

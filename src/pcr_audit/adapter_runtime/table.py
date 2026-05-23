@@ -1,17 +1,15 @@
 from __future__ import annotations
 
-from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
 from pcr_audit.adapter_runtime.base import AuditRunContext
 from pcr_audit.detectors.raw import analyze_raw_data_rules
 from pcr_audit.io import load_tables, read_json
-from pcr_audit.models import TableResult
 from pcr_audit.reporting import save_json
 
 
-TABLE_ADAPTER_ORDER = ["raw_data_rules", "digit_distribution", "p_value_distribution", "crosscheck"]
+TABLE_ADAPTER_ORDER = ["raw_data_rules", "p_value_distribution", "crosscheck"]
 
 
 def ready_tables_for_tool(source: Path, route_payload: dict[str, Any], tool_id: str):
@@ -36,19 +34,6 @@ def run_crosscheck_payload(source: Path, json_path: Path, route_payload: dict[st
     return read_json(json_path)
 
 
-def run_digit_payload(source: Path, json_path: Path, route_payload: dict[str, Any]) -> dict[str, Any]:
-    from pcr_audit.detectors.raw_legacy import analyze_digit_distribution_rules
-    from pcr_audit.models import finding_from_mapping
-
-    results = []
-    for name, df in ready_tables_for_tool(source, route_payload, "digit_distribution"):
-        legacy = analyze_digit_distribution_rules(name, df)
-        findings = [finding_from_mapping(name, asdict(item)) for item in legacy.findings]
-        results.append(TableResult(name, legacy.rows, legacy.columns, findings))
-    save_json(json_path, source, results)
-    return read_json(json_path)
-
-
 def run_p_value_payload(source: Path, json_path: Path, route_payload: dict[str, Any]) -> dict[str, Any]:
     from pcr_audit.detectors.p_values import analyze_p_value_collection
 
@@ -59,10 +44,6 @@ def run_p_value_payload(source: Path, json_path: Path, route_payload: dict[str, 
 
 def raw_adapter(context: AuditRunContext, _tool_id: str) -> None:
     context.payloads.append(run_raw_payload(context.source, context.workdir / "raw-audit.json", context.route_payload))
-
-
-def digit_adapter(context: AuditRunContext, _tool_id: str) -> None:
-    context.payloads.append(run_digit_payload(context.source, context.workdir / "digit-distribution.json", context.route_payload))
 
 
 def p_value_adapter(context: AuditRunContext, _tool_id: str) -> None:

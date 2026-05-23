@@ -31,14 +31,15 @@
           "meaning": "标准误SE与SD/√N不一致（偏差=85.1%）",
           "normal_explanations": "可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。",
           "review_steps": "核对SE是否为标准误（非SD或CI半宽），确认统计脚本输出。",
-          "confidence": "medium",
+          "confidence": "high",
+          "confidence_score": 0.825,
           "false_positive_risk": "medium",
           "evidence_id": "unknown:SE/SD/√N一致性:行2",
           "location": "summary_suspicious",
           "calculation_trace": "",
           "external_records": "",
           "review_actions": "核对SE是否为标准误（非SD或CI半宽），确认统计脚本输出。",
-          "confidence_basis": "基于确定性规则或可复算公式生成；仍需结合研究设计、原始记录和材料抽取质量人工判断。"
+          "confidence_basis": "公式确定性=1(权重45%), 表规模=0.6(权重25%), 可解析字段=0.6(权重15%), 偏差等级=0.9(权重15%); 加权总分=0.82"
         },
         {
           "table": "summary_suspicious",
@@ -61,14 +62,15 @@
           "meaning": "CI宽度与SE×t临界值不一致（偏差=43.3%）",
           "normal_explanations": "可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。",
           "review_steps": "核对CI的置信水平（通常95%）和SE是否对应。",
-          "confidence": "medium",
+          "confidence": "high",
+          "confidence_score": 0.7949999999999999,
           "false_positive_risk": "medium",
           "evidence_id": "unknown:CI宽度/SE一致性:行2",
           "location": "summary_suspicious",
           "calculation_trace": "",
           "external_records": "",
           "review_actions": "核对CI的置信水平（通常95%）和SE是否对应。",
-          "confidence_basis": "基于确定性规则或可复算公式生成；仍需结合研究设计、原始记录和材料抽取质量人工判断。"
+          "confidence_basis": "公式确定性=1(权重45%), 表规模=0.6(权重25%), 可解析字段=0.6(权重15%), 偏差等级=0.7(权重15%); 加权总分=0.79"
         },
         {
           "table": "summary_suspicious",
@@ -91,14 +93,15 @@
           "meaning": "百分比与count/N反算不一致（差值=15.000）",
           "normal_explanations": "可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。",
           "review_steps": "核对百分比的分母是否为该行的N；确认count是否正确。",
-          "confidence": "medium",
+          "confidence": "high",
+          "confidence_score": 0.825,
           "false_positive_risk": "medium",
           "evidence_id": "unknown:百分比/计数一致性:行2",
           "location": "summary_suspicious",
           "calculation_trace": "",
           "external_records": "",
           "review_actions": "核对百分比的分母是否为该行的N；确认count是否正确。",
-          "confidence_basis": "基于确定性规则或可复算公式生成；仍需结合研究设计、原始记录和材料抽取质量人工判断。"
+          "confidence_basis": "公式确定性=1(权重45%), 表规模=0.6(权重25%), 可解析字段=0.6(权重15%), 偏差等级=0.9(权重15%); 加权总分=0.82"
         },
         {
           "table": "summary_suspicious",
@@ -121,14 +124,15 @@
           "meaning": "p值与t统计量(df)反算不一致（差值=0.1926）",
           "normal_explanations": "可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。",
           "review_steps": "核对t、df和p值是否来自同一次分析，是否为单侧检验。",
-          "confidence": "medium",
+          "confidence": "high",
+          "confidence_score": 0.825,
           "false_positive_risk": "medium",
           "evidence_id": "unknown:p值/t统计量一致性:行2",
           "location": "summary_suspicious",
           "calculation_trace": "",
           "external_records": "",
           "review_actions": "核对t、df和p值是否来自同一次分析，是否为单侧检验。",
-          "confidence_basis": "基于确定性规则或可复算公式生成；仍需结合研究设计、原始记录和材料抽取质量人工判断。"
+          "confidence_basis": "公式确定性=1(权重45%), 表规模=0.6(权重25%), 可解析字段=0.6(权重15%), 偏差等级=0.9(权重15%); 加权总分=0.82"
         },
         {
           "table": "summary_suspicious",
@@ -151,14 +155,15 @@
           "meaning": "标准误SE与SD/√N不一致（偏差=76.4%）",
           "normal_explanations": "可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。",
           "review_steps": "核对SE是否为标准误（非SD或CI半宽），确认统计脚本输出。",
-          "confidence": "medium",
+          "confidence": "high",
+          "confidence_score": 0.825,
           "false_positive_risk": "medium",
           "evidence_id": "unknown:SE/SD/√N一致性:行3",
           "location": "summary_suspicious",
           "calculation_trace": "",
           "external_records": "",
           "review_actions": "核对SE是否为标准误（非SD或CI半宽），确认统计脚本输出。",
-          "confidence_basis": "基于确定性规则或可复算公式生成；仍需结合研究设计、原始记录和材料抽取质量人工判断。"
+          "confidence_basis": "公式确定性=1(权重45%), 表规模=0.6(权重25%), 可解析字段=0.6(权重15%), 偏差等级=0.9(权重15%); 加权总分=0.82"
         },
         {
           "table": "summary_suspicious",
@@ -181,14 +186,15 @@
           "meaning": "置信区间下限大于上限。",
           "normal_explanations": "可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。",
           "review_steps": "CI列顺序可能写反，或表格抽取时发生错列。",
-          "confidence": "medium",
+          "confidence": "high",
+          "confidence_score": 0.825,
           "false_positive_risk": "medium",
           "evidence_id": "unknown:CI区间倒置:行3",
           "location": "summary_suspicious",
           "calculation_trace": "",
           "external_records": "",
           "review_actions": "CI列顺序可能写反，或表格抽取时发生错列。",
-          "confidence_basis": "基于确定性规则或可复算公式生成；仍需结合研究设计、原始记录和材料抽取质量人工判断。"
+          "confidence_basis": "公式确定性=1(权重45%), 表规模=0.6(权重25%), 可解析字段=0.6(权重15%), 偏差等级=0.9(权重15%); 加权总分=0.82"
         },
         {
           "table": "summary_suspicious",
@@ -211,14 +217,15 @@
           "meaning": "百分比与count/N反算不一致（差值=33.333）",
           "normal_explanations": "可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。",
           "review_steps": "核对百分比的分母是否为该行的N；确认count是否正确。",
-          "confidence": "medium",
+          "confidence": "high",
+          "confidence_score": 0.825,
           "false_positive_risk": "medium",
           "evidence_id": "unknown:百分比/计数一致性:行3",
           "location": "summary_suspicious",
           "calculation_trace": "",
           "external_records": "",
           "review_actions": "核对百分比的分母是否为该行的N；确认count是否正确。",
-          "confidence_basis": "基于确定性规则或可复算公式生成；仍需结合研究设计、原始记录和材料抽取质量人工判断。"
+          "confidence_basis": "公式确定性=1(权重45%), 表规模=0.6(权重25%), 可解析字段=0.6(权重15%), 偏差等级=0.9(权重15%); 加权总分=0.82"
         },
         {
           "table": "summary_suspicious",
@@ -241,14 +248,15 @@
           "meaning": "p值超出[0, 1]范围。",
           "normal_explanations": "可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。",
           "review_steps": "p值必须介于0到1之间；可能是录入错误或小数点位错。",
-          "confidence": "medium",
+          "confidence": "high",
+          "confidence_score": 0.825,
           "false_positive_risk": "medium",
           "evidence_id": "unknown:p值超出定义域:行3",
           "location": "summary_suspicious",
           "calculation_trace": "",
           "external_records": "",
           "review_actions": "p值必须介于0到1之间；可能是录入错误或小数点位错。",
-          "confidence_basis": "基于确定性规则或可复算公式生成；仍需结合研究设计、原始记录和材料抽取质量人工判断。"
+          "confidence_basis": "公式确定性=1(权重45%), 表规模=0.6(权重25%), 可解析字段=0.6(权重15%), 偏差等级=0.9(权重15%); 加权总分=0.82"
         },
         {
           "table": "summary_suspicious",
@@ -271,14 +279,15 @@
           "meaning": "p值与t统计量(df)反算不一致（差值=1.0682）",
           "normal_explanations": "可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。",
           "review_steps": "核对t、df和p值是否来自同一次分析，是否为单侧检验。",
-          "confidence": "medium",
+          "confidence": "high",
+          "confidence_score": 0.825,
           "false_positive_risk": "medium",
           "evidence_id": "unknown:p值/t统计量一致性:行3",
           "location": "summary_suspicious",
           "calculation_trace": "",
           "external_records": "",
           "review_actions": "核对t、df和p值是否来自同一次分析，是否为单侧检验。",
-          "confidence_basis": "基于确定性规则或可复算公式生成；仍需结合研究设计、原始记录和材料抽取质量人工判断。"
+          "confidence_basis": "公式确定性=1(权重45%), 表规模=0.6(权重25%), 可解析字段=0.6(权重15%), 偏差等级=0.9(权重15%); 加权总分=0.82"
         },
         {
           "table": "summary_suspicious",
@@ -301,14 +310,15 @@
           "meaning": "自由度df与样本量N的关系不匹配常见检验设计。",
           "normal_explanations": "可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。",
           "review_steps": "若检验设计非单样本或两独立样本等组设计，可忽略此项。",
-          "confidence": "medium",
+          "confidence": "high",
+          "confidence_score": 0.7649999999999999,
           "false_positive_risk": "medium",
           "evidence_id": "unknown:自由度/样本量关系:行3",
           "location": "summary_suspicious",
           "calculation_trace": "",
           "external_records": "",
           "review_actions": "若检验设计非单样本或两独立样本等组设计，可忽略此项。",
-          "confidence_basis": "基于确定性规则或可复算公式生成；仍需结合研究设计、原始记录和材料抽取质量人工判断。"
+          "confidence_basis": "公式确定性=1(权重45%), 表规模=0.6(权重25%), 可解析字段=0.6(权重15%), 偏差等级=0.5(权重15%); 加权总分=0.76"
         },
         {
           "table": "summary_suspicious",
@@ -331,14 +341,15 @@
           "meaning": "CI宽度与SE×t临界值不一致（偏差=20.4%）",
           "normal_explanations": "可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。",
           "review_steps": "核对CI的置信水平（通常95%）和SE是否对应。",
-          "confidence": "medium",
+          "confidence": "high",
+          "confidence_score": 0.7949999999999999,
           "false_positive_risk": "medium",
           "evidence_id": "unknown:CI宽度/SE一致性:行4",
           "location": "summary_suspicious",
           "calculation_trace": "",
           "external_records": "",
           "review_actions": "核对CI的置信水平（通常95%）和SE是否对应。",
-          "confidence_basis": "基于确定性规则或可复算公式生成；仍需结合研究设计、原始记录和材料抽取质量人工判断。"
+          "confidence_basis": "公式确定性=1(权重45%), 表规模=0.6(权重25%), 可解析字段=0.6(权重15%), 偏差等级=0.7(权重15%); 加权总分=0.79"
         },
         {
           "table": "summary_suspicious",
@@ -361,14 +372,15 @@
           "meaning": "p值与t统计量(df)反算不一致（差值=0.3434）",
           "normal_explanations": "可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。",
           "review_steps": "核对t、df和p值是否来自同一次分析，是否为单侧检验。",
-          "confidence": "medium",
+          "confidence": "high",
+          "confidence_score": 0.825,
           "false_positive_risk": "medium",
           "evidence_id": "unknown:p值/t统计量一致性:行4",
           "location": "summary_suspicious",
           "calculation_trace": "",
           "external_records": "",
           "review_actions": "核对t、df和p值是否来自同一次分析，是否为单侧检验。",
-          "confidence_basis": "基于确定性规则或可复算公式生成；仍需结合研究设计、原始记录和材料抽取质量人工判断。"
+          "confidence_basis": "公式确定性=1(权重45%), 表规模=0.6(权重25%), 可解析字段=0.6(权重15%), 偏差等级=0.9(权重15%); 加权总分=0.82"
         }
       ]
     },
@@ -399,13 +411,14 @@
           "normal_explanations": "可能的正常原因包括变量不是离散/整数评分、量表范围设定错误、四舍五入规则不同或表格抽取错误。",
           "review_steps": "确认量表范围、四舍五入精度和变量类型；回看原始计数或统计脚本。",
           "confidence": "high",
+          "confidence_score": 0.85,
           "false_positive_risk": "medium",
           "evidence_id": "r_scrutiny:R_scrutiny_GRIMMER:行4",
           "location": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/summary_suspicious.csv",
           "calculation_trace": "",
           "external_records": "",
           "review_actions": "确认量表范围、四舍五入精度和变量类型；回看原始计数或统计脚本。",
-          "confidence_basis": "基于确定性规则或可复算公式生成；仍需结合研究设计、原始记录和材料抽取质量人工判断。"
+          "confidence_basis": "基于 R scrutiny 可行性检验、样本量/量表字段可解析性和依赖状态生成；需确认量表范围、四舍五入规则和变量类型。"
         },
         {
           "table": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/summary_suspicious.csv",
@@ -429,13 +442,14 @@
           "normal_explanations": "可能的正常原因包括变量不是离散/整数评分、量表范围设定错误、四舍五入规则不同或表格抽取错误。",
           "review_steps": "若未发现高风险项，仍需结合变量类型和原始数据人工复核。",
           "confidence": "low",
+          "confidence_score": 0.3,
           "false_positive_risk": "low",
           "evidence_id": "r_scrutiny:R_scrutiny运行记录:摘要统计表",
           "location": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/summary_suspicious.csv",
           "calculation_trace": "",
           "external_records": "",
           "review_actions": "若未发现高风险项，仍需结合变量类型和原始数据人工复核。",
-          "confidence_basis": "基于确定性规则或可复算公式生成；仍需结合研究设计、原始记录和材料抽取质量人工判断。"
+          "confidence_basis": "基于 R scrutiny 可行性检验、样本量/量表字段可解析性和依赖状态生成；需确认量表范围、四舍五入规则和变量类型。"
         }
       ]
     },
@@ -465,14 +479,15 @@
           "meaning": "SPRITE 未能找到匹配报告摘要统计的离散分布。",
           "normal_explanations": "可能的正常原因包括量表范围、均值/SD 小数精度、约束条件或 rsprite2 搜索参数设置不匹配。",
           "review_steps": "确认量表范围、均值/SD 小数精度、样本量和是否为离散评分摘要；高风险结果应由人工复核原始频数。",
-          "confidence": "medium",
+          "confidence": "high",
+          "confidence_score": 0.85,
           "false_positive_risk": "high",
           "evidence_id": "r_rsprite2:R_rsprite2_SPRITE:行1",
           "location": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/summary_suspicious.csv",
           "calculation_trace": "",
           "external_records": "",
           "review_actions": "确认量表范围、均值/SD 小数精度、样本量和是否为离散评分摘要；高风险结果应由人工复核原始频数。",
-          "confidence_basis": "基于确定性规则或可复算公式生成；仍需结合研究设计、原始记录和材料抽取质量人工判断。"
+          "confidence_basis": "基于 R rsprite2 SPRITE 搜索结果、输入字段可解析性和依赖状态生成；需确认量表范围、精度和约束条件。"
         },
         {
           "table": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/summary_suspicious.csv",
@@ -495,14 +510,15 @@
           "meaning": "SPRITE 未能找到匹配报告摘要统计的离散分布。",
           "normal_explanations": "可能的正常原因包括量表范围、均值/SD 小数精度、约束条件或 rsprite2 搜索参数设置不匹配。",
           "review_steps": "确认量表范围、均值/SD 小数精度、样本量和是否为离散评分摘要；高风险结果应由人工复核原始频数。",
-          "confidence": "medium",
+          "confidence": "high",
+          "confidence_score": 0.85,
           "false_positive_risk": "high",
           "evidence_id": "r_rsprite2:R_rsprite2_SPRITE:行2",
           "location": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/summary_suspicious.csv",
           "calculation_trace": "",
           "external_records": "",
           "review_actions": "确认量表范围、均值/SD 小数精度、样本量和是否为离散评分摘要；高风险结果应由人工复核原始频数。",
-          "confidence_basis": "基于确定性规则或可复算公式生成；仍需结合研究设计、原始记录和材料抽取质量人工判断。"
+          "confidence_basis": "基于 R rsprite2 SPRITE 搜索结果、输入字段可解析性和依赖状态生成；需确认量表范围、精度和约束条件。"
         },
         {
           "table": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/summary_suspicious.csv",
@@ -525,14 +541,15 @@
           "meaning": "SPRITE 未能找到匹配报告摘要统计的离散分布。",
           "normal_explanations": "可能的正常原因包括量表范围、均值/SD 小数精度、约束条件或 rsprite2 搜索参数设置不匹配。",
           "review_steps": "确认量表范围、均值/SD 小数精度、样本量和是否为离散评分摘要；高风险结果应由人工复核原始频数。",
-          "confidence": "medium",
+          "confidence": "high",
+          "confidence_score": 0.85,
           "false_positive_risk": "high",
           "evidence_id": "r_rsprite2:R_rsprite2_SPRITE:行3",
           "location": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/summary_suspicious.csv",
           "calculation_trace": "",
           "external_records": "",
           "review_actions": "确认量表范围、均值/SD 小数精度、样本量和是否为离散评分摘要；高风险结果应由人工复核原始频数。",
-          "confidence_basis": "基于确定性规则或可复算公式生成；仍需结合研究设计、原始记录和材料抽取质量人工判断。"
+          "confidence_basis": "基于 R rsprite2 SPRITE 搜索结果、输入字段可解析性和依赖状态生成；需确认量表范围、精度和约束条件。"
         },
         {
           "table": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/summary_suspicious.csv",
@@ -555,14 +572,15 @@
           "meaning": "SPRITE 未能找到匹配报告摘要统计的离散分布。",
           "normal_explanations": "可能的正常原因包括量表范围、均值/SD 小数精度、约束条件或 rsprite2 搜索参数设置不匹配。",
           "review_steps": "确认量表范围、均值/SD 小数精度、样本量和是否为离散评分摘要；高风险结果应由人工复核原始频数。",
-          "confidence": "medium",
+          "confidence": "high",
+          "confidence_score": 0.85,
           "false_positive_risk": "high",
           "evidence_id": "r_rsprite2:R_rsprite2_SPRITE:行4",
           "location": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/summary_suspicious.csv",
           "calculation_trace": "",
           "external_records": "",
           "review_actions": "确认量表范围、均值/SD 小数精度、样本量和是否为离散评分摘要；高风险结果应由人工复核原始频数。",
-          "confidence_basis": "基于确定性规则或可复算公式生成；仍需结合研究设计、原始记录和材料抽取质量人工判断。"
+          "confidence_basis": "基于 R rsprite2 SPRITE 搜索结果、输入字段可解析性和依赖状态生成；需确认量表范围、精度和约束条件。"
         },
         {
           "table": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/summary_suspicious.csv",
@@ -586,13 +604,14 @@
           "normal_explanations": "可能的正常原因包括量表范围、均值/SD 小数精度、约束条件或 rsprite2 搜索参数设置不匹配。",
           "review_steps": "SPRITE 是高级复核工具，解释时必须保留量表和搜索参数限制。",
           "confidence": "low",
+          "confidence_score": 0.3,
           "false_positive_risk": "medium",
           "evidence_id": "r_rsprite2:R_rsprite2运行记录:摘要统计表",
           "location": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/summary_suspicious.csv",
           "calculation_trace": "",
           "external_records": "",
           "review_actions": "SPRITE 是高级复核工具，解释时必须保留量表和搜索参数限制。",
-          "confidence_basis": "基于确定性规则或可复算公式生成；仍需结合研究设计、原始记录和材料抽取质量人工判断。"
+          "confidence_basis": "基于 R rsprite2 SPRITE 搜索结果、输入字段可解析性和依赖状态生成；需确认量表范围、精度和约束条件。"
         }
       ]
     }

@@ -90,7 +90,8 @@ Common tasks:
 - Ask authors to confirm measurement scale, rounding, range limits, and data export rules.
 - Recompute key descriptive statistics from original CSV/XLSX.
 - Compare manuscript tables with raw-data summaries and analysis script output.
-- Check grouping variables and coding rules.
+- Check whether 行列高度相似、列间线性变换、列间过高相关性、低频类别 or 有序变量极端集中 have benign design, coding, or measurement explanations.
+- Check grouping variables and coding rules when missingness differs by group.
 - Preserve or update hash/version records after receiving corrected materials.
 
 ## 下一步建议补充材料
@@ -130,8 +131,8 @@ Use this section to bridge to the next service phase without overselling:
 
 Recommended columns:
 
-| 证据ID | 复核优先级 | 检查项 | 位置 | 对象 | 证据 | 复核动作 |
-|---|---|---|---|---|---|---|
+| 证据ID | 复核优先级 | 方法学置信度 | 检查项 | 位置 | 对象 | 证据 | 复核动作 |
+|---|---|---:|---|---|---|---|---|
 
 Keep exact evidence values. Full local paths may appear here when needed.
 

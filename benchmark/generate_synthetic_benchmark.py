@@ -261,7 +261,6 @@ def write_ground_truth() -> None:
             {
                 "expected_signal_tools": [
                     "raw_data_rules",
-                    "digit_distribution",
                     "crosscheck",
                     "p_value_distribution",
                     "r_statcheck",

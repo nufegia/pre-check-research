@@ -35,6 +35,7 @@
           "normal_explanations",
           "review_steps",
           "confidence",
+          "confidence_score",
           "false_positive_risk"
         ],
         "properties": {
@@ -49,6 +50,7 @@
           "normal_explanations": { "type": "string" },
           "review_steps": { "type": "string" },
           "confidence": { "type": "string" },
+          "confidence_score": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
           "false_positive_risk": { "type": "string" },
           "tool_id": { "type": "string" },
           "tool_name": { "type": "string" },

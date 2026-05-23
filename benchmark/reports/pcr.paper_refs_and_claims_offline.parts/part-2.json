@@ -28,6 +28,7 @@
       "normal_explanations": "工具缺失、依赖缺失或路由跳过不是数据风险。",
       "review_steps": "检查 PATH、Rscript、对应 R 包安装状态和 route JSON。",
       "confidence": "low",
+      "confidence_score": 0.1,
       "false_positive_risk": "low",
       "evidence_id": "papermill_light_signals:info:/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/paper_refs_and_claims.md",
       "location": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/paper_refs_and_claims.md",

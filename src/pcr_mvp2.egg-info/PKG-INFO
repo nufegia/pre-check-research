@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: pcr-mvp2
-Version: 0.8.0
+Version: 1.1.0
 Summary: Agent-oriented CLI toolkit for research data risk auditing.
 Requires-Python: >=3.10
 Requires-Dist: numpy>=1.24

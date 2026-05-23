@@ -13,7 +13,6 @@ from pcr_audit.adapter_runtime.r_cli import R_ADAPTER_ORDER, r_adapter
 from pcr_audit.adapter_runtime.table import (
     TABLE_ADAPTER_ORDER,
     crosscheck_adapter,
-    digit_adapter,
     p_value_adapter,
     raw_adapter,
 )
@@ -25,7 +24,6 @@ ADAPTER_ORDER = [*PYTHON_ADAPTER_ORDER, *R_ADAPTER_ORDER]
 
 def register_builtin_adapters() -> None:
     register_adapter("raw_data_rules", raw_adapter)
-    register_adapter("digit_distribution", digit_adapter)
     register_adapter("p_value_distribution", p_value_adapter)
     register_adapter("crosscheck", crosscheck_adapter)
     for tool_id in PRODUCT_ADAPTER_ORDER:

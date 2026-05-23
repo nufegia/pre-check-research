@@ -69,6 +69,42 @@ def first_existing(candidates: list[str]) -> str | None:
     return candidates[0] if candidates else None
 
 
+def sample_size_score(n: int) -> float:
+    if n >= 100:
+        return 1.0
+    if n >= 60:
+        return 0.8
+    if n >= 30:
+        return 0.6
+    if n >= 15:
+        return 0.4
+    return 0.2
+
+
+def weighted_confidence(parts: list[tuple[str, float, float]]) -> tuple[float, str]:
+    total_weight = sum(weight for _, _, weight in parts) or 1.0
+    score = sum(value * weight for _, value, weight in parts) / total_weight
+    score = max(0.0, min(1.0, float(score)))
+    basis = ", ".join(f"{name}={value:.2g}(权重{weight:.0%})" for name, value, weight in parts)
+    return score, f"{basis}; 加权总分={score:.2f}"
+
+
+def level_confidence(level: str, row_count: int, parsable_fields: int = 2) -> tuple[float, str]:
+    severity_score = {"high": 0.90, "medium": 0.70, "low": 0.50, "info": 0.20}.get(level, 0.60)
+    score, basis = weighted_confidence(
+        [
+            ("公式确定性", 1.0 if level != "info" else 0.4, 0.45),
+            ("表规模", sample_size_score(row_count), 0.25),
+            ("可解析字段", sample_size_score(parsable_fields * 15), 0.15),
+            ("偏差等级", severity_score, 0.15),
+        ]
+    )
+    if row_count < 15 and level != "info":
+        score = min(score, 0.40)
+        basis += "; 小样本n<15置信度封顶0.40"
+    return score, basis
+
+
 def parse_p_value(value: Any) -> tuple[str, float] | None:
     if pd.isna(value):
         return None
@@ -95,8 +131,16 @@ def add_finding(
     evidence: str,
     suggestion: str,
     detail: str = "",
+    confidence_score: float | None = None,
+    confidence_basis: str = "",
 ) -> None:
     finding = Finding(table, level, check, target, summary, evidence, detail, suggestion)
+    if confidence_score is not None:
+        finding.confidence_score = max(0.0, min(1.0, float(confidence_score)))
+    if confidence_basis:
+        finding.confidence_basis = confidence_basis
+    else:
+        finding.confidence_score, finding.confidence_basis = level_confidence(level, 30, 2)
     enrich_finding_explanation(finding)
     findings.append(finding)
 
@@ -123,6 +167,10 @@ def tag_findings(
         finding.raw_output_ref = raw_output_ref
         finding.detector_runtime = detector_runtime
         finding.dependency_status = dependency_status
+        if not finding.confidence_basis:
+            score, basis = level_confidence(finding.level, max(1, getattr(finding, "_row_count", 30)), 2)
+            finding.confidence_score = score
+            finding.confidence_basis = basis
         enrich_finding_explanation(finding)
     return findings
 

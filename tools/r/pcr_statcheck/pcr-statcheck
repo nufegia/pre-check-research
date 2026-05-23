@@ -18,6 +18,14 @@ json_escape <- function(x) {
 
 jstr <- function(x) paste0("\"", json_escape(x), "\"")
 
+confidence_score <- function(confidence, level) {
+  if (confidence == "high") return(0.85)
+  if (confidence == "medium") return(0.60)
+  if (confidence == "low") return(0.30)
+  if (level == "info") return(0.10)
+  0.60
+}
+
 finding_json <- function(level, check, target, summary, evidence, detail, suggestion,
                          dependency_status = "ready", confidence = "medium",
                          false_positive_risk = "medium") {
@@ -34,11 +42,13 @@ finding_json <- function(level, check, target, summary, evidence, detail, sugges
     "\"normal_explanations\":", jstr("可能的正常原因包括四舍五入、单双侧检验、统计量抽取错误或同一结果不同版本未同步。"), ",",
     "\"review_steps\":", jstr(suggestion), ",",
     "\"confidence\":", jstr(confidence), ",",
+    "\"confidence_score\":", sprintf("%.2f", confidence_score(confidence, level)), ",",
     "\"false_positive_risk\":", jstr(false_positive_risk), ",",
     "\"tool_id\":\"r_statcheck\",",
     "\"tool_name\":\"R statcheck\",",
     "\"detector_runtime\":\"r\",",
-    "\"dependency_status\":", jstr(dependency_status),
+    "\"dependency_status\":", jstr(dependency_status), ",",
+    "\"confidence_basis\":", jstr("基于 R statcheck 可解析表达式、统计量反算结果和依赖状态生成；需结合报告格式、单双侧检验和抽取质量人工判断。"),
     "}"
   )
 }

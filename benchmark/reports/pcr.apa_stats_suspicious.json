@@ -30,13 +30,14 @@
           "normal_explanations": "可能的正常原因包括四舍五入、单双侧检验、统计量抽取错误或同一结果不同版本未同步。",
           "review_steps": "优先核对统计量、自由度、单双侧检验和 p 值是否来自同一次分析。",
           "confidence": "high",
+          "confidence_score": 0.85,
           "false_positive_risk": "medium",
           "evidence_id": "r_statcheck:R_statcheck正文统计一致性:t(28)=2.20,_p=.90",
           "location": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/apa_stats_suspicious.txt",
           "calculation_trace": "",
           "external_records": "",
           "review_actions": "优先核对统计量、自由度、单双侧检验和 p 值是否来自同一次分析。",
-          "confidence_basis": "基于确定性规则或可复算公式生成；仍需结合研究设计、原始记录和材料抽取质量人工判断。"
+          "confidence_basis": "基于 R statcheck 可解析表达式、统计量反算结果和依赖状态生成；需结合报告格式、单双侧检验和抽取质量人工判断。"
         },
         {
           "table": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/apa_stats_suspicious.txt",
@@ -60,13 +61,14 @@
           "normal_explanations": "可能的正常原因包括四舍五入、单双侧检验、统计量抽取错误或同一结果不同版本未同步。",
           "review_steps": "优先核对统计量、自由度、单双侧检验和 p 值是否来自同一次分析。",
           "confidence": "high",
+          "confidence_score": 0.85,
           "false_positive_risk": "medium",
           "evidence_id": "r_statcheck:R_statcheck正文统计一致性:F(1,_30)=5.00,_p=.80",
           "location": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/apa_stats_suspicious.txt",
           "calculation_trace": "",
           "external_records": "",
           "review_actions": "优先核对统计量、自由度、单双侧检验和 p 值是否来自同一次分析。",
-          "confidence_basis": "基于确定性规则或可复算公式生成；仍需结合研究设计、原始记录和材料抽取质量人工判断。"
+          "confidence_basis": "基于 R statcheck 可解析表达式、统计量反算结果和依赖状态生成；需结合报告格式、单双侧检验和抽取质量人工判断。"
         }
       ]
     }

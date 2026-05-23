@@ -14,6 +14,7 @@ from pcr_audit.product_detectors import (
     provenance_record,
     provenance_verify,
 )
+from pcr_audit.product.image_audit import _is_page_sized_pdf_image
 from pcr_audit.router import build_route_payload
 
 
@@ -66,6 +67,16 @@ def test_pdf_image_extraction_flows_into_image_audit(tmp_path: Path, monkeypatch
 
     assert any(finding.tool_id == "image_extract" and "已发现" in finding.summary for finding in findings)
     assert any(finding.tool_id == "image_metadata_audit" for finding in findings)
+
+
+def test_pdf_page_sized_images_are_not_valid_audit_units() -> None:
+    class Page:
+        width = 600
+        height = 800
+
+    assert _is_page_sized_pdf_image(Page(), (0, 0, 600, 800))
+    assert _is_page_sized_pdf_image(Page(), (10, 12, 592, 784))
+    assert not _is_page_sized_pdf_image(Page(), (100, 120, 420, 460))
 
 
 def test_provenance_jsonl_record_verify_and_diff(tmp_path: Path) -> None:
@@ -135,7 +146,7 @@ def test_route_selects_stage2_stage3_tools_for_project_and_image(tmp_path: Path)
     assert image_tools["image_metadata_audit"]["selected_by_user"] is True
 
 
-def test_auto_route_selects_digit_distribution_for_raw_data(tmp_path: Path) -> None:
+def test_auto_route_selects_raw_rules_for_raw_data(tmp_path: Path) -> None:
     source = tmp_path / "raw.csv"
     source.write_text("id,value\n" + "\n".join(f"{idx},{idx * 1.1}" for idx in range(40)), encoding="utf-8")
 
@@ -143,7 +154,6 @@ def test_auto_route_selects_digit_distribution_for_raw_data(tmp_path: Path) -> N
     decisions = route["tables"][0]["routing_decisions"]
 
     assert decisions["raw_data_rules"]["selected_by_user"] is True
-    assert decisions["digit_distribution"]["selected_by_user"] is True
 
 
 def test_auto_route_selects_p_value_collection_detector(tmp_path: Path) -> None:

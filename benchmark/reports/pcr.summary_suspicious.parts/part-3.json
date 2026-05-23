@@ -18,11 +18,13 @@
       "normal_explanations": "可能的正常原因包括量表范围、均值/SD 小数精度、约束条件或 rsprite2 搜索参数设置不匹配。",
       "review_steps": "确认量表范围、均值/SD 小数精度、样本量和是否为离散评分摘要；高风险结果应由人工复核原始频数。",
       "confidence": "medium",
+      "confidence_score": 0.6,
       "false_positive_risk": "high",
       "tool_id": "r_rsprite2",
       "tool_name": "R rsprite2 SPRITE",
       "detector_runtime": "r",
-      "dependency_status": "ready"
+      "dependency_status": "ready",
+      "confidence_basis": "基于 R rsprite2 SPRITE 搜索结果、输入字段可解析性和依赖状态生成；需确认量表范围、精度和约束条件。"
     },
     {
       "level": "high",
@@ -36,11 +38,13 @@
       "normal_explanations": "可能的正常原因包括量表范围、均值/SD 小数精度、约束条件或 rsprite2 搜索参数设置不匹配。",
       "review_steps": "确认量表范围、均值/SD 小数精度、样本量和是否为离散评分摘要；高风险结果应由人工复核原始频数。",
       "confidence": "medium",
+      "confidence_score": 0.6,
       "false_positive_risk": "high",
       "tool_id": "r_rsprite2",
       "tool_name": "R rsprite2 SPRITE",
       "detector_runtime": "r",
-      "dependency_status": "ready"
+      "dependency_status": "ready",
+      "confidence_basis": "基于 R rsprite2 SPRITE 搜索结果、输入字段可解析性和依赖状态生成；需确认量表范围、精度和约束条件。"
     },
     {
       "level": "high",
@@ -54,11 +58,13 @@
       "normal_explanations": "可能的正常原因包括量表范围、均值/SD 小数精度、约束条件或 rsprite2 搜索参数设置不匹配。",
       "review_steps": "确认量表范围、均值/SD 小数精度、样本量和是否为离散评分摘要；高风险结果应由人工复核原始频数。",
       "confidence": "medium",
+      "confidence_score": 0.6,
       "false_positive_risk": "high",
       "tool_id": "r_rsprite2",
       "tool_name": "R rsprite2 SPRITE",
       "detector_runtime": "r",
-      "dependency_status": "ready"
+      "dependency_status": "ready",
+      "confidence_basis": "基于 R rsprite2 SPRITE 搜索结果、输入字段可解析性和依赖状态生成；需确认量表范围、精度和约束条件。"
     },
     {
       "level": "high",
@@ -72,11 +78,13 @@
       "normal_explanations": "可能的正常原因包括量表范围、均值/SD 小数精度、约束条件或 rsprite2 搜索参数设置不匹配。",
       "review_steps": "确认量表范围、均值/SD 小数精度、样本量和是否为离散评分摘要；高风险结果应由人工复核原始频数。",
       "confidence": "medium",
+      "confidence_score": 0.6,
       "false_positive_risk": "high",
       "tool_id": "r_rsprite2",
       "tool_name": "R rsprite2 SPRITE",
       "detector_runtime": "r",
-      "dependency_status": "ready"
+      "dependency_status": "ready",
+      "confidence_basis": "基于 R rsprite2 SPRITE 搜索结果、输入字段可解析性和依赖状态生成；需确认量表范围、精度和约束条件。"
     },
     {
       "level": "info",
@@ -90,11 +98,13 @@
       "normal_explanations": "可能的正常原因包括量表范围、均值/SD 小数精度、约束条件或 rsprite2 搜索参数设置不匹配。",
       "review_steps": "SPRITE 是高级复核工具，解释时必须保留量表和搜索参数限制。",
       "confidence": "low",
+      "confidence_score": 0.3,
       "false_positive_risk": "medium",
       "tool_id": "r_rsprite2",
       "tool_name": "R rsprite2 SPRITE",
       "detector_runtime": "r",
-      "dependency_status": "ready"
+      "dependency_status": "ready",
+      "confidence_basis": "基于 R rsprite2 SPRITE 搜索结果、输入字段可解析性和依赖状态生成；需确认量表范围、精度和约束条件。"
     }
   ]
 }

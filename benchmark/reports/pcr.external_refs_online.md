@@ -74,12 +74,20 @@
 
 ## 风险发现清单（问题清单）
 
-| 风险 | 证据ID | 位置 | 检查项 | 对象 | 发现 | 证据 | 复核动作 |
-|---|---|---|---|---|---|---|---|
-| 中 | reference_audit:DOI题名不匹配:10.1038/495426a | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/project_external/paper.md | DOI题名不匹配 | 10.1038/495426a | 稿件参考文献行与 Crossref 返回题名明显不一致。 | overlap=0.00; reported_line=Van Noorden R. A randomized oncology survival trial with unrelated endpoints. Nature. 2013. doi:10.1038/495426a. PMID:23538808; crossref_title=Open access: The true cost of science publishing | 人工核对 DOI 是否贴错、参考文献题名是否误填，或排版/抽取是否错行。 |
-| 中 | reference_audit:DOI外部元数据不可核验:10.9999/pcr-benchmark-missing-doi | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/project_external/paper.md | DOI外部元数据不可核验 | 10.9999/pcr-benchmark-missing-doi | 该 DOI 在外部元数据服务中未能获得有效记录。 | crossref cache_miss status=error summary=HTTP Error 404: Not Found; openalex cache_miss status=error summary=HTTP Error 404: Not Found | 核对 DOI 是否拼写错误、是否为未注册标识符，或外部服务是否临时不可用。 |
-| 中 | reference_audit:PMID题名不匹配:23538808 | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/project_external/paper.md | PMID题名不匹配 | 23538808 | 稿件参考文献行与 NCBI 返回题名明显不一致。 | overlap=0.00; reported_line=Van Noorden R. A randomized oncology survival trial with unrelated endpoints. Nature. 2013. doi:10.1038/495426a. PMID:23538808; ncbi_title=Open access: The true cost of science publishing. | 人工核对 PMID 是否贴错、参考文献题名是否误填，或排版/抽取是否错行。 |
-| 低 | provenance_chain_verify:哈希版本链核验:paper.md | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/project_external | 哈希版本链核验 | paper.md | 哈希版本链状态：new | {"relative_path": "paper.md", "sha256": "ccbd79ca365cbc8eb9e3b0b5b430e5fa5f5466c55770616faa5b7a161f6023b9", "size": 408, "status": "new"} | 对 changed/modified/missing/new 文件核对原始记录、上传批次和操作者说明。 |
+| 风险 | 置信度 | 证据ID | 位置 | 检查项 | 对象 | 发现 | 证据 | 复核动作 |
+|---|---:|---|---|---|---|---|---|---|
+| 中 | 60% | reference_audit:DOI题名不匹配:10.1038/495426a | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/project_external/paper.md | DOI题名不匹配 | 10.1038/495426a | 稿件参考文献行与 Crossref 返回题名明显不一致。 | overlap=0.00; reported_line=Van Noorden R. A randomized oncology survival trial with unrelated endpoints. Nature. 2013. doi:10.1038/495426a. PMID:23538808; crossref_title=Open access: The true cost of science publishing | 人工核对 DOI 是否贴错、参考文献题名是否误填，或排版/抽取是否错行。 |
+| 中 | 60% | reference_audit:DOI外部元数据不可核验:10.9999/pcr-benchmark-missing-doi | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/project_external/paper.md | DOI外部元数据不可核验 | 10.9999/pcr-benchmark-missing-doi | 该 DOI 在外部元数据服务中未能获得有效记录。 | crossref cache_miss status=error summary=HTTP Error 404: Not Found; openalex cache_miss status=error summary=HTTP Error 404: Not Found | 核对 DOI 是否拼写错误、是否为未注册标识符，或外部服务是否临时不可用。 |
+| 中 | 60% | reference_audit:PMID题名不匹配:23538808 | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/project_external/paper.md | PMID题名不匹配 | 23538808 | 稿件参考文献行与 NCBI 返回题名明显不一致。 | overlap=0.00; reported_line=Van Noorden R. A randomized oncology survival trial with unrelated endpoints. Nature. 2013. doi:10.1038/495426a. PMID:23538808; ncbi_title=Open access: The true cost of science publishing. | 人工核对 PMID 是否贴错、参考文献题名是否误填，或排版/抽取是否错行。 |
+| 低 | 30%（低置信度，建议补充数据后重检） | provenance_chain_verify:哈希版本链核验:paper.md | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/project_external | 哈希版本链核验 | paper.md | 哈希版本链状态：new | {"relative_path": "paper.md", "sha256": "ccbd79ca365cbc8eb9e3b0b5b430e5fa5f5466c55770616faa5b7a161f6023b9", "size": 408, "status": "new"} | 对 changed/modified/missing/new 文件核对原始记录、上传批次和操作者说明。 |
+
+## 审计置信度摘要
+
+| 方法学置信度 | 发现数 |
+|---|---:|
+| 高(>=75%) | 0 |
+| 中(40%-75%) | 3 |
+| 低(<40%) | 1 |
 
 ## 专家复核附录
 
@@ -92,7 +100,7 @@
 - 工具：参考文献核验（reference_audit）
 - 运行时/依赖：python / ready
 - 输入类型：reference_list
-- 置信度/误报风险：medium / medium
+- 置信度/误报风险：60%（medium） / medium
 - 外部记录：crossref cache_miss status=ok summary=Open access: The true cost of science publishing; Crossref status=ok, title=Open access: The true cost of science publishing; openalex cache_miss status=ok summary=id=https://openalex.org/W2441943932; retracted=False; OpenAlex id=https://openalex.org/W2441943932, retracted=False
 - 路由依据：由确定性路由选择该工具。
 - 可能正常解释：可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。
@@ -109,7 +117,7 @@
 - 工具：参考文献核验（reference_audit）
 - 运行时/依赖：python / ready
 - 输入类型：reference_list
-- 置信度/误报风险：medium / medium
+- 置信度/误报风险：60%（medium） / medium
 - 外部记录：crossref cache_miss status=error summary=HTTP Error 404: Not Found; openalex cache_miss status=error summary=HTTP Error 404: Not Found
 - 路由依据：由确定性路由选择该工具。
 - 可能正常解释：可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。
@@ -126,7 +134,7 @@
 - 工具：参考文献核验（reference_audit）
 - 运行时/依赖：python / ready
 - 输入类型：reference_list
-- 置信度/误报风险：medium / medium
+- 置信度/误报风险：60%（medium） / medium
 - 外部记录：{"uid": "23538808", "pubdate": "2013 Mar 28", "epubdate": "", "source": "Nature", "authors": [{"name": "Van Noorden R", "authtype": "Author", "clusterid": ""}], "lastauthor": "Van Noorden R", "title": "Open access: The true cost of science publishing.", "sorttitle": "open access the true cost of science publishing", "volume": "495", "issue": "7442", "pages": "426-9", "lang": ["eng"], "nlmuniqueid": "0410462", "issn": "0028-0836", "essn": "1476-4687", "pubtype": ["News"], "recordstatus": "PubMed 
 - 路由依据：由确定性路由选择该工具。
 - 可能正常解释：可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。
@@ -143,7 +151,8 @@
 - 工具：哈希版本链核验（provenance_chain_verify）
 - 运行时/依赖：python / ready
 - 输入类型：raw_file_bundle
-- 置信度/误报风险：medium / medium
+- 置信度/误报风险：30%（low） / medium
+- 低置信度提示：该信号置信度较低，建议补充数据后重新检测。
 - 计算/抽取过程：读取 JSONL 账本最新记录并对当前文件重新计算 SHA-256。
 - 路由依据：由确定性路由选择该工具。
 - 可能正常解释：可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。

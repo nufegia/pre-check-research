@@ -7,7 +7,7 @@ New code should not import from this module.
 
 from __future__ import annotations
 
-from pcr_audit.detectors.raw_legacy import analyze_raw_data_rules
+from pcr_audit.detectors.raw import analyze_raw_data_rules
 from pcr_audit.io import load_tables
 from pcr_audit.models import Finding, TableResult, enrich_finding_explanation
 from pcr_audit.reporting import render_markdown, save_json

@@ -45,7 +45,7 @@
             "baseline_b",
             "notes"
           ],
-          "method_limitations": "用于发现数据形态异常；实验设计变量、仪器阈值、批量导出格式可能触发误报。",
+          "method_limitations": "用于发现数据形态、数字分布和列间关系异常；实验设计变量、仪器阈值、批量导出格式、合法派生变量可能触发误报。",
           "detector_runtime": "python",
           "dependency_status": "ready",
           "reliability": "稳定"
@@ -153,32 +153,6 @@
           "detector_runtime": "python",
           "dependency_status": "not_selected",
           "reliability": "稳定"
-        },
-        "digit_distribution": {
-          "tool_id": "digit_distribution",
-          "tool_name": "数字分布检测",
-          "category": "数字取证",
-          "selected_by_user": true,
-          "applicable": true,
-          "ran": false,
-          "status": "ready",
-          "skip_reason": "",
-          "matched_input_type": "raw_observation_table",
-          "required_fields_found": [
-            "subject_id",
-            "group",
-            "assay_step",
-            "terminal_digit_signal",
-            "dominant_value_signal",
-            "missing_by_group",
-            "baseline_a",
-            "baseline_b",
-            "notes"
-          ],
-          "method_limitations": "只适合样本量足够、变量类型合适的数值列；ID、百分比、评分、小样本和截断范围数据不适用。",
-          "detector_runtime": "python",
-          "dependency_status": "ready",
-          "reliability": "弱信号"
         },
         "p_value_distribution": {
           "tool_id": "p_value_distribution",

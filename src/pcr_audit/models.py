@@ -30,6 +30,7 @@ class Finding:
     normal_explanations: str = ""
     review_steps: str = ""
     confidence: str = "medium"
+    confidence_score: float = 0.6
     false_positive_risk: str = "medium"
     evidence_id: str = ""
     location: str = ""
@@ -77,6 +78,17 @@ def enrich_finding_explanation(finding: Finding) -> None:
         )
     if not finding.review_steps:
         finding.review_steps = finding.suggestion or "回看原始记录、统计脚本和数据处理日志，确认该信号是否有合理来源。"
+    if finding.confidence_score is None or (
+        finding.confidence_score == 0.6 and finding.confidence == "medium" and finding.level != "medium"
+    ):
+        finding.confidence_score = {"high": 0.85, "medium": 0.6, "low": 0.3, "info": 0.1}.get(finding.level, 0.6)
+    finding.confidence_score = max(0.0, min(1.0, float(finding.confidence_score)))
+    if finding.confidence_score >= 0.75:
+        finding.confidence = "high"
+    elif finding.confidence_score >= 0.40:
+        finding.confidence = "medium"
+    else:
+        finding.confidence = "low"
     if not finding.confidence:
         finding.confidence = "high" if finding.level == "high" else "medium"
     if not finding.false_positive_risk:
@@ -94,9 +106,17 @@ def enrich_finding_explanation(finding: Finding) -> None:
 
 
 def finding_from_mapping(source: str, raw: dict) -> Finding:
+    raw_level = str(raw.get("level") or "info")
+    raw_confidence = str(raw.get("confidence") or "")
+    raw_score = raw.get("confidence_score")
+    if raw_score is None:
+        raw_score = {"high": 0.85, "medium": 0.6, "low": 0.3}.get(
+            raw_confidence,
+            {"high": 0.85, "medium": 0.6, "low": 0.3, "info": 0.1}.get(raw_level, 0.6),
+        )
     finding = Finding(
         table=str(raw.get("table") or raw.get("source") or source),
-        level=str(raw.get("level") or "info"),
+        level=raw_level,
         check=str(raw.get("check") or "运行记录"),
         target=str(raw.get("target") or ""),
         summary=str(raw.get("summary") or ""),
@@ -112,7 +132,8 @@ def finding_from_mapping(source: str, raw: dict) -> Finding:
         meaning=str(raw.get("meaning") or ""),
         normal_explanations=str(raw.get("normal_explanations") or ""),
         review_steps=str(raw.get("review_steps") or ""),
-        confidence=str(raw.get("confidence") or ""),
+        confidence=raw_confidence,
+        confidence_score=float(raw_score),
         false_positive_risk=str(raw.get("false_positive_risk") or ""),
         evidence_id=str(raw.get("evidence_id") or ""),
         location=str(raw.get("location") or ""),
@@ -152,6 +173,7 @@ def info_finding(
         normal_explanations="工具缺失、依赖缺失或路由跳过不是数据风险。",
         review_steps="检查 PATH、Rscript、对应 R 包安装状态和 route JSON。",
         confidence="low",
+        confidence_score=0.1,
         false_positive_risk="low",
         evidence_id=f"{tool_id}:info:{source}",
         location=source,

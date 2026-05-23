@@ -6,14 +6,14 @@
 
 - Benchmark 根目录：`/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark`
 - 联网测评：已执行。有效 DOI/PMID 的 Crossref/OpenAlex/NCBI 查询返回 status=ok；故意构造的错误 DOI 返回 404，并被检测为“外部元数据不可核验”。
-- 风险信号总数：68
-- 运行/覆盖提示总数：60
+- 风险信号总数：70
+- 运行/覆盖提示总数：59
 
-结论：当前工程的核心检测链路可以被自动化 benchmark 稳定覆盖。确定性数学类、哈希溯源类和项目级对账类检查可作为较可靠的工程回归指标；图像、数字分布、论文工厂/跨稿件相似等弱信号工具适合衡量“是否能提出复核线索”，不能作为强结论指标。
+结论：当前工程的核心检测链路可以被自动化 benchmark 稳定覆盖。确定性数学类、哈希溯源类和项目级对账类检查可作为较可靠的工程回归指标；图像、raw 表格中的数字分布/列间关系弱信号、论文工厂/跨稿件相似等能力适合衡量“是否能提出复核线索”，不能作为强结论指标。
 
 ## 覆盖结论
 
-- 原始数据：覆盖重复行/列、固定步长、高频值、缺失分组集中、尾数分布；干净对照保持 0 个风险信号。
+- 原始数据：覆盖重复/高度重复行列、固定步长、高频值、缺失分组集中、尾数分布、列间关系和非连续变量异常；干净对照保持 0 个风险信号。
 - 摘要统计：覆盖 SE/SD/N、CI、百分比/计数、p/t/df、p 值定义域，以及 R scrutiny/SPRITE 可行性检查。
 - 正文统计：覆盖 R statcheck 对 APA/NHST 表达式的 p 值一致性检查。
 - 文献与联网：覆盖 DOI/PMID 解析、Crossref/OpenAlex/NCBI 元数据查询、引用主张抽取。
@@ -26,7 +26,7 @@
 |---|---|---|
 | 较可靠 | `crosscheck`, `p_value_distribution`, `data_trace_crosscheck`, `provenance_hash`, `provenance_chain_verify` | 数学、定义域或哈希规则明确，适合作为回归门槛。 |
 | 中等可靠 | `raw_data_rules`, `r_statcheck`, `r_scrutiny`, `r_rsprite2`, `code_rerun_execute` | 对输入格式、列名、R 包版本、脚本依赖较敏感；适合作为覆盖和主要异常捕获指标。 |
-| 弱信号 | `digit_distribution`, 图像重复/copy-move, `papermill_light_signals`, `papermill_network_signals` | 只能说明产生了人工复核线索，误报/漏报风险较高。 |
+| 弱信号 | `raw_data_rules` 中的数字分布/列间关系/非连续变量形态信号、图像重复/copy-move, `papermill_light_signals`, `papermill_network_signals` | 只能说明产生了人工复核线索，误报/漏报风险较高。 |
 
 ## 联网模块测试结论
 
@@ -44,19 +44,19 @@
 
 | 用例 | 类型 | 通过 | 秒 | 风险信号 | 提示 | 缺失工具 | 缺失检查 |
 |---|---:|---:|---:|---:|---:|---|---|
-| raw_suspicious | single_run | 是 | 1.17 | 14 | 0 |  |  |
-| raw_clean_control | single_run | 是 | 1.064 | 0 | 0 |  |  |
-| summary_suspicious | single_run | 是 | 2.403 | 17 | 2 |  |  |
-| p_values_suspicious | single_run | 是 | 1.143 | 2 | 0 |  |  |
-| apa_stats_suspicious | single_run | 是 | 1.579 | 2 | 0 |  |  |
-| paper_refs_and_claims_offline | single_run | 是 | 1.057 | 0 | 4 |  |  |
-| analysis_suspicious | single_run | 是 | 1.41 | 1 | 1 |  |  |
-| analysis_manual_unsupported | single_run | 是 | 1.039 | 0 | 3 |  |  |
-| figures_project | project | 是 | 1.192 | 11 | 13 |  |  |
-| project_full | project | 是 | 2.504 | 12 | 20 |  |  |
-| corpus_screen | corpus | 是 | 0.892 | 4 | 0 |  |  |
-| provenance_change | provenance_change | 是 | 0.757 | 1 | 5 |  |  |
-| external_refs_online | project_network | 是 | 5.795 | 4 | 12 |  |  |
+| raw_suspicious | single_run | 是 | 1.164 | 16 | 0 |  |  |
+| raw_clean_control | single_run | 是 | 1.06 | 0 | 0 |  |  |
+| summary_suspicious | single_run | 是 | 2.008 | 17 | 2 |  |  |
+| p_values_suspicious | single_run | 是 | 0.965 | 2 | 0 |  |  |
+| apa_stats_suspicious | single_run | 是 | 1.98 | 2 | 0 |  |  |
+| paper_refs_and_claims_offline | single_run | 是 | 0.974 | 0 | 4 |  |  |
+| analysis_suspicious | single_run | 是 | 1.326 | 1 | 1 |  |  |
+| analysis_manual_unsupported | single_run | 是 | 0.992 | 0 | 3 |  |  |
+| figures_project | project | 是 | 1.125 | 11 | 13 |  |  |
+| project_full | project | 是 | 2.217 | 12 | 19 |  |  |
+| corpus_screen | corpus | 是 | 1.863 | 4 | 0 |  |  |
+| provenance_change | provenance_change | 是 | 1.916 | 1 | 5 |  |  |
+| external_refs_online | project_network | 是 | 5.482 | 4 | 12 |  |  |
 
 ## 工具覆盖
 
@@ -65,7 +65,6 @@
 - `code_rerun_execute`：5 个用例
 - `crosscheck`：2 个用例
 - `data_trace_crosscheck`：3 个用例
-- `digit_distribution`：2 个用例
 - `image_copy_move_internal`：2 个用例
 - `image_duplicate_internal`：2 个用例
 - `image_extract`：3 个用例

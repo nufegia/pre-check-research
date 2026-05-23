@@ -45,10 +45,18 @@
 
 ## 风险发现清单（问题清单）
 
-| 风险 | 证据ID | 位置 | 检查项 | 对象 | 发现 | 证据 | 复核动作 |
-|---|---|---|---|---|---|---|---|
-| 高 | r_statcheck:R_statcheck正文统计一致性:t(28)=2.20,_p=.90 | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/apa_stats_suspicious.txt | R statcheck正文统计一致性 | t(28)=2.20, p=.90 | R statcheck 发现正文统计量与报告 p 值不一致。 | 报告p=0.9，反算p=0.0362254847788378 | 优先核对统计量、自由度、单双侧检验和 p 值是否来自同一次分析。 |
-| 高 | r_statcheck:R_statcheck正文统计一致性:F(1,_30)=5.00,_p=.80 | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/apa_stats_suspicious.txt | R statcheck正文统计一致性 | F(1, 30)=5.00, p=.80 | R statcheck 发现正文统计量与报告 p 值不一致。 | 报告p=0.8，反算p=0.0329363059256379 | 优先核对统计量、自由度、单双侧检验和 p 值是否来自同一次分析。 |
+| 风险 | 置信度 | 证据ID | 位置 | 检查项 | 对象 | 发现 | 证据 | 复核动作 |
+|---|---:|---|---|---|---|---|---|---|
+| 高 | 85% | r_statcheck:R_statcheck正文统计一致性:t(28)=2.20,_p=.90 | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/apa_stats_suspicious.txt | R statcheck正文统计一致性 | t(28)=2.20, p=.90 | R statcheck 发现正文统计量与报告 p 值不一致。 | 报告p=0.9，反算p=0.0362254847788378 | 优先核对统计量、自由度、单双侧检验和 p 值是否来自同一次分析。 |
+| 高 | 85% | r_statcheck:R_statcheck正文统计一致性:F(1,_30)=5.00,_p=.80 | /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/apa_stats_suspicious.txt | R statcheck正文统计一致性 | F(1, 30)=5.00, p=.80 | R statcheck 发现正文统计量与报告 p 值不一致。 | 报告p=0.8，反算p=0.0329363059256379 | 优先核对统计量、自由度、单双侧检验和 p 值是否来自同一次分析。 |
+
+## 审计置信度摘要
+
+| 方法学置信度 | 发现数 |
+|---|---:|
+| 高(>=75%) | 2 |
+| 中(40%-75%) | 0 |
+| 低(<40%) | 0 |
 
 ## 专家复核附录
 
@@ -61,13 +69,13 @@
 - 工具：R statcheck（r_statcheck）
 - 运行时/依赖：r / ready
 - 输入类型：
-- 置信度/误报风险：high / medium
+- 置信度/误报风险：85%（high） / medium
 - 详细说明：source=01; test_type=t; df1=NA; df2=28; test_comp==; test_value=2.2; p_comp==; reported_p=0.9; computed_p=0.0362254847788378; raw=t(28)=2.20, p=.90; error=TRUE; decision_error=TRUE; one_tailed_in_txt=FALSE; apa_factor=1
 - 路由依据：由确定性路由选择该工具。
 - 可能正常解释：可能的正常原因包括四舍五入、单双侧检验、统计量抽取错误或同一结果不同版本未同步。
 - 复核动作：优先核对统计量、自由度、单双侧检验和 p 值是否来自同一次分析。
 - 方法限制：该结果只提示需要复核的风险信号，不构成数据风险校验判定。
-- 置信依据：基于确定性规则或可复算公式生成；仍需结合研究设计、原始记录和材料抽取质量人工判断。
+- 置信依据：基于 R statcheck 可解析表达式、统计量反算结果和依赖状态生成；需结合报告格式、单双侧检验和抽取质量人工判断。
 
 ### 2. 高风险：R statcheck正文统计一致性（F(1, 30)=5.00, p=.80）
 
@@ -78,13 +86,13 @@
 - 工具：R statcheck（r_statcheck）
 - 运行时/依赖：r / ready
 - 输入类型：
-- 置信度/误报风险：high / medium
+- 置信度/误报风险：85%（high） / medium
 - 详细说明：source=01; test_type=F; df1=1; df2=30; test_comp==; test_value=5; p_comp==; reported_p=0.8; computed_p=0.0329363059256379; raw=F(1, 30)=5.00, p=.80; error=TRUE; decision_error=TRUE; one_tailed_in_txt=FALSE; apa_factor=1
 - 路由依据：由确定性路由选择该工具。
 - 可能正常解释：可能的正常原因包括四舍五入、单双侧检验、统计量抽取错误或同一结果不同版本未同步。
 - 复核动作：优先核对统计量、自由度、单双侧检验和 p 值是否来自同一次分析。
 - 方法限制：该结果只提示需要复核的风险信号，不构成数据风险校验判定。
-- 置信依据：基于确定性规则或可复算公式生成；仍需结合研究设计、原始记录和材料抽取质量人工判断。
+- 置信依据：基于 R statcheck 可解析表达式、统计量反算结果和依赖状态生成；需结合报告格式、单双侧检验和抽取质量人工判断。
 
 ## 人工复核任务表
 

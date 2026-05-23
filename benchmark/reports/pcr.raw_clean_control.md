@@ -2,9 +2,9 @@
 
 ## 导师摘要
 
-- 文件：`merged-findings.json`
+- 文件：`raw_clean_control.csv`
 - 总体风险：低
-- 检测对象：2 组
+- 检测对象：1 组
 - 风险信号：高 0 / 中 0 / 低 0
 - 运行提示：0 条
 
@@ -37,8 +37,7 @@
 
 | 工具 | 名称 | 材料/模块 | 状态 | 依赖状态 | 运行时 | 输入类型 | 路由/运行依据 | 方法限制 |
 |---|---|---|---|---|---|---|---|---|
-| raw_data_rules | 基础表格规则 | raw_clean_control.csv:raw_clean_control | ready | ready | python | raw_observation_table | 确定性路由判定该工具适用于当前材料。 | 用于发现数据形态异常；实验设计变量、仪器阈值、批量导出格式可能触发误报。 |
-| digit_distribution | 数字分布检测 | raw_clean_control.csv:raw_clean_control | ready | ready | python | raw_observation_table | 确定性路由判定该工具适用于当前材料。 | 只适合样本量足够、变量类型合适的数值列；ID、百分比、评分、小样本和截断范围数据不适用。 |
+| raw_data_rules | 基础表格规则 | raw_clean_control.csv:raw_clean_control | ready | ready | python | raw_observation_table | 确定性路由判定该工具适用于当前材料。 | 用于发现数据形态、数字分布和列间关系异常；实验设计变量、仪器阈值、批量导出格式、合法派生变量可能触发误报。 |
 
 ## 覆盖缺口与未运行原因
 

@@ -28,13 +28,14 @@
           "normal_explanations": "可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。",
           "review_steps": "若变量类型或检验设计与假设不符，仍建议人工复核原始分析。",
           "confidence": "medium",
+          "confidence_score": 0.45000000000000007,
           "false_positive_risk": "medium",
           "evidence_id": "unknown:交叉验证运行记录:摘要统计表",
           "location": "Sheet1",
           "calculation_trace": "",
           "external_records": "",
           "review_actions": "若变量类型或检验设计与假设不符，仍建议人工复核原始分析。",
-          "confidence_basis": "基于确定性规则或可复算公式生成；仍需结合研究设计、原始记录和材料抽取质量人工判断。"
+          "confidence_basis": "公式确定性=0.4(权重45%), 表规模=0.6(权重25%), 可解析字段=0.6(权重15%), 偏差等级=0.2(权重15%); 加权总分=0.45"
         }
       ]
     }

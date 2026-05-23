@@ -2,7 +2,7 @@
   "service": "openalex",
   "identifier": "10.1038/495426a",
   "url": "https://api.openalex.org/works/https://doi.org/10.1038%2F495426a",
-  "timestamp": "2026-05-23T01:34:51+00:00",
+  "timestamp": "2026-05-23T10:47:36+00:00",
   "status": "ok",
   "summary": "id=https://openalex.org/W2441943932; retracted=False",
   "response": {
@@ -720,8 +720,8 @@
     "awards": [],
     "funders": [],
     "has_content": {
-      "pdf": false,
-      "grobid_xml": false
+      "grobid_xml": false,
+      "pdf": false
     },
     "content_urls": null,
     "referenced_works_count": 2,

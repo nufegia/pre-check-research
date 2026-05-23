@@ -18,11 +18,13 @@
       "normal_explanations": "可能的正常原因包括四舍五入、单双侧检验、统计量抽取错误或同一结果不同版本未同步。",
       "review_steps": "优先核对统计量、自由度、单双侧检验和 p 值是否来自同一次分析。",
       "confidence": "high",
+      "confidence_score": 0.85,
       "false_positive_risk": "medium",
       "tool_id": "r_statcheck",
       "tool_name": "R statcheck",
       "detector_runtime": "r",
-      "dependency_status": "ready"
+      "dependency_status": "ready",
+      "confidence_basis": "基于 R statcheck 可解析表达式、统计量反算结果和依赖状态生成；需结合报告格式、单双侧检验和抽取质量人工判断。"
     },
     {
       "level": "high",
@@ -36,11 +38,13 @@
       "normal_explanations": "可能的正常原因包括四舍五入、单双侧检验、统计量抽取错误或同一结果不同版本未同步。",
       "review_steps": "优先核对统计量、自由度、单双侧检验和 p 值是否来自同一次分析。",
       "confidence": "high",
+      "confidence_score": 0.85,
       "false_positive_risk": "medium",
       "tool_id": "r_statcheck",
       "tool_name": "R statcheck",
       "detector_runtime": "r",
-      "dependency_status": "ready"
+      "dependency_status": "ready",
+      "confidence_basis": "基于 R statcheck 可解析表达式、统计量反算结果和依赖状态生成；需结合报告格式、单双侧检验和抽取质量人工判断。"
     }
   ]
 }

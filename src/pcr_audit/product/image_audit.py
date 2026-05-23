@@ -15,6 +15,9 @@ import numpy as np
 from pcr_audit.models import Finding, TableResult
 from pcr_audit.product.common import IMAGE_SUFFIXES, finding, iter_audit_files
 
+PDF_PAGE_IMAGE_MAX_COVERAGE = 0.72
+PDF_PAGE_IMAGE_MIN_MARGIN = 18.0
+
 def iter_image_files(source: Path) -> list[Path]:
     if source.is_dir():
         return [path for path in iter_audit_files(source) if path.suffix.lower() in IMAGE_SUFFIXES]
@@ -39,6 +42,44 @@ def extract_docx_images(source: Path, out_dir: Path) -> list[Path]:
     return images
 
 
+def _pdf_image_bbox(item: dict[str, Any]) -> tuple[float, float, float, float] | None:
+    try:
+        x0 = float(item["x0"])
+        top = float(item["top"])
+        x1 = float(item["x1"])
+        bottom = float(item["bottom"])
+    except Exception:
+        return None
+    if x1 <= x0 or bottom <= top:
+        return None
+    return x0, top, x1, bottom
+
+
+def _pdf_image_coverage(page: Any, bbox: tuple[float, float, float, float]) -> float:
+    page_width = float(getattr(page, "width", 0) or 0)
+    page_height = float(getattr(page, "height", 0) or 0)
+    page_area = page_width * page_height
+    if page_area <= 0:
+        return 0.0
+    x0, top, x1, bottom = bbox
+    return max(0.0, (x1 - x0) * (bottom - top)) / page_area
+
+
+def _is_page_sized_pdf_image(page: Any, bbox: tuple[float, float, float, float]) -> bool:
+    page_width = float(getattr(page, "width", 0) or 0)
+    page_height = float(getattr(page, "height", 0) or 0)
+    if page_width <= 0 or page_height <= 0:
+        return False
+    x0, top, x1, bottom = bbox
+    near_edges = (
+        x0 <= PDF_PAGE_IMAGE_MIN_MARGIN
+        and top <= PDF_PAGE_IMAGE_MIN_MARGIN
+        and page_width - x1 <= PDF_PAGE_IMAGE_MIN_MARGIN
+        and page_height - bottom <= PDF_PAGE_IMAGE_MIN_MARGIN
+    )
+    return _pdf_image_coverage(page, bbox) >= PDF_PAGE_IMAGE_MAX_COVERAGE or near_edges
+
+
 def extract_pdf_images(source: Path, out_dir: Path) -> tuple[list[Path], str]:
     images: list[Path] = []
     if source.suffix.lower() != ".pdf":
@@ -56,6 +97,15 @@ def extract_pdf_images(source: Path, out_dir: Path) -> tuple[list[Path], str]:
         with pdfplumber.open(str(source)) as pdf:
             for page_no, page in enumerate(pdf.pages, start=1):
                 for image_no, item in enumerate(page.images or [], start=1):
+                    bbox = _pdf_image_bbox(item)
+                    if bbox is None:
+                        notes.append(f"p{page_no}/img{image_no}:invalid_bbox")
+                        continue
+                    if _is_page_sized_pdf_image(page, bbox):
+                        notes.append(
+                            f"p{page_no}/img{image_no}:skipped_page_sized_image coverage={_pdf_image_coverage(page, bbox):.2f}"
+                        )
+                        continue
                     out = out_dir / f"{source.stem}_p{page_no}_img{image_no}.png"
                     saved = False
                     stream = item.get("stream")
@@ -69,7 +119,6 @@ def extract_pdf_images(source: Path, out_dir: Path) -> tuple[list[Path], str]:
                             pass
                     if not saved:
                         try:
-                            bbox = (item["x0"], item["top"], item["x1"], item["bottom"])
                             rendered = page.crop(bbox).to_image(resolution=150).original
                             rendered.save(out)
                             saved = True

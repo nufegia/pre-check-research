@@ -9,6 +9,26 @@ from pcr_audit.crosscheck import parse_p_value
 from pcr_audit.models import Finding, TableResult, enrich_finding_explanation
 
 
+def _sample_size_score(n: int) -> float:
+    if n >= 100:
+        return 1.0
+    if n >= 60:
+        return 0.8
+    if n >= 30:
+        return 0.6
+    if n >= 15:
+        return 0.4
+    return 0.2
+
+
+def _weighted_confidence(parts: list[tuple[str, float, float]]) -> tuple[float, str]:
+    total_weight = sum(weight for _, _, weight in parts) or 1.0
+    score = sum(value * weight for _, value, weight in parts) / total_weight
+    score = max(0.0, min(1.0, float(score)))
+    basis = ", ".join(f"{name}={value:.2g}(权重{weight:.0%})" for name, value, weight in parts)
+    return score, f"{basis}; 加权总分={score:.2f}"
+
+
 def _normalize_name(name: Any) -> str:
     text = str(name).strip().lower()
     text = re.sub(r"\s+", "", text)
@@ -34,7 +54,19 @@ def _finding(
     evidence: str,
     suggestion: str,
     detail: str = "",
+    effective_n: int = 0,
+    effect_score: float = 0.6,
 ) -> Finding:
+    score, basis = _weighted_confidence(
+        [
+            ("p值数量", _sample_size_score(effective_n), 0.30),
+            ("规则确定性", 1.0 if check == "p值定义域" else 0.6 if check == "边缘显著p值聚集" else 0.3, 0.40),
+            ("效应强度", effect_score, 0.30),
+        ]
+    )
+    if effective_n < 15 and level != "info":
+        score = min(score, 0.40)
+        basis += "; 小样本n<15置信度封顶0.40"
     item = Finding(
         table=table,
         level=level,
@@ -51,6 +83,8 @@ def _finding(
         routing_reason="纯 p 值集合由确定性路由选择 p 值集合弱信号检测。",
         method_limitations="该检查只看 p 值集合形态，不知道检验族、方向、校正方式或完整结果空间；边缘显著聚集只能提示人工复核。",
         confidence="medium" if level != "info" else "low",
+        confidence_score=score,
+        confidence_basis=basis,
         false_positive_risk="high" if check == "边缘显著p值聚集" else "medium",
     )
     enrich_finding_explanation(item)
@@ -88,6 +122,8 @@ def analyze_p_value_collection(name: str, df: pd.DataFrame) -> TableResult:
                 "；".join(invalid[:12]),
                 "核对 p 值列是否混入统计量、百分比、格式化注释或表格抽取错误。",
                 f"异常条目数={len(invalid)}。",
+                effective_n=len(parsed_values) + len(invalid),
+                effect_score=1.0 if len(invalid) >= 3 else 0.7,
             )
         )
 
@@ -104,6 +140,8 @@ def analyze_p_value_collection(name: str, df: pd.DataFrame) -> TableResult:
                 f"边缘显著={len(edge)}，显著p值={len(sig)}，有效p值={len(parsed_values)}",
                 "这只能提示选择性报告或多重比较透明度风险；需结合方法、预注册和完整结果表人工复核。",
                 "该规则不判断 p-hacking，只作为复核线索。",
+                effective_n=len(parsed_values),
+                effect_score=1.0 if len(edge) / max(len(sig), 1) >= 0.50 else 0.7,
             )
         )
 
@@ -117,6 +155,8 @@ def analyze_p_value_collection(name: str, df: pd.DataFrame) -> TableResult:
                 "p 值集合弱信号检测已完成，未发现定义域异常或边缘显著聚集。",
                 f"p值列={len(columns)}，有效p值={len(parsed_values)}",
                 "若这些 p 值来自大量探索性检验，仍建议结合完整检验清单和多重校正策略人工复核。",
+                effective_n=len(parsed_values),
+                effect_score=0.2,
             )
         )
 

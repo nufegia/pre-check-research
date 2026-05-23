@@ -13,7 +13,7 @@
       "id": "raw_suspicious",
       "kind": "single_run",
       "input": "inputs/raw_suspicious.csv",
-      "expected_tools": ["raw_data_rules", "digit_distribution"],
+      "expected_tools": ["raw_data_rules"],
       "expected_checks": ["重复行", "重复列", "等差/固定步长", "高频数值", "缺失集中于分组", "尾数分布"],
       "min_risk_findings": 6
     },

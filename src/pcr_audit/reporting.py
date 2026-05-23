@@ -30,6 +30,10 @@ def _short_value(value: Any, limit: int = 180) -> str:
     return text if len(text) <= limit else text[: limit - 1] + "…"
 
 
+def _confidence_percent(finding: Finding) -> str:
+    return f"{max(0.0, min(1.0, float(finding.confidence_score))) * 100:.0f}%"
+
+
 def _read_json_if_exists(path: Path) -> dict[str, Any] | None:
     if not path.exists() or not path.is_file():
         return None
@@ -336,13 +340,27 @@ def render_markdown(
     else:
         ordered = sorted(risk_findings, key=lambda finding: LEVEL_SCORE[finding.level], reverse=True)
         lines += [
-            "| 风险 | 证据ID | 位置 | 检查项 | 对象 | 发现 | 证据 | 复核动作 |",
-            "|---|---|---|---|---|---|---|---|",
+            "| 风险 | 置信度 | 证据ID | 位置 | 检查项 | 对象 | 发现 | 证据 | 复核动作 |",
+            "|---|---:|---|---|---|---|---|---|---|",
         ]
         for finding in ordered:
+            low_confidence_note = "（低置信度，建议补充数据后重检）" if finding.confidence_score < 0.40 else ""
             lines.append(
-                f"| {LEVEL_CN[finding.level]} | {markdown_cell(finding.evidence_id)} | {markdown_cell(finding.location)} | {markdown_cell(finding.check)} | {markdown_cell(finding.target)} | {markdown_cell(finding.summary)} | {markdown_cell(finding.evidence)} | {markdown_cell(finding.review_actions or finding.suggestion)} |"
+                f"| {LEVEL_CN[finding.level]} | {_confidence_percent(finding)}{low_confidence_note} | {markdown_cell(finding.evidence_id)} | {markdown_cell(finding.location)} | {markdown_cell(finding.check)} | {markdown_cell(finding.target)} | {markdown_cell(finding.summary)} | {markdown_cell(finding.evidence)} | {markdown_cell(finding.review_actions or finding.suggestion)} |"
             )
+        lines.append("")
+        confidence_bins = Counter(
+            "高(>=75%)" if finding.confidence_score >= 0.75 else "中(40%-75%)" if finding.confidence_score >= 0.40 else "低(<40%)"
+            for finding in ordered
+        )
+        lines += [
+            "## 审计置信度摘要",
+            "",
+            "| 方法学置信度 | 发现数 |",
+            "|---|---:|",
+        ]
+        for label in ["高(>=75%)", "中(40%-75%)", "低(<40%)"]:
+            lines.append(f"| {label} | {confidence_bins.get(label, 0)} |")
         lines.append("")
         lines += ["## 专家复核附录", ""]
         for idx, finding in enumerate(ordered, start=1):
@@ -356,8 +374,10 @@ def render_markdown(
                 f"- 工具：{finding.tool_name or finding.tool_id}（{finding.tool_id}）",
                 f"- 运行时/依赖：{finding.detector_runtime} / {finding.dependency_status}",
                 f"- 输入类型：{finding.input_type}",
-                f"- 置信度/误报风险：{finding.confidence} / {finding.false_positive_risk}",
+                f"- 置信度/误报风险：{_confidence_percent(finding)}（{finding.confidence}） / {finding.false_positive_risk}",
             ]
+            if finding.confidence_score < 0.40:
+                lines.append("- 低置信度提示：该信号置信度较低，建议补充数据后重新检测。")
             if finding.detail:
                 lines.append(f"- 详细说明：{finding.detail}")
             if finding.calculation_trace:

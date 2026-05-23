@@ -136,7 +136,7 @@ def finding(
 
 
 def _http_json(url: str, timeout: float = 8.0, contact_email: str = "") -> dict[str, Any] | None:
-    user_agent = f"pcr-audit/1.0.2 ({contact_email})" if contact_email else "pcr-audit/1.0.2"
+    user_agent = f"pcr-audit/1.1.0 ({contact_email})" if contact_email else "pcr-audit/1.1.0"
     request = urllib.request.Request(
         url,
         headers={
@@ -238,7 +238,7 @@ def extract_text_with_grobid(source: Path, config: AuditConfig, findings: list[F
         request = urllib.request.Request(
             _grobid_endpoint(config.grobid_url),
             data=body,
-            headers={"Content-Type": f"multipart/form-data; boundary={boundary}", "User-Agent": "pcr-audit/1.0.2"},
+            headers={"Content-Type": f"multipart/form-data; boundary={boundary}", "User-Agent": "pcr-audit/1.1.0"},
             method="POST",
         )
         with urllib.request.urlopen(request, timeout=20) as response:
