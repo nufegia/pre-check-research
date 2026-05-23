@@ -1,0 +1,126 @@
+{
+  "ledger": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/project_provenance_benchmark/.pcr/provenance-ledger.jsonl",
+  "batch_id": "53aed2f2350f4c4883c69e3c85c1c2fd",
+  "records": [
+    {
+      "event": "record",
+      "record_id": "e06c3912e54044e182e941348f46e385",
+      "batch_id": "53aed2f2350f4c4883c69e3c85c1c2fd",
+      "project_id": "project_provenance_benchmark",
+      "relative_path": "analysis.py",
+      "path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/project_provenance_benchmark/analysis.py",
+      "sha256": "a2251f7ae1655d155f9cdfe921818f0c0c0c07c37dd058c954bd0d52b8a6c4b5",
+      "size": 192,
+      "mtime": 1779499974,
+      "recorded_at": "2026-05-23T01:34:48+00:00",
+      "parent_record_id": "",
+      "role": "analysis_code",
+      "operator": "",
+      "metadata": {
+        "size": 192,
+        "mtime": 1779499974,
+        "suffix": ".py"
+      }
+    },
+    {
+      "event": "record",
+      "record_id": "83bd46157714452faeacc5994f576870",
+      "batch_id": "53aed2f2350f4c4883c69e3c85c1c2fd",
+      "project_id": "project_provenance_benchmark",
+      "relative_path": "data.csv",
+      "path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/project_provenance_benchmark/data.csv",
+      "sha256": "9eb13bdb1f6f9c2e47dac6249ebb882b2b395f0f236efed09e0ed2bae2b5d081",
+      "size": 22,
+      "mtime": 1779499974,
+      "recorded_at": "2026-05-23T01:34:48+00:00",
+      "parent_record_id": "",
+      "role": "raw_data",
+      "operator": "",
+      "metadata": {
+        "size": 22,
+        "mtime": 1779499974,
+        "suffix": ".csv"
+      }
+    },
+    {
+      "event": "record",
+      "record_id": "1b4cfa27ee364c3089d7c54ed2e32e12",
+      "batch_id": "53aed2f2350f4c4883c69e3c85c1c2fd",
+      "project_id": "project_provenance_benchmark",
+      "relative_path": "figures/western_blot_project_a.png",
+      "path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/project_provenance_benchmark/figures/western_blot_project_a.png",
+      "sha256": "0e202e24af20cbfe14f09ee413e0728ab9d7ff54819b1ef321b3ceb1ed3214ca",
+      "size": 759,
+      "mtime": 1779499974,
+      "recorded_at": "2026-05-23T01:34:48+00:00",
+      "parent_record_id": "",
+      "role": "figures",
+      "operator": "",
+      "metadata": {
+        "size": 759,
+        "mtime": 1779499974,
+        "suffix": ".png"
+      }
+    },
+    {
+      "event": "record",
+      "record_id": "2584c911fc3e44f881bc30bc68fb5ef7",
+      "batch_id": "53aed2f2350f4c4883c69e3c85c1c2fd",
+      "project_id": "project_provenance_benchmark",
+      "relative_path": "figures/western_blot_project_b.png",
+      "path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/project_provenance_benchmark/figures/western_blot_project_b.png",
+      "sha256": "0e202e24af20cbfe14f09ee413e0728ab9d7ff54819b1ef321b3ceb1ed3214ca",
+      "size": 759,
+      "mtime": 1779499974,
+      "recorded_at": "2026-05-23T01:34:48+00:00",
+      "parent_record_id": "",
+      "role": "figures",
+      "operator": "",
+      "metadata": {
+        "size": 759,
+        "mtime": 1779499974,
+        "suffix": ".png"
+      }
+    },
+    {
+      "event": "record",
+      "record_id": "076fd344bb484de6bf6c0ce528fb4a59",
+      "batch_id": "53aed2f2350f4c4883c69e3c85c1c2fd",
+      "project_id": "project_provenance_benchmark",
+      "relative_path": "paper.md",
+      "path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/project_provenance_benchmark/paper.md",
+      "sha256": "7a58ef1bf3fbf28d559603f518887ad78642da737f089d570558e625169a9a97",
+      "size": 165,
+      "mtime": 1779499974,
+      "recorded_at": "2026-05-23T01:34:48+00:00",
+      "parent_record_id": "",
+      "role": "manuscript",
+      "operator": "",
+      "metadata": {
+        "size": 165,
+        "mtime": 1779499974,
+        "suffix": ".md"
+      }
+    },
+    {
+      "event": "record",
+      "record_id": "3dda8bf94e7f46a884b01ef45adacf3e",
+      "batch_id": "53aed2f2350f4c4883c69e3c85c1c2fd",
+      "project_id": "project_provenance_benchmark",
+      "relative_path": "paper_tables.xlsx",
+      "path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/project_provenance_benchmark/paper_tables.xlsx",
+      "sha256": "ce628fbe5a5385ebd4f4357b9d685251b1a185ab79ecc0343e1046395820766e",
+      "size": 5436,
+      "mtime": 1779499974,
+      "recorded_at": "2026-05-23T01:34:48+00:00",
+      "parent_record_id": "",
+      "role": "raw_data",
+      "operator": "",
+      "metadata": {
+        "size": 5436,
+        "mtime": 1779499974,
+        "suffix": ".xlsx"
+      }
+    }
+  ]
+}

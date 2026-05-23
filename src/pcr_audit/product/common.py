@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import re
+import ssl
 import sys
 import urllib.request
 from dataclasses import dataclass, field
@@ -143,7 +144,14 @@ def _http_json(url: str, timeout: float = 8.0, contact_email: str = "") -> dict[
             "Accept": "application/json",
         },
     )
-    with urllib.request.urlopen(request, timeout=timeout) as response:
+    context = None
+    try:
+        import certifi  # type: ignore
+
+        context = ssl.create_default_context(cafile=certifi.where())
+    except Exception:
+        context = None
+    with urllib.request.urlopen(request, timeout=timeout, context=context) as response:
         return json.loads(response.read().decode("utf-8"))
 
 

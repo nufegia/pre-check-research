@@ -117,15 +117,15 @@ res <- tryCatch({
   out <- statcheck::statcheck(txt, messages = FALSE)
   if (is.null(out)) { data.frame() } else if (is.list(out) && "results" %in% names(out)) out$results else out
 }, error = function(e) {
-  data.frame(error = conditionMessage(e), stringsAsFactors = FALSE)
+  data.frame(.pcr_cli_error = conditionMessage(e), stringsAsFactors = FALSE)
 })
 
-if ("error" %in% names(res)) {
+if (".pcr_cli_error" %in% names(res)) {
   f <- finding_json(
     "info", "R statcheck运行记录", "statcheck API",
     "R statcheck API 调用失败。",
     "dependency_status=error",
-    res$error[[1]],
+    res$.pcr_cli_error[[1]],
     "确认文本格式、statcheck 版本和输入编码后重试。",
     "error", "low", "low"
   )

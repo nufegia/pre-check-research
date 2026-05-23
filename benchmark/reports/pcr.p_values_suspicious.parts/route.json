@@ -1,0 +1,451 @@
+{
+  "source": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/p_values_suspicious.csv",
+  "source_kind": "table",
+  "scenario": "auto",
+  "tables": [
+    {
+      "name": "p_values_suspicious",
+      "rows": 12,
+      "columns": 2,
+      "classification": {
+        "primary_type": "p_value_collection",
+        "input_types": [
+          "p_value_collection"
+        ],
+        "signals": {
+          "n_columns": [],
+          "mean_columns": [],
+          "sd_columns": [],
+          "se_columns": [],
+          "ci_columns": [],
+          "p_columns": [
+            "p"
+          ],
+          "statistic_columns": [],
+          "score_columns": []
+        }
+      },
+      "routing_decisions": {
+        "raw_data_rules": {
+          "tool_id": "raw_data_rules",
+          "tool_name": "基础表格规则",
+          "category": "原始数据",
+          "selected_by_user": false,
+          "applicable": false,
+          "ran": false,
+          "status": "not_selected",
+          "skip_reason": "用户未勾选该工具包，本次不参与检测。",
+          "matched_input_type": "",
+          "required_fields_found": [
+            "test",
+            "p"
+          ],
+          "method_limitations": "用于发现数据形态异常；实验设计变量、仪器阈值、批量导出格式可能触发误报。",
+          "detector_runtime": "python",
+          "dependency_status": "not_selected",
+          "reliability": "稳定"
+        },
+        "r_scrutiny": {
+          "tool_id": "r_scrutiny",
+          "tool_name": "R scrutiny",
+          "category": "R 统计一致性",
+          "selected_by_user": false,
+          "applicable": false,
+          "ran": false,
+          "status": "not_selected",
+          "skip_reason": "用户未勾选该工具包，本次不参与检测。",
+          "matched_input_type": "",
+          "required_fields_found": [
+            "test",
+            "p"
+          ],
+          "method_limitations": "适用于报告均值、SD、N、比例或二元数据摘要；需确认量表范围、四舍五入规则和变量类型。",
+          "detector_runtime": "r",
+          "dependency_status": "not_selected",
+          "reliability": "需 R"
+        },
+        "r_statcheck": {
+          "tool_id": "r_statcheck",
+          "tool_name": "R statcheck",
+          "category": "R 正文统计",
+          "selected_by_user": false,
+          "applicable": false,
+          "ran": false,
+          "status": "not_selected",
+          "skip_reason": "用户未勾选该工具包，本次不参与检测。",
+          "matched_input_type": "",
+          "required_fields_found": [
+            "test",
+            "p"
+          ],
+          "method_limitations": "只适用于可被 statcheck 解析的 APA/NHST 表达式；中文全角标点、非标准统计报告和抽取失败文本会降低覆盖率。",
+          "detector_runtime": "r",
+          "dependency_status": "not_selected",
+          "reliability": "需 R"
+        },
+        "r_rsprite2": {
+          "tool_id": "r_rsprite2",
+          "tool_name": "R rsprite2",
+          "category": "R 高级复核",
+          "selected_by_user": false,
+          "applicable": false,
+          "ran": false,
+          "status": "not_selected",
+          "skip_reason": "用户未勾选该工具包，本次不参与检测。",
+          "matched_input_type": "",
+          "required_fields_found": [
+            "test",
+            "p"
+          ],
+          "method_limitations": "需要明确量表范围、精度和约束；结果解释成本高，只作为专家复核入口。",
+          "detector_runtime": "r",
+          "dependency_status": "not_selected",
+          "reliability": "高级/需 R"
+        },
+        "crosscheck": {
+          "tool_id": "crosscheck",
+          "tool_name": "行级数学交叉校验",
+          "category": "统计一致性",
+          "selected_by_user": false,
+          "applicable": false,
+          "ran": false,
+          "status": "not_selected",
+          "skip_reason": "用户未勾选该工具包，本次不参与检测。",
+          "matched_input_type": "",
+          "required_fields_found": [
+            "test",
+            "p"
+          ],
+          "method_limitations": "只校验表内派生统计量的数学一致性；无法判断原始观测是否真实或统计模型是否合适。",
+          "detector_runtime": "python",
+          "dependency_status": "not_selected",
+          "reliability": "稳定"
+        },
+        "digit_distribution": {
+          "tool_id": "digit_distribution",
+          "tool_name": "数字分布检测",
+          "category": "数字取证",
+          "selected_by_user": false,
+          "applicable": false,
+          "ran": false,
+          "status": "not_selected",
+          "skip_reason": "用户未勾选该工具包，本次不参与检测。",
+          "matched_input_type": "",
+          "required_fields_found": [
+            "test",
+            "p"
+          ],
+          "method_limitations": "只适合样本量足够、变量类型合适的数值列；ID、百分比、评分、小样本和截断范围数据不适用。",
+          "detector_runtime": "python",
+          "dependency_status": "not_selected",
+          "reliability": "弱信号"
+        },
+        "p_value_distribution": {
+          "tool_id": "p_value_distribution",
+          "tool_name": "p值集合弱信号检测",
+          "category": "统计一致性",
+          "selected_by_user": true,
+          "applicable": true,
+          "ran": false,
+          "status": "ready",
+          "skip_reason": "",
+          "matched_input_type": "p_value_collection",
+          "required_fields_found": [
+            "test",
+            "p"
+          ],
+          "method_limitations": "只检查 p 值集合形态，不知道检验族、方向、校正方式或完整结果空间；边缘聚集只能作为选择性报告复核线索。",
+          "detector_runtime": "python",
+          "dependency_status": "ready",
+          "reliability": "弱信号"
+        },
+        "image_forensics": {
+          "tool_id": "image_forensics",
+          "tool_name": "图像取证",
+          "category": "图像",
+          "selected_by_user": false,
+          "applicable": false,
+          "ran": false,
+          "status": "not_selected",
+          "skip_reason": "用户未勾选该工具包，本次不参与检测。",
+          "matched_input_type": "",
+          "required_fields_found": [
+            "test",
+            "p"
+          ],
+          "method_limitations": "图像取证结果不能单独作为强结论；重复纹理、压缩流程和排版软件都可能导致误报。",
+          "detector_runtime": "python",
+          "dependency_status": "not_selected",
+          "reliability": "弱信号"
+        },
+        "reference_audit": {
+          "tool_id": "reference_audit",
+          "tool_name": "参考文献核验",
+          "category": "文献与外部信号",
+          "selected_by_user": false,
+          "applicable": false,
+          "ran": false,
+          "status": "not_selected",
+          "skip_reason": "用户未勾选该工具包，本次不参与检测。",
+          "matched_input_type": "",
+          "required_fields_found": [
+            "test",
+            "p"
+          ],
+          "method_limitations": "默认不向外部 API 发送材料；外部元数据可能不完整，撤稿与争议信号需人工确认。",
+          "detector_runtime": "python",
+          "dependency_status": "not_selected",
+          "reliability": "稳定/外部查询需启用"
+        },
+        "citation_claim_check": {
+          "tool_id": "citation_claim_check",
+          "tool_name": "引用支持关系辅助复核",
+          "category": "文献与外部信号",
+          "selected_by_user": false,
+          "applicable": false,
+          "ran": false,
+          "status": "not_selected",
+          "skip_reason": "用户未勾选该工具包，本次不参与检测。",
+          "matched_input_type": "",
+          "required_fields_found": [
+            "test",
+            "p"
+          ],
+          "method_limitations": "轻量抽取不判断引用是否真正支持主张；必须保留证据片段并人工确认。",
+          "detector_runtime": "python",
+          "dependency_status": "not_selected",
+          "reliability": "辅助"
+        },
+        "image_extract": {
+          "tool_id": "image_extract",
+          "tool_name": "图像抽取",
+          "category": "图像",
+          "selected_by_user": false,
+          "applicable": false,
+          "ran": false,
+          "status": "not_selected",
+          "skip_reason": "用户未勾选该工具包，本次不参与检测。",
+          "matched_input_type": "",
+          "required_fields_found": [
+            "test",
+            "p"
+          ],
+          "method_limitations": "图片文件和 DOCX 抽取较稳定；PDF 图像抽取为 best-effort，复杂版式建议提供原始图片或 DOCX。",
+          "detector_runtime": "python",
+          "dependency_status": "not_selected",
+          "reliability": "稳定"
+        },
+        "image_duplicate_internal": {
+          "tool_id": "image_duplicate_internal",
+          "tool_name": "稿件内部重复图初筛",
+          "category": "图像",
+          "selected_by_user": false,
+          "applicable": false,
+          "ran": false,
+          "status": "not_selected",
+          "skip_reason": "用户未勾选该工具包，本次不参与检测。",
+          "matched_input_type": "",
+          "required_fields_found": [
+            "test",
+            "p"
+          ],
+          "method_limitations": "只能提示重复/复用复核线索，仅提示复核线索，不做判定；复杂裁剪、低质量压缩和重复纹理可能影响结果。",
+          "detector_runtime": "python",
+          "dependency_status": "not_selected",
+          "reliability": "弱信号"
+        },
+        "image_copy_move_internal": {
+          "tool_id": "image_copy_move_internal",
+          "tool_name": "图像局部复制初筛",
+          "category": "图像",
+          "selected_by_user": false,
+          "applicable": false,
+          "ran": false,
+          "status": "not_selected",
+          "skip_reason": "用户未勾选该工具包，本次不参与检测。",
+          "matched_input_type": "",
+          "required_fields_found": [
+            "test",
+            "p"
+          ],
+          "method_limitations": "局部复制初筛对重复纹理、图表元素和压缩噪声敏感；命中区域必须由人工结合原图复核。",
+          "detector_runtime": "python",
+          "dependency_status": "not_selected",
+          "reliability": "弱信号"
+        },
+        "image_metadata_audit": {
+          "tool_id": "image_metadata_audit",
+          "tool_name": "图像元数据与质量初筛",
+          "category": "图像",
+          "selected_by_user": false,
+          "applicable": false,
+          "ran": false,
+          "status": "not_selected",
+          "skip_reason": "用户未勾选该工具包，本次不参与检测。",
+          "matched_input_type": "",
+          "required_fields_found": [
+            "test",
+            "p"
+          ],
+          "method_limitations": "元数据容易被清除或被软件重写，只能作为文件流程复核线索。",
+          "detector_runtime": "python",
+          "dependency_status": "not_selected",
+          "reliability": "辅助"
+        },
+        "western_blot_review_list": {
+          "tool_id": "western_blot_review_list",
+          "tool_name": "Western blot复核清单",
+          "category": "图像",
+          "selected_by_user": false,
+          "applicable": false,
+          "ran": false,
+          "status": "not_selected",
+          "skip_reason": "用户未勾选该工具包，本次不参与检测。",
+          "matched_input_type": "",
+          "required_fields_found": [
+            "test",
+            "p"
+          ],
+          "method_limitations": "基于文件名和材料类型生成清单，不做专业图像取证结论。",
+          "detector_runtime": "python",
+          "dependency_status": "not_selected",
+          "reliability": "辅助"
+        },
+        "papermill_light_signals": {
+          "tool_id": "papermill_light_signals",
+          "tool_name": "论文工厂轻量信号",
+          "category": "论文工厂",
+          "selected_by_user": false,
+          "applicable": false,
+          "ran": false,
+          "status": "not_selected",
+          "skip_reason": "用户未勾选该工具包，本次不参与检测。",
+          "matched_input_type": "",
+          "required_fields_found": [
+            "test",
+            "p"
+          ],
+          "method_limitations": "轻量文本信号不能替代跨论文数据库、投稿行为和作者网络审查。",
+          "detector_runtime": "python",
+          "dependency_status": "not_selected",
+          "reliability": "弱信号"
+        },
+        "papermill_network_signals": {
+          "tool_id": "papermill_network_signals",
+          "tool_name": "本地论文工厂跨库信号",
+          "category": "论文工厂",
+          "selected_by_user": false,
+          "applicable": false,
+          "ran": false,
+          "status": "not_selected",
+          "skip_reason": "用户未勾选该工具包，本次不参与检测。",
+          "matched_input_type": "",
+          "required_fields_found": [
+            "test",
+            "p"
+          ],
+          "method_limitations": "跨库信号强依赖本地语料覆盖；相似模板、共同方法和同团队系列研究都可能产生正常相似。",
+          "detector_runtime": "python",
+          "dependency_status": "not_selected",
+          "reliability": "弱信号/需本地语料"
+        },
+        "provenance_hash": {
+          "tool_id": "provenance_hash",
+          "tool_name": "原始文件哈希存证",
+          "category": "溯源",
+          "selected_by_user": false,
+          "applicable": false,
+          "ran": false,
+          "status": "not_selected",
+          "skip_reason": "用户未勾选该工具包，本次不参与检测。",
+          "matched_input_type": "",
+          "required_fields_found": [
+            "test",
+            "p"
+          ],
+          "method_limitations": "哈希只能证明文件后续未变化，不能证明实验真实发生或上传文件就是最早原始文件。",
+          "detector_runtime": "python",
+          "dependency_status": "not_selected",
+          "reliability": "稳定"
+        },
+        "provenance_chain_verify": {
+          "tool_id": "provenance_chain_verify",
+          "tool_name": "哈希版本链核验",
+          "category": "溯源",
+          "selected_by_user": false,
+          "applicable": false,
+          "ran": false,
+          "status": "not_selected",
+          "skip_reason": "用户未勾选该工具包，本次不参与检测。",
+          "matched_input_type": "",
+          "required_fields_found": [
+            "test",
+            "p"
+          ],
+          "method_limitations": "版本链只能证明登记后的文件完整性变化，不能证明登记前材料来源真实。",
+          "detector_runtime": "python",
+          "dependency_status": "not_selected",
+          "reliability": "稳定"
+        },
+        "code_rerun_audit": {
+          "tool_id": "code_rerun_audit",
+          "tool_name": "分析代码复跑审计",
+          "category": "代码复核",
+          "selected_by_user": false,
+          "applicable": false,
+          "ran": false,
+          "status": "not_selected",
+          "skip_reason": "用户未勾选该工具包，本次不参与检测。",
+          "matched_input_type": "",
+          "required_fields_found": [
+            "test",
+            "p"
+          ],
+          "method_limitations": "该工具只读扫描复跑准备风险；Python AST 和更强多语言解析可后续增强。实际 Python/R 执行由 code_rerun_execute 在临时项目副本中处理。",
+          "detector_runtime": "python",
+          "dependency_status": "not_selected",
+          "reliability": "辅助"
+        },
+        "code_rerun_execute": {
+          "tool_id": "code_rerun_execute",
+          "tool_name": "分析脚本沙箱复跑",
+          "category": "代码复核",
+          "selected_by_user": false,
+          "applicable": false,
+          "ran": false,
+          "status": "not_selected",
+          "skip_reason": "用户未勾选该工具包，本次不参与检测。",
+          "matched_input_type": "",
+          "required_fields_found": [
+            "test",
+            "p"
+          ],
+          "method_limitations": "本地临时目录隔离不能替代强安全容器；脚本失败、超时或缺包只记录为运行提示。",
+          "detector_runtime": "python",
+          "dependency_status": "not_selected",
+          "reliability": "辅助/本地沙箱"
+        },
+        "data_trace_crosscheck": {
+          "tool_id": "data_trace_crosscheck",
+          "tool_name": "跨材料数据对账",
+          "category": "统计一致性",
+          "selected_by_user": false,
+          "applicable": false,
+          "ran": false,
+          "status": "not_selected",
+          "skip_reason": "用户未勾选该工具包，本次不参与检测。",
+          "matched_input_type": "",
+          "required_fields_found": [
+            "test",
+            "p"
+          ],
+          "method_limitations": "只对可可靠匹配的变量和统计量对账；复杂分组、派生变量和抽取错误需要人工确认。",
+          "detector_runtime": "python",
+          "dependency_status": "not_selected",
+          "reliability": "稳定"
+        }
+      }
+    }
+  ],
+  "text": null
+}

@@ -1,0 +1,402 @@
+{
+  "benchmark_root": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark",
+  "network_enabled": true,
+  "cases": [
+    {
+      "case_id": "raw_suspicious",
+      "kind": "single_run",
+      "ok": true,
+      "returncode": 0,
+      "seconds": 1.17,
+      "json_path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.raw_suspicious.json",
+      "markdown_path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.raw_suspicious.md",
+      "risk_findings": 14,
+      "info_findings": 0,
+      "tools_seen": [
+        "digit_distribution",
+        "raw_data_rules"
+      ],
+      "checks_seen": [
+        "小数位模式",
+        "尾数分布",
+        "等差/固定步长",
+        "缺失集中于分组",
+        "连续重复值",
+        "重复列",
+        "重复行",
+        "高频数值"
+      ],
+      "missing_tools": [],
+      "missing_checks": [],
+      "notes": [
+        "合并报告已生成：/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.raw_suspicious.md"
+      ]
+    },
+    {
+      "case_id": "raw_clean_control",
+      "kind": "single_run",
+      "ok": true,
+      "returncode": 0,
+      "seconds": 1.064,
+      "json_path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.raw_clean_control.json",
+      "markdown_path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.raw_clean_control.md",
+      "risk_findings": 0,
+      "info_findings": 0,
+      "tools_seen": [],
+      "checks_seen": [],
+      "missing_tools": [],
+      "missing_checks": [],
+      "notes": [
+        "合并报告已生成：/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.raw_clean_control.md"
+      ]
+    },
+    {
+      "case_id": "summary_suspicious",
+      "kind": "single_run",
+      "ok": true,
+      "returncode": 0,
+      "seconds": 2.403,
+      "json_path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.summary_suspicious.json",
+      "markdown_path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.summary_suspicious.md",
+      "risk_findings": 17,
+      "info_findings": 2,
+      "tools_seen": [
+        "crosscheck",
+        "r_rsprite2",
+        "r_scrutiny"
+      ],
+      "checks_seen": [
+        "CI区间倒置",
+        "CI宽度/SE一致性",
+        "R rsprite2 SPRITE",
+        "R rsprite2运行记录",
+        "R scrutiny GRIMMER",
+        "R scrutiny运行记录",
+        "SE/SD/√N一致性",
+        "p值/t统计量一致性",
+        "p值超出定义域",
+        "百分比/计数一致性",
+        "自由度/样本量关系"
+      ],
+      "missing_tools": [],
+      "missing_checks": [],
+      "notes": [
+        "合并报告已生成：/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.summary_suspicious.md"
+      ]
+    },
+    {
+      "case_id": "p_values_suspicious",
+      "kind": "single_run",
+      "ok": true,
+      "returncode": 0,
+      "seconds": 1.143,
+      "json_path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.p_values_suspicious.json",
+      "markdown_path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.p_values_suspicious.md",
+      "risk_findings": 2,
+      "info_findings": 0,
+      "tools_seen": [
+        "p_value_distribution"
+      ],
+      "checks_seen": [
+        "p值定义域",
+        "边缘显著p值聚集"
+      ],
+      "missing_tools": [],
+      "missing_checks": [],
+      "notes": [
+        "合并报告已生成：/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.p_values_suspicious.md"
+      ]
+    },
+    {
+      "case_id": "apa_stats_suspicious",
+      "kind": "single_run",
+      "ok": true,
+      "returncode": 0,
+      "seconds": 1.579,
+      "json_path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.apa_stats_suspicious.json",
+      "markdown_path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.apa_stats_suspicious.md",
+      "risk_findings": 2,
+      "info_findings": 0,
+      "tools_seen": [
+        "r_statcheck"
+      ],
+      "checks_seen": [
+        "R statcheck正文统计一致性"
+      ],
+      "missing_tools": [],
+      "missing_checks": [],
+      "notes": [
+        "合并报告已生成：/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.apa_stats_suspicious.md"
+      ]
+    },
+    {
+      "case_id": "paper_refs_and_claims_offline",
+      "kind": "single_run",
+      "ok": true,
+      "returncode": 0,
+      "seconds": 1.057,
+      "json_path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.paper_refs_and_claims_offline.json",
+      "markdown_path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.paper_refs_and_claims_offline.md",
+      "risk_findings": 0,
+      "info_findings": 4,
+      "tools_seen": [
+        "citation_claim_check",
+        "papermill_light_signals",
+        "reference_audit"
+      ],
+      "checks_seen": [
+        "参考文献标识符解析",
+        "外部元数据核验未启用",
+        "工具运行记录",
+        "引用主张抽取"
+      ],
+      "missing_tools": [],
+      "missing_checks": [],
+      "notes": [
+        "合并报告已生成：/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.paper_refs_and_claims_offline.md"
+      ]
+    },
+    {
+      "case_id": "analysis_suspicious",
+      "kind": "single_run",
+      "ok": true,
+      "returncode": 0,
+      "seconds": 1.41,
+      "json_path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.analysis_suspicious.json",
+      "markdown_path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.analysis_suspicious.md",
+      "risk_findings": 1,
+      "info_findings": 1,
+      "tools_seen": [
+        "code_rerun_audit",
+        "code_rerun_execute"
+      ],
+      "checks_seen": [
+        "分析代码复跑准备检查",
+        "分析脚本沙箱复跑"
+      ],
+      "missing_tools": [],
+      "missing_checks": [],
+      "notes": [
+        "合并报告已生成：/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.analysis_suspicious.md"
+      ]
+    },
+    {
+      "case_id": "analysis_manual_unsupported",
+      "kind": "single_run",
+      "ok": true,
+      "returncode": 0,
+      "seconds": 1.039,
+      "json_path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.analysis_manual_unsupported.json",
+      "markdown_path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.analysis_manual_unsupported.md",
+      "risk_findings": 0,
+      "info_findings": 3,
+      "tools_seen": [
+        "code_rerun_audit",
+        "code_rerun_execute"
+      ],
+      "checks_seen": [
+        "分析代码复跑准备检查",
+        "分析脚本复跑不支持",
+        "分析脚本复跑材料不足"
+      ],
+      "missing_tools": [],
+      "missing_checks": [],
+      "notes": [
+        "合并报告已生成：/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.analysis_manual_unsupported.md"
+      ]
+    },
+    {
+      "case_id": "figures_project",
+      "kind": "project",
+      "ok": true,
+      "returncode": 0,
+      "seconds": 1.192,
+      "json_path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.figures_project.json",
+      "markdown_path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.figures_project.md",
+      "risk_findings": 11,
+      "info_findings": 13,
+      "tools_seen": [
+        "code_rerun_audit",
+        "code_rerun_execute",
+        "data_trace_crosscheck",
+        "image_copy_move_internal",
+        "image_duplicate_internal",
+        "image_extract",
+        "image_metadata_audit",
+        "papermill_network_signals",
+        "project_audit",
+        "provenance_chain_verify",
+        "provenance_hash",
+        "western_blot_review_list"
+      ],
+      "checks_seen": [
+        "SHA-256文件存证",
+        "Western blot/凝胶复核清单",
+        "内部重复图像",
+        "分析代码复跑准备检查",
+        "分析脚本复跑跳过",
+        "哈希版本链核验",
+        "图像元数据与质量",
+        "图像抽取",
+        "本地跨库语料缺失",
+        "疑似局部复制区域",
+        "跨材料对账材料不足",
+        "项目主稿缺失"
+      ],
+      "missing_tools": [],
+      "missing_checks": [],
+      "notes": [
+        "项目审计报告已生成：/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.figures_project.md"
+      ]
+    },
+    {
+      "case_id": "project_full",
+      "kind": "project",
+      "ok": true,
+      "returncode": 0,
+      "seconds": 2.504,
+      "json_path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.project_full.json",
+      "markdown_path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.project_full.md",
+      "risk_findings": 12,
+      "info_findings": 20,
+      "tools_seen": [
+        "citation_claim_check",
+        "code_rerun_audit",
+        "code_rerun_execute",
+        "crosscheck",
+        "data_trace_crosscheck",
+        "digit_distribution",
+        "image_copy_move_internal",
+        "image_duplicate_internal",
+        "image_extract",
+        "image_metadata_audit",
+        "papermill_light_signals",
+        "papermill_network_signals",
+        "provenance_chain_verify",
+        "provenance_hash",
+        "r_scrutiny",
+        "reference_audit",
+        "western_blot_review_list"
+      ],
+      "checks_seen": [
+        "R scrutiny运行记录",
+        "SHA-256文件存证",
+        "Western blot/凝胶复核清单",
+        "交叉验证运行记录",
+        "内部重复图像",
+        "分析代码复跑准备检查",
+        "分析脚本沙箱复跑",
+        "原始数据/稿件摘要统计对账",
+        "参考文献标识符解析",
+        "哈希版本链核验",
+        "图像元数据与质量",
+        "图像抽取",
+        "外部元数据核验未启用",
+        "工具运行记录",
+        "引用主张抽取",
+        "本地跨库语料缺失",
+        "疑似局部复制区域",
+        "论文工厂轻量信号"
+      ],
+      "missing_tools": [],
+      "missing_checks": [],
+      "notes": [
+        "项目审计报告已生成：/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.project_full.md"
+      ]
+    },
+    {
+      "case_id": "corpus_screen",
+      "kind": "corpus",
+      "ok": true,
+      "returncode": 0,
+      "seconds": 0.892,
+      "json_path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.corpus_screen.json",
+      "markdown_path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.corpus_screen.md",
+      "risk_findings": 4,
+      "info_findings": 0,
+      "tools_seen": [
+        "papermill_network_signals"
+      ],
+      "checks_seen": [
+        "作者/邮箱域网络重叠",
+        "跨稿件文本高度相似"
+      ],
+      "missing_tools": [],
+      "missing_checks": [],
+      "notes": [
+        "本地语料索引已生成：/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.corpus_index.json",
+        "本地语料筛查报告已生成：/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.corpus_screen.md"
+      ]
+    },
+    {
+      "case_id": "provenance_change",
+      "kind": "provenance_change",
+      "ok": true,
+      "returncode": 0,
+      "seconds": 0.757,
+      "json_path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.provenance_change.json",
+      "markdown_path": ".",
+      "risk_findings": 1,
+      "info_findings": 5,
+      "tools_seen": [
+        "provenance_chain_verify"
+      ],
+      "checks_seen": [
+        "哈希版本链核验"
+      ],
+      "missing_tools": [],
+      "missing_checks": [],
+      "notes": [
+        "}",
+        "}"
+      ]
+    },
+    {
+      "case_id": "external_refs_online",
+      "kind": "project_network",
+      "ok": true,
+      "returncode": 0,
+      "seconds": 5.795,
+      "json_path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.external_refs_online.json",
+      "markdown_path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.external_refs_online.md",
+      "risk_findings": 4,
+      "info_findings": 12,
+      "tools_seen": [
+        "citation_claim_check",
+        "code_rerun_audit",
+        "code_rerun_execute",
+        "data_trace_crosscheck",
+        "image_extract",
+        "papermill_light_signals",
+        "papermill_network_signals",
+        "provenance_chain_verify",
+        "provenance_hash",
+        "reference_audit"
+      ],
+      "checks_seen": [
+        "DOI元数据核验",
+        "DOI外部元数据不可核验",
+        "DOI题名不匹配",
+        "PMID元数据核验",
+        "PMID题名不匹配",
+        "SHA-256文件存证",
+        "分析代码复跑准备检查",
+        "分析脚本复跑跳过",
+        "参考文献标识符解析",
+        "哈希版本链核验",
+        "图像抽取",
+        "引用主张抽取",
+        "本地跨库语料缺失",
+        "论文工厂轻量信号",
+        "跨材料对账材料不足"
+      ],
+      "missing_tools": [],
+      "missing_checks": [],
+      "notes": [
+        "项目审计报告已生成：/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.external_refs_online.md"
+      ]
+    }
+  ],
+  "passed": 13,
+  "failed": 0
+}

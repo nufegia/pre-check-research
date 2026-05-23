@@ -1,0 +1,38 @@
+{
+  "source": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/figures",
+  "source_kind": "project",
+  "project_id": "",
+  "title": "",
+  "counts": {
+    "documents": 0,
+    "data": 0,
+    "images": 4,
+    "code": 0,
+    "all": 4
+  },
+  "materials": [
+    {
+      "path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/figures/copy_move_panel.png",
+      "role": "figures"
+    },
+    {
+      "path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/figures/low_resolution_control.png",
+      "role": "figures"
+    },
+    {
+      "path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/figures/western_blot_panel_a.png",
+      "role": "figures"
+    },
+    {
+      "path": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/figures/western_blot_panel_b.png",
+      "role": "figures"
+    }
+  ],
+  "policy": {
+    "external_lookups": "disabled",
+    "grobid_url": "",
+    "contact_email": "",
+    "pyMuPDF": "not_used_due_to_license_review",
+    "imagehash": "not_used; local Pillow/numpy hash only"
+  }
+}

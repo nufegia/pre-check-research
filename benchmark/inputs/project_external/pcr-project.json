@@ -1,0 +1,13 @@
+{
+  "project_id": "synthetic-external",
+  "title": "Synthetic external lookup coverage project",
+  "materials": [
+    {
+      "path": "paper.md",
+      "role": "manuscript"
+    }
+  ],
+  "settings": {
+    "external_lookups": true
+  }
+}

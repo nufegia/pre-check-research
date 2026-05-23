@@ -1,0 +1,42 @@
+{
+  "source": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/project_full/paper_tables.xlsx",
+  "results": [
+    {
+      "name": "Sheet1",
+      "rows": 1,
+      "columns": 4,
+      "findings": [
+        {
+          "table": "Sheet1",
+          "level": "info",
+          "check": "交叉验证运行记录",
+          "target": "摘要统计表",
+          "summary": "逐行交叉验证已完成，未发现统计量内部不一致。",
+          "evidence": "检查行数=1",
+          "detail": "",
+          "suggestion": "若变量类型或检验设计与假设不符，仍建议人工复核原始分析。",
+          "tool_id": "crosscheck",
+          "tool_name": "交叉验证",
+          "module": "crosscheck",
+          "input_type": "summary_statistics_table",
+          "routing_reason": "摘要统计表逐行数学交叉验证。",
+          "method_limitations": "交叉验证基于统计量的数学定义（SE=SD/√N、CI=mean±t×SE等），不做结论性判定。离群值需人工复核。",
+          "raw_output_ref": "",
+          "detector_runtime": "python",
+          "dependency_status": "ready",
+          "meaning": "逐行交叉验证已完成，未发现统计量内部不一致。",
+          "normal_explanations": "可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。",
+          "review_steps": "若变量类型或检验设计与假设不符，仍建议人工复核原始分析。",
+          "confidence": "medium",
+          "false_positive_risk": "medium",
+          "evidence_id": "unknown:交叉验证运行记录:摘要统计表",
+          "location": "Sheet1",
+          "calculation_trace": "",
+          "external_records": "",
+          "review_actions": "若变量类型或检验设计与假设不符，仍建议人工复核原始分析。",
+          "confidence_basis": "基于确定性规则或可复算公式生成；仍需结合研究设计、原始记录和材料抽取质量人工判断。"
+        }
+      ]
+    }
+  ]
+}

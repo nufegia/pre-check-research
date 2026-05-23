@@ -4,6 +4,7 @@ import json
 import re
 import urllib.parse
 from pathlib import Path
+from typing import Any
 
 from pcr_audit.models import Finding, TableResult
 from pcr_audit.product.common import (
@@ -19,6 +20,44 @@ from pcr_audit.product.common import (
     _extract_reference_text,
     finding,
 )
+
+_TITLE_TOKEN_RE = re.compile(r"[A-Za-z0-9]{3,}")
+
+
+def _title_tokens(text: str) -> set[str]:
+    stop = {
+        "the", "and", "for", "with", "from", "this", "that", "reference", "references",
+        "doi", "pmid", "nature", "journal", "article", "study", "trial", "open", "access",
+    }
+    return {token.lower() for token in _TITLE_TOKEN_RE.findall(text or "") if token.lower() not in stop}
+
+
+def _token_overlap(left: str, right: str) -> float:
+    left_tokens = _title_tokens(left)
+    right_tokens = _title_tokens(right)
+    if not left_tokens or not right_tokens:
+        return 1.0
+    return len(left_tokens.intersection(right_tokens)) / max(len(right_tokens), 1)
+
+
+def _line_for_identifier(reference_lines: list[str], identifier: str) -> str:
+    ident = identifier.lower()
+    return next((line for line in reference_lines if ident in line.lower()), "")
+
+
+def _crossref_title(payload: dict[str, Any] | None) -> str:
+    titles = ((payload or {}).get("message") or {}).get("title") or []
+    return str(titles[0]) if titles else ""
+
+
+def _ncbi_title(payload: dict[str, Any] | None, pmid: str) -> str:
+    return str(((payload or {}).get("result") or {}).get(pmid, {}).get("title") or "")
+
+
+def _metadata_status_error(records: list[str]) -> bool:
+    text = " ".join(records).lower()
+    return "status=error" in text or "http error 404" in text or "not found" in text
+
 
 def analyze_references(source: Path, config: AuditConfig | None = None) -> TableResult:
     config = config or _env_config()
@@ -92,7 +131,7 @@ def analyze_references(source: Path, config: AuditConfig | None = None) -> Table
         records.append(record)
         if crossref:
             status = (crossref or {}).get("status")
-            title = "; ".join((crossref or {}).get("message", {}).get("title", [])[:1])
+            title = _crossref_title(crossref)
             records.append(f"Crossref status={status}, title={title[:120]}")
         openalex, record, _cache_hit = _cached_lookup(
             "openalex",
@@ -115,7 +154,33 @@ def analyze_references(source: Path, config: AuditConfig | None = None) -> Table
                         external_records="; ".join(records),
                     )
                 )
-        if records and not any(f.target == doi for f in findings):
+        crossref_title = _crossref_title(crossref)
+        reference_line = _line_for_identifier(reference_lines, doi)
+        if crossref_title and reference_line:
+            overlap = _token_overlap(reference_line, crossref_title)
+            if overlap < 0.35:
+                findings.append(
+                    finding(
+                        str(source), "medium", "DOI题名不匹配", doi,
+                        "稿件参考文献行与 Crossref 返回题名明显不一致。",
+                        f"overlap={overlap:.2f}; reported_line={reference_line[:180]}; crossref_title={crossref_title[:180]}",
+                        "人工核对 DOI 是否贴错、参考文献题名是否误填，或排版/抽取是否错行。",
+                        tool_id="reference_audit", tool_name="参考文献核验", input_type="reference_list",
+                        external_records="; ".join(records),
+                    )
+                )
+        if not crossref and not openalex and _metadata_status_error(records):
+            findings.append(
+                finding(
+                    str(source), "medium", "DOI外部元数据不可核验", doi,
+                    "该 DOI 在外部元数据服务中未能获得有效记录。",
+                    "; ".join(records),
+                    "核对 DOI 是否拼写错误、是否为未注册标识符，或外部服务是否临时不可用。",
+                    tool_id="reference_audit", tool_name="参考文献核验", input_type="reference_list",
+                    external_records="; ".join(records),
+                )
+            )
+        if records:
             findings.append(
                 finding(
                     str(source), "info", "DOI元数据核验", doi,
@@ -138,6 +203,21 @@ def analyze_references(source: Path, config: AuditConfig | None = None) -> Table
             config,
             lambda payload: ((payload or {}).get("result", {}).get(pmid, {}).get("title") or "")[:180],
         )
+        ncbi_title = _ncbi_title(ncbi, pmid)
+        reference_line = _line_for_identifier(reference_lines, pmid)
+        if ncbi_title and reference_line:
+            overlap = _token_overlap(reference_line, ncbi_title)
+            if overlap < 0.35:
+                findings.append(
+                    finding(
+                        str(source), "medium", "PMID题名不匹配", pmid,
+                        "稿件参考文献行与 NCBI 返回题名明显不一致。",
+                        f"overlap={overlap:.2f}; reported_line={reference_line[:180]}; ncbi_title={ncbi_title[:180]}",
+                        "人工核对 PMID 是否贴错、参考文献题名是否误填，或排版/抽取是否错行。",
+                        tool_id="reference_audit", tool_name="参考文献核验", input_type="reference_list",
+                        external_records=json.dumps((ncbi or {}).get("result", {}).get(pmid, {}), ensure_ascii=False)[:500],
+                    )
+                )
         findings.append(
             finding(
                 str(source), "info", "PMID元数据核验", pmid,

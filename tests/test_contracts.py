@@ -132,6 +132,74 @@ def test_missing_adapter_is_reported_as_info(tmp_path: Path, monkeypatch) -> Non
     assert {finding["level"] for finding in adapter_findings} == {"info"}
 
 
+def test_adapter_runtime_error_is_reported_without_blocking_delivery(tmp_path: Path, monkeypatch) -> None:
+    source = ROOT / "examples" / "summary_stat_sample.csv"
+    out = tmp_path / "adapter-error.md"
+    run_json = tmp_path / "adapter-error.json"
+
+    def raising_adapter(_context, _tool_id):
+        raise RuntimeError("simulated detector failure")
+
+    monkeypatch.setattr("pcr_audit.runner.adapter_for", lambda tool_id: raising_adapter if tool_id == "crosscheck" else None)
+
+    assert audit_main(["run", str(source), "--out", str(out), "--json", str(run_json)]) == 0
+    payload = json.loads(run_json.read_text(encoding="utf-8"))
+    findings = [finding for result in payload["results"] for finding in result.get("findings", [])]
+    runtime_errors = [finding for finding in findings if finding["dependency_status"] == "runtime_error"]
+
+    assert out.exists()
+    assert any(finding["tool_id"] == "crosscheck" and finding["level"] == "info" for finding in runtime_errors)
+    assert "simulated detector failure" in json.dumps(runtime_errors, ensure_ascii=False)
+
+
+def test_project_detector_runtime_error_is_reported_without_blocking_delivery(tmp_path: Path, monkeypatch) -> None:
+    project = tmp_path / "project"
+    project.mkdir()
+    (project / "paper.md").write_text("References\n[1] doi:10.1234/example.2026\n", encoding="utf-8")
+    pd.DataFrame({"subject": ["S1", "S2"], "value": [1.0, 2.0]}).to_csv(project / "data.csv", index=False)
+    out = tmp_path / "project.md"
+    run_json = tmp_path / "project.json"
+
+    def raising_reference_audit(*_args, **_kwargs):
+        raise RuntimeError("reference detector unavailable")
+
+    monkeypatch.setattr("pcr_audit.product.reference_audit.analyze_references", raising_reference_audit)
+    monkeypatch.setattr("pcr_audit.tool_system.rscript_available", lambda: True)
+    monkeypatch.setattr("pcr_audit.tool_system.r_package_available", lambda _package: False)
+
+    assert audit_main(["project", str(project), "--out", str(out), "--json", str(run_json), "--no-external-lookups"]) == 0
+    payload = json.loads(run_json.read_text(encoding="utf-8"))
+    findings = [finding for result in payload["results"] for finding in result.get("findings", [])]
+
+    assert out.exists()
+    assert any(
+        finding["tool_id"] == "reference_audit"
+        and finding["level"] == "info"
+        and finding["dependency_status"] == "runtime_error"
+        for finding in findings
+    )
+    assert "reference detector unavailable" in json.dumps(findings, ensure_ascii=False)
+
+
+def test_project_manifest_parse_error_is_reported_without_blocking_delivery(tmp_path: Path) -> None:
+    manifest = tmp_path / "pcr-project.json"
+    manifest.write_text("{not valid json", encoding="utf-8")
+    out = tmp_path / "bad-project.md"
+    run_json = tmp_path / "bad-project.json"
+
+    assert audit_main(["project", str(manifest), "--out", str(out), "--json", str(run_json)]) == 0
+    payload = json.loads(run_json.read_text(encoding="utf-8"))
+    findings = [finding for result in payload["results"] for finding in result.get("findings", [])]
+
+    assert out.exists()
+    assert any(
+        finding["tool_id"] == "project_audit"
+        and finding["level"] == "info"
+        and finding["dependency_status"] == "runtime_error"
+        for finding in findings
+    )
+
+
 def test_product_image_adapter_runs_image_audit_once(tmp_path: Path, monkeypatch) -> None:
     calls = []
 

@@ -1,0 +1,72 @@
+{
+  "source": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/inputs/p_values_suspicious.csv",
+  "results": [
+    {
+      "name": "p_values_suspicious",
+      "rows": 12,
+      "columns": 2,
+      "findings": [
+        {
+          "table": "p_values_suspicious",
+          "level": "high",
+          "check": "p值定义域",
+          "target": "p值集合",
+          "summary": "发现无法解析或超出 [0, 1] 范围的 p 值。",
+          "evidence": "p:行11=1.2；p:行12=bad",
+          "detail": "异常条目数=2。",
+          "suggestion": "核对 p 值列是否混入统计量、百分比、格式化注释或表格抽取错误。",
+          "tool_id": "p_value_distribution",
+          "tool_name": "p值集合弱信号检测",
+          "module": "p_value_distribution",
+          "input_type": "p_value_collection",
+          "routing_reason": "纯 p 值集合由确定性路由选择 p 值集合弱信号检测。",
+          "method_limitations": "该检查只看 p 值集合形态，不知道检验族、方向、校正方式或完整结果空间；边缘显著聚集只能提示人工复核。",
+          "raw_output_ref": "",
+          "detector_runtime": "python",
+          "dependency_status": "ready",
+          "meaning": "发现无法解析或超出 [0, 1] 范围的 p 值。",
+          "normal_explanations": "可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。",
+          "review_steps": "核对 p 值列是否混入统计量、百分比、格式化注释或表格抽取错误。",
+          "confidence": "medium",
+          "false_positive_risk": "medium",
+          "evidence_id": "p_value_distribution:p值定义域:p值集合",
+          "location": "p_values_suspicious",
+          "calculation_trace": "",
+          "external_records": "",
+          "review_actions": "核对 p 值列是否混入统计量、百分比、格式化注释或表格抽取错误。",
+          "confidence_basis": "基于确定性规则或可复算公式生成；仍需结合研究设计、原始记录和材料抽取质量人工判断。"
+        },
+        {
+          "table": "p_values_suspicious",
+          "level": "medium",
+          "check": "边缘显著p值聚集",
+          "target": "p值集合",
+          "summary": "多个 p 值集中在 0.045-0.050 区间。",
+          "evidence": "边缘显著=4，显著p值=4，有效p值=10",
+          "detail": "该规则不判断 p-hacking，只作为复核线索。",
+          "suggestion": "这只能提示选择性报告或多重比较透明度风险；需结合方法、预注册和完整结果表人工复核。",
+          "tool_id": "p_value_distribution",
+          "tool_name": "p值集合弱信号检测",
+          "module": "p_value_distribution",
+          "input_type": "p_value_collection",
+          "routing_reason": "纯 p 值集合由确定性路由选择 p 值集合弱信号检测。",
+          "method_limitations": "该检查只看 p 值集合形态，不知道检验族、方向、校正方式或完整结果空间；边缘显著聚集只能提示人工复核。",
+          "raw_output_ref": "",
+          "detector_runtime": "python",
+          "dependency_status": "ready",
+          "meaning": "多个 p 值集中在 0.045-0.050 区间。",
+          "normal_explanations": "可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。",
+          "review_steps": "这只能提示选择性报告或多重比较透明度风险；需结合方法、预注册和完整结果表人工复核。",
+          "confidence": "medium",
+          "false_positive_risk": "high",
+          "evidence_id": "p_value_distribution:边缘显著p值聚集:p值集合",
+          "location": "p_values_suspicious",
+          "calculation_trace": "",
+          "external_records": "",
+          "review_actions": "这只能提示选择性报告或多重比较透明度风险；需结合方法、预注册和完整结果表人工复核。",
+          "confidence_basis": "基于确定性规则或可复算公式生成；仍需结合研究设计、原始记录和材料抽取质量人工判断。"
+        }
+      ]
+    }
+  ]
+}

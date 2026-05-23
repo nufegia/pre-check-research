@@ -1,0 +1,29 @@
+{
+  "expected_signal_tools": [
+    "raw_data_rules",
+    "digit_distribution",
+    "crosscheck",
+    "p_value_distribution",
+    "r_statcheck",
+    "r_scrutiny",
+    "r_rsprite2",
+    "reference_audit",
+    "citation_claim_check",
+    "papermill_light_signals",
+    "image_duplicate_internal",
+    "image_copy_move_internal",
+    "image_metadata_audit",
+    "western_blot_review_list",
+    "code_rerun_audit",
+    "code_rerun_execute",
+    "data_trace_crosscheck",
+    "provenance_hash",
+    "provenance_chain_verify",
+    "papermill_network_signals"
+  ],
+  "known_limitations": [
+    "R 工具输出取决于 statcheck/scrutiny/rsprite2 对列名和文本格式的解析。",
+    "图像 copy-move 是弱信号，低纹理或规则重复图形可能产生误报/漏报。",
+    "项目级文献外部查询在此基准中关闭，未测试 Crossref/OpenAlex/NCBI 网络可靠性。"
+  ]
+}

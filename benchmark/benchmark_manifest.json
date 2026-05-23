@@ -1,0 +1,118 @@
+{
+  "schema_version": 1,
+  "name": "PCR mvp2 benchmark suite",
+  "root": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark",
+  "principles": [
+    "Findings are risk signals, not misconduct verdicts.",
+    "info records are operational status, skip reasons, or coverage notes.",
+    "Weak-signal tools are evaluated for surfacing review leads, not for proof.",
+    "Network checks are separated because external services can be slow, cached, or temporarily unavailable."
+  ],
+  "cases": [
+    {
+      "id": "raw_suspicious",
+      "kind": "single_run",
+      "input": "inputs/raw_suspicious.csv",
+      "expected_tools": ["raw_data_rules", "digit_distribution"],
+      "expected_checks": ["重复行", "重复列", "等差/固定步长", "高频数值", "缺失集中于分组", "尾数分布"],
+      "min_risk_findings": 6
+    },
+    {
+      "id": "raw_clean_control",
+      "kind": "single_run",
+      "input": "inputs/raw_clean_control.csv",
+      "expected_tools": [],
+      "max_risk_findings": 0
+    },
+    {
+      "id": "summary_suspicious",
+      "kind": "single_run",
+      "input": "inputs/summary_suspicious.csv",
+      "expected_tools": ["crosscheck", "r_scrutiny", "r_rsprite2"],
+      "expected_checks": ["SE/SD/√N一致性", "百分比/计数一致性", "p值超出定义域", "p值/t统计量一致性", "R scrutiny GRIMMER", "R rsprite2 SPRITE"],
+      "min_risk_findings": 8
+    },
+    {
+      "id": "p_values_suspicious",
+      "kind": "single_run",
+      "input": "inputs/p_values_suspicious.csv",
+      "expected_tools": ["p_value_distribution"],
+      "expected_checks": ["p值定义域", "边缘显著p值聚集"],
+      "min_risk_findings": 2
+    },
+    {
+      "id": "apa_stats_suspicious",
+      "kind": "single_run",
+      "input": "inputs/apa_stats_suspicious.txt",
+      "expected_tools": ["r_statcheck"],
+      "expected_checks": ["R statcheck正文统计一致性"],
+      "min_risk_findings": 2
+    },
+    {
+      "id": "paper_refs_and_claims_offline",
+      "kind": "single_run",
+      "input": "inputs/paper_refs_and_claims.md",
+      "expected_tools": ["reference_audit", "citation_claim_check", "papermill_light_signals"],
+      "expected_checks": ["参考文献标识符解析", "引用主张抽取"],
+      "min_info_findings": 2
+    },
+    {
+      "id": "analysis_suspicious",
+      "kind": "single_run",
+      "input": "inputs/analysis_suspicious.py",
+      "expected_tools": ["code_rerun_audit", "code_rerun_execute"],
+      "expected_checks": ["分析代码复跑准备检查"],
+      "min_risk_findings": 1
+    },
+    {
+      "id": "analysis_manual_unsupported",
+      "kind": "single_run",
+      "input": "inputs/analysis_manual.do",
+      "expected_tools": ["code_rerun_audit", "code_rerun_execute"],
+      "expected_checks": ["分析脚本复跑不支持"],
+      "min_info_findings": 1
+    },
+    {
+      "id": "figures_project",
+      "kind": "project",
+      "input": "inputs/figures",
+      "expected_tools": ["image_extract", "image_duplicate_internal", "image_copy_move_internal", "image_metadata_audit", "western_blot_review_list", "provenance_hash", "provenance_chain_verify"],
+      "expected_checks": ["内部重复图像", "疑似局部复制区域", "图像元数据与质量", "Western blot/凝胶复核清单"],
+      "min_risk_findings": 4
+    },
+    {
+      "id": "project_full",
+      "kind": "project",
+      "input": "inputs/project_full",
+      "expected_tools": ["crosscheck", "r_scrutiny", "provenance_hash", "provenance_chain_verify", "code_rerun_audit", "code_rerun_execute", "data_trace_crosscheck", "reference_audit", "citation_claim_check", "image_duplicate_internal", "image_copy_move_internal", "western_blot_review_list"],
+      "expected_checks": ["原始数据/稿件摘要统计对账", "分析脚本沙箱复跑", "内部重复图像"],
+      "min_risk_findings": 5
+    },
+    {
+      "id": "corpus_screen",
+      "kind": "corpus",
+      "input": "inputs/project_full",
+      "expected_tools": ["papermill_network_signals"],
+      "expected_checks": ["跨稿件文本高度相似", "作者/邮箱域网络重叠"],
+      "min_risk_findings": 2
+    },
+    {
+      "id": "provenance_change",
+      "kind": "provenance_change",
+      "input": "inputs/project_full",
+      "expected_tools": ["provenance_chain_verify"],
+      "expected_checks": ["哈希版本链核验"],
+      "expected_statuses": ["changed"],
+      "min_risk_findings": 1
+    },
+    {
+      "id": "external_refs_online",
+      "kind": "project_network",
+      "input": "inputs/project_external",
+      "expected_tools": ["reference_audit", "citation_claim_check", "provenance_hash"],
+      "expected_checks": ["DOI题名不匹配", "PMID题名不匹配", "DOI外部元数据不可核验", "PMID元数据核验"],
+      "expected_external_services": ["crossref", "openalex", "ncbi"],
+      "min_risk_findings": 3
+    }
+  ]
+}

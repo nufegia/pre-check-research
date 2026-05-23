@@ -1,0 +1,29 @@
+{
+  "project_id": "synthetic-full",
+  "title": "Synthetic full coverage project",
+  "materials": [
+    {
+      "path": "paper.md",
+      "role": "manuscript"
+    },
+    {
+      "path": "paper_tables.xlsx",
+      "role": "supplement"
+    },
+    {
+      "path": "data.csv",
+      "role": "raw_data"
+    },
+    {
+      "path": "analysis.py",
+      "role": "analysis_code"
+    },
+    {
+      "path": "figures",
+      "role": "figures"
+    }
+  ],
+  "settings": {
+    "external_lookups": false
+  }
+}
