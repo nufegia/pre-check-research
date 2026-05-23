@@ -1,8 +1,15 @@
 # pre-check-research Documentation
 
-pre-check-research (`pcr`) is a local-first toolkit for pre-submission research data audit workflows. It helps researchers, labs, reviewers, editors, and research integrity teams route research materials to deterministic checks and produce explainable risk signals for human review.
+pre-check-research (`pcr`) is a local-first toolkit for pre-submission research package audit workflows. It helps researchers, labs, reviewers, editors, and research integrity teams route research materials to deterministic checks and produce explainable risk signals for human review.
 
 `pcr` is designed for cautious review workflows. It can surface statistical inconsistencies, data-shape anomalies, provenance changes, code rerun notes, image triage leads, and cross-material reconciliation issues. It must not be used to make misconduct determinations by itself.
+
+## Reader Paths
+
+- **I need to try it quickly**: start with [Getting started](getting-started.md), run `pcr-audit route`, then run `pcr-audit run` on an example CSV.
+- **I have a manuscript package**: read [Use cases](use-cases.md), prepare a `pcr-project.json`, and run `pcr-audit project`.
+- **I need to interpret a report**: read [Interpretation boundaries](interpretation-boundaries.md) before turning findings into reviewer, editor, lab, or client-facing language.
+- **I am an AI agent**: read [`llms.txt`](https://github.com/nufegia/pre-check-research/blob/main/llms.txt), preserve JSON outputs, and do not infer misconduct from risk signals.
 
 ## Start Here
 

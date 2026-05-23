@@ -5,25 +5,37 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-production%20stable-brightgreen.svg)](https://github.com/nufegia/pre-check-research)
 
-**Catch data problems before reviewers do.** `pcr` is a local-first, deterministic CLI toolkit that screens research manuscripts, data files, statistics, images, code, and references for reproducibility risks. It produces structured, explainable, mergeable findings — not misconduct verdicts.
+**Catch data problems before reviewers do.** `pcr` is a local-first, deterministic CLI toolkit for pre-submission research package screening. It routes manuscripts, data files, statistics, images, code, references, and provenance records through reproducible checks, then produces structured findings that a human reviewer can verify and explain.
+
+`pcr` is built for serious review workflows: it helps you find issues early, document what was checked, preserve cautious language, and decide what needs expert follow-up before a manuscript, report, or case file moves forward. It produces review leads — not misconduct verdicts.
 
 ---
 
-## Quick Start
+## First Look
 
 ```bash
 git clone https://github.com/nufegia/pre-check-research.git
 cd pre-check-research
 python3 -m pip install -e ".[dev]"
+mkdir -p build
 
-# Audit a summary-stat table in one command
+# Inspect which checks apply to an example summary-stat table
+pcr-audit route examples/summary_stat_sample.csv --json build/route.json
+
+# Run the applicable checks and write human + machine-readable reports
 pcr-audit run examples/summary_stat_sample.csv --out build/audit.md --json build/audit.json
 
-# See what was found
+# Read the human report
 cat build/audit.md
 ```
 
-**30 seconds.** That is all it takes to screen a data file for SE/SD/N inconsistencies, CI centering errors, p-value domain violations, and more.
+This example is a smoke test, not a complete review. It shows how `pcr` records route decisions, runs applicable checks, and emits reports. A serious pre-submission or editorial audit usually requires assembling source tables, manuscript text, figure originals, analysis scripts, references, and provenance context, then interpreting each finding against the study design and source files.
+
+For a full package, use a project folder:
+
+```bash
+pcr-audit project path/to/project_folder --out build/project.md --json build/project.json
+```
 
 For R-backed statistical checks (GRIM, GRIMMER, DEBIT, SPRITE, statcheck):
 
@@ -36,6 +48,13 @@ export PATH="$PWD/tools/r/pcr_statcheck:$PWD/tools/r/pcr_scrutiny:$PWD/tools/r/p
 ## The Problem
 
 Research integrity screening is time-consuming, error-prone, and often happens too late — after submission, during peer review, or post-publication. Journals, labs, and institutions need reliable, reproducible pre-submission checks, but existing tools are scattered across languages (R, Python), lack a unified output format, and require expert judgment to route the right tool to the right material.
+
+## Why Teams Use It
+
+- **Before submission**: find statistical, data, figure, reference, and code-review leads while there is still time to fix or explain them.
+- **Before acceptance or sign-off**: run a consistent checklist across manuscript packages instead of relying on ad hoc manual inspection.
+- **During triage**: separate reproducible signals from speculation, missing material, dependency gaps, and extraction artifacts.
+- **With AI agents**: give agents route decisions and schema-bound findings so they can summarize evidence without inventing tool applicability.
 
 ## What pcr Does
 
@@ -69,6 +88,15 @@ Research integrity screening is time-consuming, error-prone, and often happens t
 13 synthetic cases, **13 pass, 0 fail**, covering every detector family. 66 risk signals and 47 info records in an offline run.
 
 [`benchmark/BENCHMARK.md`](benchmark/BENCHMARK.md) · [`benchmark/BENCHMARK_REPORT.md`](benchmark/BENCHMARK_REPORT.md)
+
+## What You Get
+
+A run produces two complementary outputs:
+
+- **Markdown report** for humans: findings grouped by tool, evidence, possible normal explanations, review steps, confidence, and limitations.
+- **JSON report** for systems: schema-bound findings that can be merged, archived, diffed, or handed to an AI-assisted review workflow.
+
+The report is designed to support a defensible review process. It does not replace source-material verification, subject-matter judgment, or statistical consultation.
 
 ## Who Is This For
 
