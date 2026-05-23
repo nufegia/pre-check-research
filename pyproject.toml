@@ -54,7 +54,6 @@ image = [
   "scikit-image>=0.22",
 ]
 dev = ["pytest>=8.0"]
-docs = ["mkdocs>=1.6"]
 
 [project.scripts]
 pcr-extract = "pcr_audit.cli:extract_main"
@@ -66,7 +65,6 @@ pcr-crosscheck = "pcr_audit.cli:crosscheck_main"
 [project.urls]
 Homepage = "https://github.com/PreCheckResearch/pre-check-research"
 Repository = "https://github.com/PreCheckResearch/pre-check-research"
-Documentation = "https://precheckresearch.github.io/pre-check-research/"
 Issues = "https://github.com/PreCheckResearch/pre-check-research/issues"
 
 [tool.setuptools.packages.find]
