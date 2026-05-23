@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use pre-check-research (pcr), please cite it as research software."
+title: "pre-check-research: Pre-submission research data risk audit toolkit"
+version: "1.1.0"
+date-released: "2026-05-23"
+type: software
+license: MIT
+authors:
+  - name: "PreCheckResearch contributors"
+repository-code: "https://github.com/PreCheckResearch/pre-check-research"
+url: "https://github.com/PreCheckResearch/pre-check-research"
+abstract: >-
+  pre-check-research (pcr) is a local-first CLI toolkit for pre-submission
+  research data audit workflows, including reproducibility checks, statistical
+  consistency screening, manuscript/material review, provenance checks, and
+  explainable risk-signal reporting.
+keywords:
+  - research integrity
+  - reproducibility
+  - data audit
+  - statistical consistency
+  - manuscript screening
+  - open science
+  - forensic statistics

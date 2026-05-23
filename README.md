@@ -1,10 +1,45 @@
 # pre-check-research (pcr)
 
-[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://github.com/PreCheckResearch/pre-check-research) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://github.com/PreCheckResearch/pre-check-research) [![CI](https://github.com/PreCheckResearch/pre-check-research/actions/workflows/ci.yml/badge.svg)](https://github.com/PreCheckResearch/pre-check-research/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Pre-check research data risk audit toolkit. The project name is `pre-check-research`; `pcr` is the abbreviation used for CLI commands, output stems, schemas, and agent workflows.
+Pre-submission research data audit toolkit for reproducibility checks, statistical consistency screening, manuscript/material review, and research integrity workflows. The project name is `pre-check-research`; `pcr` is the abbreviation used for CLI commands, output stems, schemas, and agent workflows.
 
-pcr routes research materials to deterministic CLI tools and emits mergeable, explainable, reviewable risk signals. Reports must stay at the level of "anomalous signal, evidence, possible normal explanations, review steps" and must not make misconduct determinations.
+`pcr` routes manuscripts, CSV/XLSX data, summary-stat tables, statistical text, analysis code, and image materials to deterministic CLI tools. It emits mergeable, explainable, reviewable risk signals for human follow-up. Reports must stay at the level of "anomalous signal, evidence, possible normal explanations, review steps" and must not make misconduct, fabrication, fraud, or data manipulation determinations.
+
+Related terms: research integrity, reproducibility, open science, statistical error detection, pre-submission review, manuscript screening, forensic statistics, data quality audit, `statcheck`, GRIM/GRIMMER, DEBIT, and SPRITE.
+
+## Why pcr?
+
+- Local-first CLI workflow for private manuscripts and research packages.
+- Deterministic routing so people and AI agents do not guess which audit tools apply.
+- Unified JSON and Markdown findings for downstream review, merging, and reporting.
+- Clear interpretation boundaries: findings are risk signals, not accusations or verdicts.
+- Mixed-material project audits across tables, manuscripts, references, figures, code, provenance, and local corpora.
+
+## Use Cases
+
+- Pre-submission checks before sending a manuscript, registered report, or supplement to a journal.
+- Lab, institution, or editorial office reproducibility screening of research packages.
+- Reviewer or research integrity workflows that need explainable leads for human follow-up.
+- AI-assisted audit orchestration where an agent reads route JSON, runs ready tools, and drafts cautious review notes.
+- Teaching and benchmarking workflows for statistical consistency, data quality, provenance, and weak-signal triage.
+
+## Benchmark Snapshot
+
+The repository includes a synthetic benchmark suite covering raw data rules, summary-stat cross-checks, p-value collections, APA/NHST text, image triage, code reruns, provenance checks, and local corpus screening.
+
+Latest checked-in benchmark summary: 13 synthetic cases, 13 pass, 0 fail, with 66 risk signals and 47 operational/info notes in an offline run. See [`benchmark/BENCHMARK.md`](benchmark/BENCHMARK.md) and [`benchmark/BENCHMARK_REPORT.md`](benchmark/BENCHMARK_REPORT.md).
+
+## Documentation and Citation
+
+- Start with [`docs/index.md`](docs/index.md) for an overview.
+- See [`docs/getting-started.md`](docs/getting-started.md) for first commands.
+- See [`docs/use-cases.md`](docs/use-cases.md) for practical workflows.
+- See [`docs/methods.md`](docs/methods.md) for detector families and limits.
+- See [`docs/interpretation-boundaries.md`](docs/interpretation-boundaries.md) for responsible reporting language.
+- See [`docs/open-source-release-checklist.md`](docs/open-source-release-checklist.md) for GitHub topics and release metadata.
+- See [`llms.txt`](llms.txt) for a concise AI-agent entry point.
+- Cite the software with [`CITATION.cff`](CITATION.cff).
 
 ## Architecture
 

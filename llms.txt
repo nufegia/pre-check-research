@@ -1,0 +1,51 @@
+# pre-check-research (pcr)
+
+pre-check-research is a local-first command-line toolkit for pre-submission research data audit workflows. It routes research materials to deterministic checks and produces explainable risk signals for human review.
+
+Important boundary: pcr findings are risk signals, not misconduct verdicts. Do not describe outputs as proof of fabrication, fraud, data manipulation, or research misconduct.
+
+Repository: https://github.com/PreCheckResearch/pre-check-research
+
+## What pcr checks
+
+- Raw CSV/XLSX tables: digit distributions, repeated or highly similar rows/columns, column relationships, missingness and category-shape signals.
+- Summary-stat tables: row-level math checks for N, mean, SD, SE, CI, counts, percentages, t, df, and p-values.
+- Statistical text: APA/NHST consistency through R statcheck when available.
+- Likert/integer summaries: GRIM/GRIMMER/DEBIT and SPRITE-style feasibility through R-backed tools when available.
+- P-value collections: domain validity and weak signals around just-significant clustering.
+- Project folders: mixed data, manuscript, reference, image, code, provenance, and local corpus checks.
+- Images: weak-signal triage for internal duplicates, copy-move candidates, metadata quality, and blot/gel review checklists.
+- Code: read-only scans and controlled temporary reruns for Python/R; Stata/SPSS/SAS are scanned and recorded for manual rerun.
+
+## Main commands
+
+```bash
+python3 -m pip install -e ".[dev]"
+export PATH="$PWD/tools/r/pcr_statcheck:$PWD/tools/r/pcr_scrutiny:$PWD/tools/r/pcr_sprite:$PATH"
+
+pcr-audit route examples/summary_stat_sample.csv --json build/route.json
+pcr-audit run examples/summary_stat_sample.csv --scenario auto --out build/audit.md --json build/audit.json
+pcr-audit project examples/project_minimal --out build/project.md --json build/project.json
+pcr-report merge build/raw.json build/crosscheck.json --out build/merged.md --json build/merged.json
+```
+
+## Agent workflow
+
+1. Run `pcr-audit route` or `pcr-audit run --dry-run` before deciding which checks apply.
+2. Execute only route-ready tools unless the user explicitly requests a manual or experimental path.
+3. Preserve JSON outputs; use Markdown reports for human reading.
+4. Treat missing dependencies, disabled lookups, unsupported script runtimes, and missing material as `level: info`.
+5. Phrase conclusions as review leads: anomalous signal, evidence, possible normal explanations, and suggested review steps.
+
+## Key files
+
+- `README.md`: installation, usage, commands, architecture, and project audit details.
+- `docs/index.md`: short overview and navigation.
+- `docs/getting-started.md`: first commands.
+- `docs/use-cases.md`: practical workflows.
+- `docs/methods.md`: detector families and limitations.
+- `docs/interpretation-boundaries.md`: responsible reporting language.
+- `benchmark/BENCHMARK.md`: benchmark design.
+- `benchmark/BENCHMARK_REPORT.md`: latest checked-in benchmark report.
+- `tools/common/schemas/finding.schema.json`: unified finding JSON schema.
+- `AGENTS.md`: repository-specific instructions for coding agents.
