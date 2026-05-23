@@ -54,15 +54,16 @@ class OrdinalConfig:
     extreme_ratio_medium: float = 0.60
     max_unique_values: int = 15
     keywords: tuple[str, ...] = (
-        "评分",
-        "等级",
-        "分级",
         "scale",
         "score",
         "grade",
         "level",
         "stage",
         "likert",
+        "rating",
+        "评分",
+        "等级",
+        "分级",
     )
 
 

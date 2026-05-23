@@ -1,6 +1,6 @@
 # pre-check-research (pcr)
 
-[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://github.com/PreCheckResearch/pre-check-research) [![CI](https://github.com/PreCheckResearch/pre-check-research/actions/workflows/ci.yml/badge.svg)](https://github.com/PreCheckResearch/pre-check-research/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://github.com/nufegia/pre-check-research) [![CI](https://github.com/nufegia/pre-check-research/actions/workflows/ci.yml/badge.svg)](https://github.com/nufegia/pre-check-research/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Pre-submission research data audit toolkit for reproducibility checks, statistical consistency screening, manuscript/material review, and research integrity workflows. The project name is `pre-check-research`; `pcr` is the abbreviation used for CLI commands, output stems, schemas, and agent workflows.
 
@@ -37,7 +37,6 @@ Latest checked-in benchmark summary: 13 synthetic cases, 13 pass, 0 fail, with 6
 - See [`docs/use-cases.md`](docs/use-cases.md) for practical workflows.
 - See [`docs/methods.md`](docs/methods.md) for detector families and limits.
 - See [`docs/interpretation-boundaries.md`](docs/interpretation-boundaries.md) for responsible reporting language.
-- See [`docs/open-source-release-checklist.md`](docs/open-source-release-checklist.md) for GitHub topics and release metadata.
 - See [`llms.txt`](llms.txt) for a concise AI-agent entry point.
 - Cite the software with [`CITATION.cff`](CITATION.cff).
 

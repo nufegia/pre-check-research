@@ -79,7 +79,7 @@ def build_route_payload(source: Path, scenario: str = "auto") -> dict[str, Any]:
         payload["project"] = {
             "classification": classification,
             "delegated_material_tools": project_delegated_material_tools(),
-            "delegation_note": "项目审计会先解析材料清单，再按每个文件的数据类型委派表格、文本、图像和代码工具；这里的 routing_decisions 只表示项目级工具。",
+            "delegation_note": "Project audit first parses the material manifest, then delegates table, text, image, and code tools per file data type; routing_decisions here only represent project-level tools.",
             "routing_decisions": routing_decisions_payload(decisions),
         }
         return payload
@@ -101,7 +101,7 @@ def build_route_payload(source: Path, scenario: str = "auto") -> dict[str, Any]:
         payload["project"] = {
             "classification": classification,
             "delegated_material_tools": project_delegated_material_tools(),
-            "delegation_note": "项目审计会先解析材料清单，再按每个文件的数据类型委派表格、文本、图像和代码工具；这里的 routing_decisions 只表示项目级工具。",
+            "delegation_note": "Project audit first parses the material manifest, then delegates table, text, image, and code tools per file data type; routing_decisions here only represent project-level tools.",
             "routing_decisions": routing_decisions_payload(decisions),
         }
         return payload

@@ -34,9 +34,9 @@ def test_manifest_v1_parses_roles_and_records_warnings(tmp_path: Path) -> None:
 
     assert spec.project_id == "demo"
     assert any(material.role == "manuscript" for material in spec.materials)
-    assert any(f.check == "Manifest重复材料" for f in spec.findings)
-    assert any(f.check == "Manifest材料缺失" for f in spec.findings)
-    assert any(f.check == "Manifest材料角色" for f in spec.findings)
+    assert any(f.check == "Manifest duplicate material" for f in spec.findings)
+    assert any(f.check == "Manifest missing material" for f in spec.findings)
+    assert any(f.check == "Manifest material role" for f in spec.findings)
     assert config.external_lookups is False
 
 
@@ -79,24 +79,24 @@ def test_report_separates_info_from_risk_findings(tmp_path: Path) -> None:
     risk = Finding(
         table="table1",
         level="high",
-        check="高风险检查",
+        check="High-risk check",
         target="A1",
-        summary="发现明确数学矛盾。",
+        summary="Found clear mathematical contradiction.",
         evidence="expected=1, actual=2",
         detail="detail",
-        suggestion="核对原始统计脚本。",
+        suggestion="Verify original statistical scripts.",
         tool_id="crosscheck",
         location="table1 row 1",
     )
     info = Finding(
         table="route",
         level="info",
-        check="工具运行记录",
+        check="Tool Run Record",
         target="r_scrutiny",
-        summary="R 包缺失，已跳过。",
+        summary="R package missing; skipped.",
         evidence="missing_r_package",
         detail="",
-        suggestion="安装 R 包后重试。",
+        suggestion="Install R package and retry.",
         tool_id="r_scrutiny",
     )
     enrich_finding_explanation(risk)
@@ -104,15 +104,15 @@ def test_report_separates_info_from_risk_findings(tmp_path: Path) -> None:
 
     report = render_markdown(tmp_path / "source.csv", [TableResult("demo", 1, 1, [risk, info])], [])
 
-    assert "导师摘要" in report
-    assert "预审范围与判读口径" in report
-    assert "材料清单" in report
-    assert "工具运行明细" in report
-    assert "覆盖缺口与未运行原因" in report
-    assert "人工复核任务表" in report
-    assert "运行提示（不计入风险）" in report
-    assert "| 高 |" in report
-    assert "R 包缺失，已跳过" in report
+    assert "Executive Summary" in report
+    assert "Audit Scope and Interpretation Guide" in report
+    assert "Material Inventory" in report
+    assert "Tool Run Details" in report
+    assert "Coverage Gaps and Skip Reasons" in report
+    assert "Manual Review Task List" in report
+    assert "Info Records (Not Risk)" in report
+    assert "| High |" in report
+    assert "R package missing; skipped" in report
 
 
 def test_external_lookup_cache_records_metadata(tmp_path: Path, monkeypatch) -> None:

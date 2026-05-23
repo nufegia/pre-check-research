@@ -21,8 +21,8 @@
     "papermill_network_signals"
   ],
   "known_limitations": [
-    "R 工具输出取决于 statcheck/scrutiny/rsprite2 对列名和文本格式的解析。",
-    "图像 copy-move 是弱信号，低纹理或规则重复图形可能产生误报/漏报。",
-    "项目级文献外部查询在此基准中关闭，未测试 Crossref/OpenAlex/NCBI 网络可靠性。"
+    "R tool output depends on statcheck/scrutiny/rsprite2 parsing of column names and text formats.",
+    "Image copy-move is a weak signal; low-texture or regularly repeating graphics may produce false positives/negatives.",
+    "Project-level external reference queries are disabled in this benchmark; Crossref/OpenAlex/NCBI network reliability is not tested."
   ]
 }

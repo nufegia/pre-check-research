@@ -4,7 +4,7 @@ pre-check-research is a local-first command-line toolkit for pre-submission rese
 
 Important boundary: pcr findings are risk signals, not misconduct verdicts. Do not describe outputs as proof of fabrication, fraud, data manipulation, or research misconduct.
 
-Repository: https://github.com/PreCheckResearch/pre-check-research
+Repository: https://github.com/nufegia/pre-check-research
 
 ## What pcr checks
 

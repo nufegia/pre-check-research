@@ -65,7 +65,7 @@ def test_pdf_image_extraction_flows_into_image_audit(tmp_path: Path, monkeypatch
     results = analyze_images(pdf, tmp_path / "work")
     findings = [finding for result in results for finding in result.findings]
 
-    assert any(finding.tool_id == "image_extract" and "已发现" in finding.summary for finding in findings)
+    assert any(finding.tool_id == "image_extract" and "found" in finding.summary.lower() for finding in findings)
     assert any(finding.tool_id == "image_metadata_audit" for finding in findings)
 
 
@@ -227,7 +227,7 @@ def test_project_data_trace_and_code_sandbox_outputs(tmp_path: Path, monkeypatch
     payload = json.loads(merged_json.read_text(encoding="utf-8"))
     findings = [finding for result in payload["results"] for finding in result["findings"]]
 
-    assert any(finding["tool_id"] == "code_rerun_execute" and "完成" in finding["summary"] for finding in findings)
+    assert any(finding["tool_id"] == "code_rerun_execute" and "completed" in finding["summary"] for finding in findings)
     assert any(finding["tool_id"] == "data_trace_crosscheck" and finding["level"] == "high" for finding in findings)
 
 

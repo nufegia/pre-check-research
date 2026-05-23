@@ -7,7 +7,7 @@
       "kind": "single_run",
       "ok": true,
       "returncode": 0,
-      "seconds": 1.754,
+      "seconds": 1.16,
       "json_path": "benchmark/reports/pcr.raw_suspicious.json",
       "markdown_path": "benchmark/reports/pcr.raw_suspicious.md",
       "risk_findings": 16,
@@ -16,21 +16,21 @@
         "raw_data_rules"
       ],
       "checks_seen": [
-        "列间线性变换",
-        "列间过高相关性",
-        "小数位模式",
-        "尾数分布",
-        "等差/固定步长",
-        "缺失集中于分组",
-        "连续重复值",
-        "重复列",
-        "重复行",
-        "高频数值"
+        "Arithmetic/fixed step",
+        "Consecutive repeated values",
+        "Decimal place pattern",
+        "Duplicate columns",
+        "Duplicate rows",
+        "High frequency value",
+        "Inter-column high correlation",
+        "Inter-column linear transform",
+        "Missing concentrated by group",
+        "Terminal digit distribution"
       ],
       "missing_tools": [],
       "missing_checks": [],
       "notes": [
-        "合并报告已生成：benchmark/reports/pcr.raw_suspicious.md"
+        "Merged report generated: benchmark/reports/pcr.raw_suspicious.md"
       ]
     },
     {
@@ -38,7 +38,7 @@
       "kind": "single_run",
       "ok": true,
       "returncode": 0,
-      "seconds": 1.148,
+      "seconds": 1.046,
       "json_path": "benchmark/reports/pcr.raw_clean_control.json",
       "markdown_path": "benchmark/reports/pcr.raw_clean_control.md",
       "risk_findings": 0,
@@ -48,7 +48,7 @@
       "missing_tools": [],
       "missing_checks": [],
       "notes": [
-        "合并报告已生成：benchmark/reports/pcr.raw_clean_control.md"
+        "Merged report generated: benchmark/reports/pcr.raw_clean_control.md"
       ]
     },
     {
@@ -56,7 +56,7 @@
       "kind": "single_run",
       "ok": true,
       "returncode": 0,
-      "seconds": 2.293,
+      "seconds": 2.083,
       "json_path": "benchmark/reports/pcr.summary_suspicious.json",
       "markdown_path": "benchmark/reports/pcr.summary_suspicious.md",
       "risk_findings": 17,
@@ -67,22 +67,22 @@
         "r_scrutiny"
       ],
       "checks_seen": [
-        "CI区间倒置",
-        "CI宽度/SE一致性",
+        "CI interval inverted",
+        "CI width/SE consistency",
+        "P-value outside domain",
+        "P-value/t-statistic consistency",
+        "Percent/count consistency",
         "R rsprite2 SPRITE",
-        "R rsprite2运行记录",
+        "R rsprite2 run record",
         "R scrutiny GRIMMER",
-        "R scrutiny运行记录",
-        "SE/SD/√N一致性",
-        "p值/t统计量一致性",
-        "p值超出定义域",
-        "百分比/计数一致性",
-        "自由度/样本量关系"
+        "R scrutiny run record",
+        "SE/SD/√N consistency",
+        "df/sample size relationship"
       ],
       "missing_tools": [],
       "missing_checks": [],
       "notes": [
-        "合并报告已生成：benchmark/reports/pcr.summary_suspicious.md"
+        "Merged report generated: benchmark/reports/pcr.summary_suspicious.md"
       ]
     },
     {
@@ -90,7 +90,7 @@
       "kind": "single_run",
       "ok": true,
       "returncode": 0,
-      "seconds": 1.029,
+      "seconds": 1.012,
       "json_path": "benchmark/reports/pcr.p_values_suspicious.json",
       "markdown_path": "benchmark/reports/pcr.p_values_suspicious.md",
       "risk_findings": 2,
@@ -99,13 +99,13 @@
         "p_value_distribution"
       ],
       "checks_seen": [
-        "p值定义域",
-        "边缘显著p值聚集"
+        "Marginally significant p-value clustering",
+        "P-value domain"
       ],
       "missing_tools": [],
       "missing_checks": [],
       "notes": [
-        "合并报告已生成：benchmark/reports/pcr.p_values_suspicious.md"
+        "Merged report generated: benchmark/reports/pcr.p_values_suspicious.md"
       ]
     },
     {
@@ -113,7 +113,7 @@
       "kind": "single_run",
       "ok": true,
       "returncode": 0,
-      "seconds": 2.147,
+      "seconds": 2.193,
       "json_path": "benchmark/reports/pcr.apa_stats_suspicious.json",
       "markdown_path": "benchmark/reports/pcr.apa_stats_suspicious.md",
       "risk_findings": 2,
@@ -122,12 +122,12 @@
         "r_statcheck"
       ],
       "checks_seen": [
-        "R statcheck正文统计一致性"
+        "R statcheck in-text statistical consistency"
       ],
       "missing_tools": [],
       "missing_checks": [],
       "notes": [
-        "合并报告已生成：benchmark/reports/pcr.apa_stats_suspicious.md"
+        "Merged report generated: benchmark/reports/pcr.apa_stats_suspicious.md"
       ]
     },
     {
@@ -135,7 +135,7 @@
       "kind": "single_run",
       "ok": true,
       "returncode": 0,
-      "seconds": 1.071,
+      "seconds": 1.011,
       "json_path": "benchmark/reports/pcr.paper_refs_and_claims_offline.json",
       "markdown_path": "benchmark/reports/pcr.paper_refs_and_claims_offline.md",
       "risk_findings": 0,
@@ -146,15 +146,15 @@
         "reference_audit"
       ],
       "checks_seen": [
-        "参考文献标识符解析",
-        "外部元数据核验未启用",
-        "工具运行记录",
-        "引用主张抽取"
+        "Citation claim extraction",
+        "External metadata verification not enabled",
+        "Reference identifier parsing",
+        "Tool Run Record"
       ],
       "missing_tools": [],
       "missing_checks": [],
       "notes": [
-        "合并报告已生成：benchmark/reports/pcr.paper_refs_and_claims_offline.md"
+        "Merged report generated: benchmark/reports/pcr.paper_refs_and_claims_offline.md"
       ]
     },
     {
@@ -162,7 +162,7 @@
       "kind": "single_run",
       "ok": true,
       "returncode": 0,
-      "seconds": 1.447,
+      "seconds": 1.378,
       "json_path": "benchmark/reports/pcr.analysis_suspicious.json",
       "markdown_path": "benchmark/reports/pcr.analysis_suspicious.md",
       "risk_findings": 1,
@@ -172,13 +172,13 @@
         "code_rerun_execute"
       ],
       "checks_seen": [
-        "分析代码复跑准备检查",
-        "分析脚本沙箱复跑"
+        "Analysis code rerun readiness check",
+        "Analysis script sandbox rerun"
       ],
       "missing_tools": [],
       "missing_checks": [],
       "notes": [
-        "合并报告已生成：benchmark/reports/pcr.analysis_suspicious.md"
+        "Merged report generated: benchmark/reports/pcr.analysis_suspicious.md"
       ]
     },
     {
@@ -186,7 +186,7 @@
       "kind": "single_run",
       "ok": true,
       "returncode": 0,
-      "seconds": 1.028,
+      "seconds": 1.012,
       "json_path": "benchmark/reports/pcr.analysis_manual_unsupported.json",
       "markdown_path": "benchmark/reports/pcr.analysis_manual_unsupported.md",
       "risk_findings": 0,
@@ -196,14 +196,14 @@
         "code_rerun_execute"
       ],
       "checks_seen": [
-        "分析代码复跑准备检查",
-        "分析脚本复跑不支持",
-        "分析脚本复跑材料不足"
+        "Analysis code rerun readiness check",
+        "Analysis script rerun unsupported",
+        "Insufficient materials for analysis script rerun"
       ],
       "missing_tools": [],
       "missing_checks": [],
       "notes": [
-        "合并报告已生成：benchmark/reports/pcr.analysis_manual_unsupported.md"
+        "Merged report generated: benchmark/reports/pcr.analysis_manual_unsupported.md"
       ]
     },
     {
@@ -211,7 +211,7 @@
       "kind": "project",
       "ok": true,
       "returncode": 0,
-      "seconds": 1.286,
+      "seconds": 1.205,
       "json_path": "benchmark/reports/pcr.figures_project.json",
       "markdown_path": "benchmark/reports/pcr.figures_project.md",
       "risk_findings": 11,
@@ -231,23 +231,23 @@
         "western_blot_review_list"
       ],
       "checks_seen": [
-        "SHA-256文件存证",
-        "Western blot/凝胶复核清单",
-        "内部重复图像",
-        "分析代码复跑准备检查",
-        "分析脚本复跑跳过",
-        "哈希版本链核验",
-        "图像元数据与质量",
-        "图像抽取",
-        "本地跨库语料缺失",
-        "疑似局部复制区域",
-        "跨材料对账材料不足",
-        "项目主稿缺失"
+        "Analysis code rerun readiness check",
+        "Analysis script rerun skipped",
+        "Hash Version Chain Verification",
+        "Image extraction",
+        "Image metadata and quality",
+        "Insufficient materials for cross-material reconciliation",
+        "Internal duplicate image",
+        "Local cross-corpus index missing",
+        "Project manuscript missing",
+        "SHA-256 File Record",
+        "Suspected local copy-move region",
+        "Western blot/gel review checklist"
       ],
       "missing_tools": [],
       "missing_checks": [],
       "notes": [
-        "项目审计报告已生成：benchmark/reports/pcr.figures_project.md"
+        "Project audit report generated: benchmark/reports/pcr.figures_project.md"
       ]
     },
     {
@@ -255,7 +255,7 @@
       "kind": "project",
       "ok": true,
       "returncode": 0,
-      "seconds": 2.512,
+      "seconds": 2.555,
       "json_path": "benchmark/reports/pcr.project_full.json",
       "markdown_path": "benchmark/reports/pcr.project_full.md",
       "risk_findings": 12,
@@ -279,28 +279,28 @@
         "western_blot_review_list"
       ],
       "checks_seen": [
-        "R scrutiny运行记录",
-        "SHA-256文件存证",
-        "Western blot/凝胶复核清单",
-        "交叉验证运行记录",
-        "内部重复图像",
-        "分析代码复跑准备检查",
-        "分析脚本沙箱复跑",
-        "原始数据/稿件摘要统计对账",
-        "参考文献标识符解析",
-        "哈希版本链核验",
-        "图像元数据与质量",
-        "图像抽取",
-        "外部元数据核验未启用",
-        "引用主张抽取",
-        "本地跨库语料缺失",
-        "疑似局部复制区域",
-        "论文工厂轻量信号"
+        "Analysis code rerun readiness check",
+        "Analysis script sandbox rerun",
+        "Citation claim extraction",
+        "Cross-check run record",
+        "External metadata verification not enabled",
+        "Hash Version Chain Verification",
+        "Image extraction",
+        "Image metadata and quality",
+        "Internal duplicate image",
+        "Local cross-corpus index missing",
+        "Paper mill light signal",
+        "R scrutiny run record",
+        "Raw data/manuscript summary statistics reconciliation",
+        "Reference identifier parsing",
+        "SHA-256 File Record",
+        "Suspected local copy-move region",
+        "Western blot/gel review checklist"
       ],
       "missing_tools": [],
       "missing_checks": [],
       "notes": [
-        "项目审计报告已生成：benchmark/reports/pcr.project_full.md"
+        "Project audit report generated: benchmark/reports/pcr.project_full.md"
       ]
     },
     {
@@ -308,7 +308,7 @@
       "kind": "corpus",
       "ok": true,
       "returncode": 0,
-      "seconds": 2.114,
+      "seconds": 2.355,
       "json_path": "benchmark/reports/pcr.corpus_screen.json",
       "markdown_path": "benchmark/reports/pcr.corpus_screen.md",
       "risk_findings": 4,
@@ -317,14 +317,14 @@
         "papermill_network_signals"
       ],
       "checks_seen": [
-        "作者/邮箱域网络重叠",
-        "跨稿件文本高度相似"
+        "Author/email domain network overlap",
+        "High cross-manuscript text similarity"
       ],
       "missing_tools": [],
       "missing_checks": [],
       "notes": [
-        "本地语料索引已生成：benchmark/reports/pcr.corpus_index.json",
-        "本地语料筛查报告已生成：benchmark/reports/pcr.corpus_screen.md"
+        "Local corpus index generated: benchmark/reports/pcr.corpus_index.json",
+        "Local corpus screening report generated: benchmark/reports/pcr.corpus_screen.md"
       ]
     },
     {
@@ -332,7 +332,7 @@
       "kind": "provenance_change",
       "ok": true,
       "returncode": 0,
-      "seconds": 2.089,
+      "seconds": 2.067,
       "json_path": "benchmark/reports/pcr.provenance_change.json",
       "markdown_path": ".",
       "risk_findings": 1,
@@ -341,7 +341,7 @@
         "provenance_chain_verify"
       ],
       "checks_seen": [
-        "哈希版本链核验"
+        "Hash Version Chain Verification"
       ],
       "missing_tools": [],
       "missing_checks": [],

@@ -326,11 +326,11 @@ def _image_metadata_findings(source: Path, images: list[Path]) -> list[Finding]:
     if Image is None:
         return [
             finding(
-                str(source), "info", "图像元数据依赖缺失", "Pillow",
-                "缺少 Pillow，无法读取图像元数据与亮度质量信号。",
+                str(source), "info", "Image metadata dependency missing", "Pillow",
+                "Missing Pillow; cannot read image metadata and brightness quality signals.",
                 "dependency_missing=Pillow",
-                "安装受信任版本 Pillow 后重试；该提示不计入数据风险。",
-                tool_id="image_metadata_audit", tool_name="图像元数据与质量初筛",
+                "Install a trusted version of Pillow and retry; this notice does not count as a data risk.",
+                tool_id="image_metadata_audit", tool_name="Image Metadata & Quality Screening",
                 input_type="scientific_figure", dependency_status="dependency_missing",
             )
         ]
@@ -347,31 +347,31 @@ def _image_metadata_findings(source: Path, images: list[Path]) -> list[Finding]:
         except Exception as exc:
             findings.append(
                 finding(
-                    str(source), "info", "图像元数据读取失败", path.name,
-                    "图片无法读取，已跳过元数据检查。",
+                    str(source), "info", "Image metadata read failed", path.name,
+                    "Image could not be read; metadata check skipped.",
                     str(exc),
-                    "确认文件是否损坏或格式是否受支持。",
-                    tool_id="image_metadata_audit", tool_name="图像元数据与质量初筛",
+                    "Verify whether the file is corrupted or the format is supported.",
+                    tool_id="image_metadata_audit", tool_name="Image Metadata & Quality Screening",
                     input_type="scientific_figure", dependency_status="read_failed",
                 )
             )
             continue
         evidence = f"format={fmt}; size={width}x{height}; mode={mode}; exif_fields={exif_count}; gray_mean={mean:.1f}; gray_std={std:.1f}"
         if width < 80 or height < 80:
-            level, summary = "low", "图片分辨率较低，可能限制图像取证和人工复核。"
+            level, summary = "low", "Image resolution is low; may limit image forensics and human review."
         elif std < 4 or mean < 3 or mean > 252:
-            level, summary = "low", "图片动态范围异常偏低或接近全黑/全白，需确认是否为导出或压缩流程导致。"
+            level, summary = "low", "Image dynamic range is abnormally low or near all-black/all-white; confirm whether caused by export or compression pipeline."
         elif exif_count == 0 and fmt in {"JPEG", "TIFF"}:
-            level, summary = "info", "图片未包含可读 EXIF 元数据；这常见于论文排版或导出流程。"
+            level, summary = "info", "Image does not contain readable EXIF metadata; this is common in paper layout or export pipelines."
         else:
-            level, summary = "info", "图像元数据读取完成，未发现内置质量阈值信号。"
+            level, summary = "info", "Image metadata read complete; no built-in quality threshold signals found."
         findings.append(
             finding(
-                str(source), level, "图像元数据与质量", path.name,
+                str(source), level, "Image metadata and quality", path.name,
                 summary,
                 evidence,
-                "结合原始仪器文件、导出流程和未压缩原图人工复核。",
-                tool_id="image_metadata_audit", tool_name="图像元数据与质量初筛",
+                "Review against original instrument files, export pipeline, and uncompressed original images.",
+                tool_id="image_metadata_audit", tool_name="Image Metadata & Quality Screening",
                 input_type="scientific_figure",
             )
         )
@@ -395,11 +395,11 @@ def analyze_images(source: Path, workdir: Path | None = None) -> list[TableResul
     if not images:
         findings_extract.append(
             finding(
-                str(source), "info", "图像抽取", "figure",
-                "未发现可直接检测的图片文件。",
-                f"PDF 图像抽取为 best-effort；DOCX 可抽取 word/media 下图片。{pdf_note}",
-                "若需要图像完整性初筛，请提供原始图、DOCX稿件或单独图片目录。",
-                tool_id="image_extract", tool_name="图像抽取", input_type="scientific_figure",
+                str(source), "info", "Image extraction", "figure",
+                "No directly detectable image files found.",
+                f"PDF image extraction is best-effort; DOCX can extract images under word/media. {pdf_note}",
+                "If image integrity screening is needed, provide original images, DOCX manuscript, or a separate image directory.",
+                tool_id="image_extract", tool_name="Image extraction", input_type="scientific_figure",
                 dependency_status="insufficient_material",
             )
         )
@@ -407,11 +407,11 @@ def analyze_images(source: Path, workdir: Path | None = None) -> list[TableResul
 
     findings_extract.append(
         finding(
-            str(source), "info", "图像抽取", "figure",
-            "已发现可检测图片。",
-            f"图片数={len(images)}；样例={', '.join(path.name for path in images[:8])}",
-            "对命中的重复图或blot/gel图，建议回看原始未裁剪图片和图注说明。",
-            tool_id="image_extract", tool_name="图像抽取", input_type="scientific_figure",
+            str(source), "info", "Image extraction", "figure",
+            "Detectable images found.",
+            f"Image count={len(images)}; examples={', '.join(path.name for path in images[:8])}",
+            "For flagged duplicate or blot/gel images, review original uncropped images and figure legends.",
+            tool_id="image_extract", tool_name="Image extraction", input_type="scientific_figure",
         )
     )
 
@@ -426,11 +426,11 @@ def analyze_images(source: Path, workdir: Path | None = None) -> list[TableResul
     if hash_missing:
         findings_dup.append(
             finding(
-                str(source), "info", "图像依赖缺失或读取失败", "Pillow",
-                "部分图片无法计算感知哈希。",
-                "需要 Pillow 才能执行本地感知哈希；损坏或特殊格式图片也会跳过。",
-                "安装受信任版本 Pillow 后重试；不要把该提示当作图像风险。",
-                tool_id="image_duplicate_internal", tool_name="稿件内部重复图初筛",
+                str(source), "info", "Image dependency missing or read failed", "Pillow",
+                "Some images could not compute perceptual hash.",
+                "Pillow is required for local perceptual hashing; corrupted or special-format images are also skipped.",
+                "Install a trusted version of Pillow and retry; do not treat this notice as an image risk.",
+                tool_id="image_duplicate_internal", tool_name="Internal Duplicate Image Screening",
                 input_type="scientific_figure", dependency_status="dependency_missing",
             )
         )
@@ -450,23 +450,23 @@ def analyze_images(source: Path, workdir: Path | None = None) -> list[TableResul
                 orb_text = f"orb_good={orb_good}, keypoints={int((orb or {}).get('keypoints_left') or 0)}/{int((orb or {}).get('keypoints_right') or 0)}" if orb else "orb=unavailable"
                 findings_dup.append(
                     finding(
-                        str(source), "medium", "内部重复图像", f"{left_path.name} / {right_path.name}",
-                        "两张图片的本地图像指纹或局部特征高度相似，需人工复核是否为重复、裁剪、翻转或复用。",
+                        str(source), "medium", "Internal duplicate image", f"{left_path.name} / {right_path.name}",
+                        "Two images have highly similar local fingerprints or features; manual review needed to determine if duplicated, cropped, flipped, or reused.",
                         f"best_hash={best_name}:{best_distance}; transform={transform_text}; {orb_text}; hashes_left={{{_hash_summary(left_hashes)}}}; hashes_right={{{_hash_summary(right_hashes)}}}",
-                        "检查图注、实验条件和原始图；相似图可能来自同一样本、排版缩略图或真实重复实验。",
-                        tool_id="image_duplicate_internal", tool_name="稿件内部重复图初筛",
+                        "Check figure legends, experimental conditions, and original images; similar images may come from the same sample, layout thumbnails, or genuine replicate experiments.",
+                        tool_id="image_duplicate_internal", tool_name="Internal Duplicate Image Screening",
                         input_type="scientific_figure",
-                        calculation_trace="Pillow/numpy 本地 aHash/dHash/pHash；若 cv2 可用则附加 ORB 局部特征匹配；不上传图片。",
+                        calculation_trace="Pillow/numpy local aHash/dHash/pHash; if cv2 is available, ORB local feature matching is additionally applied; no image upload.",
                     )
                 )
     if not findings_dup:
         findings_dup.append(
             finding(
-                str(source), "info", "内部重复图像", "figure",
-                "内部重复图初筛完成，未发现高度相似图片对。",
-                f"可哈希图片数={len(hashes)}",
-                "该初筛不能排除局部复制、复杂旋转裁剪或跨稿件复用。",
-                tool_id="image_duplicate_internal", tool_name="稿件内部重复图初筛", input_type="scientific_figure",
+                str(source), "info", "Internal duplicate image", "figure",
+                "Internal duplicate image screening complete; no highly similar image pairs found.",
+                f"Hashable images={len(hashes)}",
+                "This screening cannot exclude local duplication, complex rotation/cropping, or cross-manuscript reuse.",
+                tool_id="image_duplicate_internal", tool_name="Internal Duplicate Image Screening", input_type="scientific_figure",
             )
         )
 
@@ -475,11 +475,11 @@ def analyze_images(source: Path, workdir: Path | None = None) -> list[TableResul
         if copy is None:
             findings_copy.append(
                 finding(
-                    str(source), "info", "局部复制依赖缺失", "cv2",
-                    "缺少 OpenCV，无法运行 ORB 局部 copy-move 初筛。",
+                    str(source), "info", "Copy-move dependency missing", "cv2",
+                    "Missing OpenCV; cannot run ORB local copy-move screening.",
                     "dependency_missing=cv2",
-                    "安装 opencv-python-headless 后重试；该提示不计入图像风险。",
-                    tool_id="image_copy_move_internal", tool_name="图像局部复制初筛",
+                    "Install opencv-python-headless and retry; this notice does not count as an image risk.",
+                    tool_id="image_copy_move_internal", tool_name="Image Copy-Move Screening",
                     input_type="scientific_figure", dependency_status="dependency_missing",
                 )
             )
@@ -487,23 +487,23 @@ def analyze_images(source: Path, workdir: Path | None = None) -> list[TableResul
         if int(copy.get("clustered_matches") or 0) >= 6:
             findings_copy.append(
                 finding(
-                    str(source), "medium", "疑似局部复制区域", path.name,
-                    "单张图内部存在多组相似局部特征，需人工复核是否为 copy-move、重复纹理或图表元素。",
+                    str(source), "medium", "Suspected local copy-move region", path.name,
+                    "Multiple groups of similar local features found within a single image; manual review needed for copy-move, repeated textures, or chart elements.",
                     f"matches={copy.get('matches')}; clustered_matches={copy.get('clustered_matches')}; keypoints={copy.get('keypoints')}; samples={json.dumps(copy.get('samples'), ensure_ascii=False)}",
-                    "打开原图检查命中坐标附近区域，要求作者提供原始未裁剪图和处理说明。",
-                    tool_id="image_copy_move_internal", tool_name="图像局部复制初筛",
+                    "Open original image to inspect areas near hit coordinates; request original uncropped images and processing notes from authors.",
+                    tool_id="image_copy_move_internal", tool_name="Image Copy-Move Screening",
                     input_type="scientific_figure",
-                    calculation_trace="OpenCV ORB 特征在同一图内部自匹配，过滤近邻点后按位移向量聚类。",
+                    calculation_trace="OpenCV ORB features self-matched within the same image, filtered for nearby points, then clustered by displacement vector.",
                 )
             )
     if not findings_copy:
         findings_copy.append(
             finding(
-                str(source), "info", "疑似局部复制区域", "figure",
-                "局部 copy-move 初筛完成，未发现达到阈值的聚类匹配。",
-                f"图片数={len(images)}",
-                "该结果不能排除人工精修、低纹理区域或强压缩后的局部复制。",
-                tool_id="image_copy_move_internal", tool_name="图像局部复制初筛",
+                str(source), "info", "Suspected local copy-move region", "figure",
+                "Local copy-move screening complete; no cluster matches reaching threshold found.",
+                f"Image count={len(images)}",
+                "This result cannot exclude local duplication after manual retouching, in low-texture regions, or under heavy compression.",
+                tool_id="image_copy_move_internal", tool_name="Image Copy-Move Screening",
                 input_type="scientific_figure",
             )
         )
@@ -514,21 +514,21 @@ def analyze_images(source: Path, workdir: Path | None = None) -> list[TableResul
     if blot_candidates:
         findings_blot.append(
             finding(
-                str(source), "low", "Western blot/凝胶复核清单", "图像文件名",
-                "发现疑似 Western blot 或凝胶图片文件名。",
+                str(source), "low", "Western blot/gel review checklist", "Image filename",
+                "Found filenames suggestive of Western blot or gel images.",
                 ", ".join(path.name for path in blot_candidates[:10]),
-                "请作者提供原始 uncropped blot、曝光参数、拼接说明、loading control 和重复实验记录。",
-                tool_id="western_blot_review_list", tool_name="Western blot复核清单", input_type="western_blot_or_gel_image",
+                "Request original uncropped blots, exposure parameters, splicing notes, loading controls, and replicate experiment records from authors.",
+                tool_id="western_blot_review_list", tool_name="Western Blot Review Checklist", input_type="western_blot_or_gel_image",
             )
         )
     else:
         findings_blot.append(
             finding(
-                str(source), "info", "Western blot/凝胶复核清单", "图像文件名",
-                "未从文件名识别到 blot/gel 专项复核对象。",
-                f"图片数={len(images)}",
-                "若稿件包含 blot/gel 但文件名未标注，建议人工指定图像类型。",
-                tool_id="western_blot_review_list", tool_name="Western blot复核清单", input_type="western_blot_or_gel_image",
+                str(source), "info", "Western blot/gel review checklist", "Image filename",
+                "No blot/gel-specific review targets identified from filenames.",
+                f"Image count={len(images)}",
+                "If the manuscript contains blots/gels but filenames are not labeled, manually specify image types.",
+                tool_id="western_blot_review_list", tool_name="Western Blot Review Checklist", input_type="western_blot_or_gel_image",
             )
         )
     return [

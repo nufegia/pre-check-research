@@ -79,9 +79,9 @@ if (!file.exists(input)) {
   quit(status = 2)
 }
 if (!requireNamespace("scrutiny", quietly = TRUE)) {
-  f <- finding_json("info", "R scrutiny运行记录", "R 包", "缺少 R 包 scrutiny，摘要统计可行性检测已跳过。",
+  f <- finding_json("info", "R scrutiny run record", "R 包", "Missing R package scrutiny; summary statistic feasibility check skipped.",
     "dependency_status=missing_r_package", "Install with install.packages('scrutiny').",
-    "安装 scrutiny 后重试；工具缺失不计入数据风险。", "missing_r_package", "low", "low")
+    "Install scrutiny and retry; missing tool does not count as data risk.", "missing_r_package", "low", "low")
   write_payload(normalizePath(input), "missing_r_package", c(f), json_path)
   quit(status = 0)
 }
@@ -97,7 +97,7 @@ sdcol <- cols[match(TRUE, norm(cols) %in% c("sd", "std", "标准差", "stdev"))]
 propcol <- cols[match(TRUE, norm(cols) %in% c("proportion", "prop", "rate", "ratio", "percent", "percentage", "百分比", "比例", "率"))]
 findings <- c()
 add <- function(level, check, row, summary, evidence, status = "ready", confidence = "medium", fp = "medium") {
-  findings <<- c(findings, finding_json(level, paste0("R scrutiny ", check), paste0("行", row), summary, evidence,
+  findings <<- c(findings, finding_json(level, paste0("R scrutiny ", check), paste0("row ", row), summary, evidence,
     paste0("scale=", scale_min, "-", scale_max), "确认量表范围、四舍五入精度和变量类型；回看原始计数或统计脚本。",
     status, confidence, fp))
 }
@@ -160,7 +160,7 @@ if (!is.na(ncol) && !is.na(sdcol) && !is.na(propcol) && is.na(mcol)) {
   }
 }
 
-findings <- c(findings, finding_json("info", "R scrutiny运行记录", "摘要统计表", "R scrutiny 已运行。",
+findings <- c(findings, finding_json("info", "R scrutiny run record", "摘要统计表", "R scrutiny 已运行。",
   paste0("GRIMMER候选行=", grimmer_cases, "；DEBIT候选行=", debit_cases), "",
   "若未发现高风险项，仍需结合变量类型和原始数据人工复核。", "ready", "low", "low"))
 write_payload(normalizePath(input), "ready", findings, json_path)

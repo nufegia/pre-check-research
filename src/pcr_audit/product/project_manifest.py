@@ -86,10 +86,10 @@ def inspect_project_payload(source: Path, workdir: Path | None = None) -> dict[s
 
 def init_manifest_payload(source: Path, overwrite: bool = False) -> dict[str, Any]:
     if not source.is_dir():
-        raise ValueError("init-manifest 只支持项目文件夹。")
+        raise ValueError("init-manifest only supports project folders.")
     manifest = source / "pcr-project.json"
     if manifest.exists() and not overwrite:
-        raise FileExistsError(f"manifest 已存在：{manifest}")
+        raise FileExistsError(f"Manifest already exists: {manifest}")
     files = [path for path in iter_audit_files(source) if path.name != "pcr-project.json"]
     payload = {
         "project_id": source.name,
@@ -130,11 +130,11 @@ def parse_project_spec(source: Path, config_overrides: AuditConfig | None = None
             if role not in MATERIAL_ROLES:
                 findings.append(
                     finding(
-                        str(source), "info", "Manifest材料角色", str(raw_path),
-                        "manifest 中存在未知材料角色，已按 unknown 处理。",
+                        str(source), "info", "Manifest material role", str(raw_path),
+                        "Unknown material roles found in manifest; treated as unknown.",
                         f"role={role}",
-                        "请使用 manuscript/raw_data/analysis_code/figures/supplement/references 等标准角色。",
-                        tool_id="project_audit", tool_name="项目Manifest解析", input_type="project_manifest",
+                        "Please use standard roles such as manuscript/raw_data/analysis_code/figures/supplement/references.",
+                        tool_id="project_audit", tool_name="Project Manifest Parsing", input_type="project_manifest",
                         dependency_status="manifest_warning",
                     )
                 )
@@ -146,11 +146,11 @@ def parse_project_spec(source: Path, config_overrides: AuditConfig | None = None
             if path in seen:
                 findings.append(
                     finding(
-                        str(source), "info", "Manifest重复材料", str(raw_path),
-                        "manifest 中存在重复材料路径，已保留一份。",
+                        str(source), "info", "Manifest duplicate material", str(raw_path),
+                        "Duplicate material paths found in manifest; one copy retained.",
                         str(path),
-                        "删除重复条目以降低报告噪声。",
-                        tool_id="project_audit", tool_name="项目Manifest解析", input_type="project_manifest",
+                        "Remove duplicate entries to reduce report noise.",
+                        tool_id="project_audit", tool_name="Project Manifest Parsing", input_type="project_manifest",
                         dependency_status="manifest_warning",
                     )
                 )
@@ -159,11 +159,11 @@ def parse_project_spec(source: Path, config_overrides: AuditConfig | None = None
             if not path.exists():
                 findings.append(
                     finding(
-                        str(source), "info", "Manifest材料缺失", str(raw_path),
-                        "manifest 指向的材料不存在，已跳过。",
+                        str(source), "info", "Manifest missing material", str(raw_path),
+                        "Material referenced in manifest does not exist; skipped.",
                         str(path),
-                        "核对相对路径是否以 manifest 所在目录为基准。",
-                        tool_id="project_audit", tool_name="项目Manifest解析", input_type="project_manifest",
+                        "Verify that relative paths are relative to the manifest directory.",
+                        tool_id="project_audit", tool_name="Project Manifest Parsing", input_type="project_manifest",
                         dependency_status="missing_material",
                     )
                 )
@@ -185,11 +185,11 @@ def parse_project_spec(source: Path, config_overrides: AuditConfig | None = None
     if not any(material.role == "manuscript" for material in materials):
         findings.append(
             finding(
-                str(source), "info", "项目主稿缺失", "manuscript",
-                "项目材料中未识别到主稿文件。",
-                "可继续审计数据/代码/图像，但文献、引用和正文统计覆盖会受限。",
-                "建议在 manifest 中声明 manuscript 材料。",
-                tool_id="project_audit", tool_name="项目Manifest解析", input_type="project_manifest",
+                str(source), "info", "Project manuscript missing", "manuscript",
+                "No manuscript file identified among project materials.",
+                "Data/code/image audit can continue, but literature, citation, and in-text statistics coverage will be limited.",
+                "Consider declaring manuscript material in the manifest.",
+                tool_id="project_audit", tool_name="Project Manifest Parsing", input_type="project_manifest",
                 dependency_status="missing_material",
             )
         )

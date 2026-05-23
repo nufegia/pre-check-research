@@ -80,9 +80,9 @@ if (!file.exists(input)) {
   quit(status = 2)
 }
 if (!requireNamespace("rsprite2", quietly = TRUE)) {
-  f <- finding_json("info", "R rsprite2运行记录", "R 包", "缺少 R 包 rsprite2，SPRITE 高级复核已跳过。",
+  f <- finding_json("info", "R rsprite2 run record", "R 包", "Missing R package rsprite2; SPRITE advanced review skipped.",
     "dependency_status=missing_r_package", "Install with install.packages('rsprite2').",
-    "安装 rsprite2 后重试；工具缺失不计入数据风险。", "missing_r_package", "low", "low")
+    "Install rsprite2 and retry; missing tool does not count as data risk.", "missing_r_package", "low", "low")
   write_payload(normalizePath(input), "missing_r_package", c(f), json_path)
   quit(status = 0)
 }
@@ -129,12 +129,12 @@ for (i in seq_len(nrow(d))) {
     list(status = "impossible", detail = paste0("N=", n, ", mean=", m_raw, ", SD=", sd_raw, ", scale=", scale_min, "-", scale_max, "；", conditionMessage(e)))
   })
   if (res$status %in% c("impossible", "not_found")) {
-    findings <- c(findings, finding_json("high", "R rsprite2 SPRITE", paste0("行", i),
+    findings <- c(findings, finding_json("high", "R rsprite2 SPRITE", paste0("row ", i),
       "SPRITE 未能找到匹配报告摘要统计的离散分布。", res$detail, "",
       "确认量表范围、均值/SD 小数精度、样本量和是否为离散评分摘要；高风险结果应由人工复核原始频数。",
       "ready", "medium", "high"))
   }
 }
-findings <- c(findings, finding_json("info", "R rsprite2运行记录", "摘要统计表", "R rsprite2 SPRITE 已运行。",
+findings <- c(findings, finding_json("info", "R rsprite2 run record", "摘要统计表", "R rsprite2 SPRITE 已运行。",
   paste0("尝试行数=", cases), "", "SPRITE 是高级复核工具，解释时必须保留量表和搜索参数限制。", "ready", "low", "medium"))
 write_payload(normalizePath(input), "ready", findings, json_path)

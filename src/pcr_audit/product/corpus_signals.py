@@ -141,7 +141,7 @@ def build_corpus_index(source: Path) -> dict[str, Any]:
     projects = _corpus_project_paths(source)
     return {
         "tool_id": "papermill_network_signals",
-        "tool_name": "本地论文工厂跨库信号",
+        "tool_name": "Local Paper Mill Cross-Corpus Signals",
         "detector_runtime": "python",
         "dependency_status": "ready",
         "source": str(source),
@@ -163,11 +163,11 @@ def analyze_papermill_network_signals(project: Path, index_payload: dict[str, An
     if not projects:
         findings.append(
             finding(
-                str(project), "info", "本地跨库语料缺失", "corpus",
-                "未提供本地 corpus 索引，跨稿件论文工厂信号未运行。",
-                "使用 pcr-audit corpus build 生成 corpus-index.json 后再执行 screen。",
-                "该提示不计入风险；无本地语料不能说明无论文工厂风险。",
-                tool_id="papermill_network_signals", tool_name="本地论文工厂跨库信号",
+                str(project), "info", "Local cross-corpus index missing", "corpus",
+                "No local corpus index provided; cross-manuscript paper mill signals not run.",
+                "Use pcr-audit corpus build to generate corpus-index.json before running screen.",
+                "This notice does not count as a risk; absence of local corpus does not indicate absence of paper mill risk.",
+                tool_id="papermill_network_signals", tool_name="Local Paper Mill Cross-Corpus Signals",
                 input_type="project_manifest", dependency_status="insufficient_material",
             )
         )
@@ -183,11 +183,11 @@ def analyze_papermill_network_signals(project: Path, index_payload: dict[str, An
         if text_jaccard >= 0.35 or sim_distance <= 8:
             findings.append(
                 finding(
-                    str(project), "medium", "跨稿件文本高度相似", str(other.get("project_id") or other.get("source")),
-                    "当前项目与本地语料中的另一稿件存在较高文本模板相似性。",
+                    str(project), "medium", "High cross-manuscript text similarity", str(other.get("project_id") or other.get("source")),
+                    "Current project shows high text template similarity with another manuscript in the local corpus.",
                     f"jaccard={text_jaccard:.3f}; simhash_distance={sim_distance}; other={other.get('source')}",
-                    "人工比较摘要/方法/结果段，确认是否为合理系列研究、模板写作或异常复用。",
-                    tool_id="papermill_network_signals", tool_name="本地论文工厂跨库信号",
+                    "Manually compare abstract/methods/results sections; confirm whether this is legitimate serial research, template-based writing, or abnormal reuse.",
+                    tool_id="papermill_network_signals", tool_name="Local Paper Mill Cross-Corpus Signals",
                     input_type="project_manifest",
                 )
             )
@@ -198,22 +198,22 @@ def analyze_papermill_network_signals(project: Path, index_payload: dict[str, An
         if len(doi_overlap) >= 3:
             findings.append(
                 finding(
-                    str(project), "low", "跨稿件引用列表重叠", str(other.get("project_id") or other.get("source")),
-                    "当前项目与本地语料中的另一稿件共享多个 DOI，需复核引用网络是否合理。",
+                    str(project), "low", "Cross-manuscript reference list overlap", str(other.get("project_id") or other.get("source")),
+                    "Current project shares multiple DOIs with another manuscript in the local corpus; review whether the citation network is reasonable.",
                     f"overlap_doi_count={len(doi_overlap)}; examples={', '.join(sorted(doi_overlap)[:5])}",
-                    "比较研究主题、引用语境和参考文献来源，排除同模板文献堆叠。",
-                    tool_id="papermill_network_signals", tool_name="本地论文工厂跨库信号",
+                    "Compare research topics, citation contexts, and reference sources; rule out template-based document stacking.",
+                    tool_id="papermill_network_signals", tool_name="Local Paper Mill Cross-Corpus Signals",
                     input_type="project_manifest",
                 )
             )
         if len(author_overlap) >= 2 or domain_overlap.intersection({"qq.com", "163.com", "126.com", "gmail.com"}):
             findings.append(
                 finding(
-                    str(project), "low", "作者/邮箱域网络重叠", str(other.get("project_id") or other.get("source")),
-                    "本地语料中存在作者或邮箱域重叠，需结合机构和投稿背景复核。",
+                    str(project), "low", "Author/email domain network overlap", str(other.get("project_id") or other.get("source")),
+                    "Author or email domain overlap found in local corpus; requires review combining institutional and submission context.",
                     f"author_overlap={', '.join(sorted(author_overlap)[:5])}; email_domain_overlap={', '.join(sorted(domain_overlap)[:5])}",
-                    "确认是否为同一团队系列研究、通讯作者邮箱习惯或异常批量投稿线索。",
-                    tool_id="papermill_network_signals", tool_name="本地论文工厂跨库信号",
+                    "Confirm whether this is same-team serial research, corresponding author email conventions, or abnormal batch submission clues.",
+                    tool_id="papermill_network_signals", tool_name="Local Paper Mill Cross-Corpus Signals",
                     input_type="project_manifest",
                 )
             )
@@ -228,22 +228,22 @@ def analyze_papermill_network_signals(project: Path, index_payload: dict[str, An
                     best = min(distances, key=lambda item: item[1])
                     findings.append(
                         finding(
-                            str(project), "medium", "跨稿件图像指纹相似", f"{image.get('name')} / {other_image.get('name')}",
-                            "当前项目图片与本地语料图片存在高度相似图像指纹。",
+                            str(project), "medium", "Cross-manuscript image fingerprint similarity", f"{image.get('name')} / {other_image.get('name')}",
+                            "Current project image shows highly similar fingerprint to a local corpus image.",
                             f"best_hash={best[0]}:{best[1]}; other_project={other.get('source')}; other_image={other_image.get('path')}",
-                            "人工核对图注、实验条件和原始图，确认是否为合理复用、公共示意图或异常重复。",
-                            tool_id="papermill_network_signals", tool_name="本地论文工厂跨库信号",
+                            "Manually verify figure legends, experimental conditions, and original images; confirm whether legitimate reuse, public schematic, or abnormal duplication.",
+                            tool_id="papermill_network_signals", tool_name="Local Paper Mill Cross-Corpus Signals",
                             input_type="project_manifest",
                         )
                     )
     if not findings:
         findings.append(
             finding(
-                str(project), "info", "本地跨库信号", "corpus",
-                "本地 corpus 筛查完成，未发现达到阈值的文本、引用、作者或图像相似信号。",
+                str(project), "info", "Local cross-corpus signal", "corpus",
+                "Local corpus screening complete; no text, citation, author, or image similarity signals reaching threshold found.",
                 f"indexed_projects={len(projects)}; current_tokens={current.get('token_count')}",
-                "该结果只覆盖提供的本地语料，不代表外部数据库无相似稿件。",
-                tool_id="papermill_network_signals", tool_name="本地论文工厂跨库信号",
+                "This result only covers the provided local corpus; does not represent absence of similar manuscripts in external databases.",
+                tool_id="papermill_network_signals", tool_name="Local Paper Mill Cross-Corpus Signals",
                 input_type="project_manifest",
             )
         )

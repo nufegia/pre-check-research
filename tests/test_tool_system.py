@@ -64,7 +64,7 @@ def test_route_reports_insufficient_material() -> None:
 
     assert decision.status == "insufficient_material"
     assert decision.applicable is False
-    assert "至少 2 行" in decision.skip_reason
+    assert "at least 2 rows" in decision.skip_reason
 
 
 def test_route_reports_not_applicable() -> None:

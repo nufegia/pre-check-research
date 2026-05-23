@@ -71,33 +71,33 @@ def analyze_references(source: Path, config: AuditConfig | None = None) -> Table
     if not text:
         findings.append(
             finding(
-                str(source), "info", "参考文献解析", "输入文本",
-                "未能从输入中抽取可核验参考文献文本。",
-                "支持 TXT/MD/DOCX/PDF/BibTeX/RIS；复杂PDF可能需要GROBID预处理。",
-                "补充参考文献列表、BibTeX/RIS或开启GROBID服务后重试。",
-                tool_id="reference_audit", tool_name="参考文献核验", input_type="reference_list",
+                str(source), "info", "Reference parsing", "Input text",
+                "Could not extract verifiable reference text from input.",
+                "Supports TXT/MD/DOCX/PDF/BibTeX/RIS; complex PDF may require GROBID preprocessing.",
+                "Supplement with reference list, BibTeX/RIS, or enable GROBID service and retry.",
+                tool_id="reference_audit", tool_name="Reference Audit", input_type="reference_list",
                 dependency_status="insufficient_material",
             )
         )
     elif not dois and not pmids:
         findings.append(
             finding(
-                str(source), "low", "参考文献标识符缺失", "DOI/PMID",
-                "未发现 DOI 或 PMID，自动核验覆盖受限。",
-                f"候选参考文献行={len(reference_lines)}，DOI=0，PMID=0",
-                "建议补充 DOI/PMID 或提供结构化参考文献表，以降低错引和虚假引用风险。",
-                tool_id="reference_audit", tool_name="参考文献核验", input_type="reference_list",
+                str(source), "low", "Reference identifier missing", "DOI/PMID",
+                "No DOI or PMID found; automatic verification coverage is limited.",
+                f"Candidate reference lines={len(reference_lines)}, DOI=0, PMID=0",
+                "Supplement with DOI/PMID or provide structured reference tables to reduce miscitation and fabricated reference risks.",
+                tool_id="reference_audit", tool_name="Reference Audit", input_type="reference_list",
             )
         )
     else:
         findings.append(
             finding(
-                str(source), "info", "参考文献标识符解析", "DOI/PMID",
-                "已解析出可核验的参考文献标识符。",
-                f"DOI={len(dois)}，PMID={len(pmids)}，候选参考文献行={len(reference_lines)}",
-                "对高风险引用建议人工核对题名、作者、年份和正文主张是否匹配。",
-                tool_id="reference_audit", tool_name="参考文献核验", input_type="reference_list",
-                calculation_trace="正则抽取 DOI 和 PMID；外部元数据查询需显式开启 PCR_ENABLE_EXTERNAL_LOOKUPS=1。",
+                str(source), "info", "Reference identifier parsing", "DOI/PMID",
+                "Parseable reference identifiers found.",
+                f"DOI={len(dois)}, PMID={len(pmids)}, candidate reference lines={len(reference_lines)}",
+                "For high-risk citations, manually verify title, author, year, and in-text claim consistency.",
+                tool_id="reference_audit", tool_name="Reference Audit", input_type="reference_list",
+                calculation_trace="Regex extraction of DOI and PMID; external metadata queries require PCR_ENABLE_EXTERNAL_LOOKUPS=1.",
             )
         )
 
@@ -105,13 +105,13 @@ def analyze_references(source: Path, config: AuditConfig | None = None) -> Table
         if dois or pmids:
             findings.append(
                 finding(
-                    str(source), "info", "外部元数据核验未启用", "Crossref/OpenAlex/NCBI",
-                    "默认本地/私有化运行未向外部API发送稿件或参考文献信息。",
-                    "使用 --external-lookups 或设置 PCR_ENABLE_EXTERNAL_LOOKUPS=1 后才会查询 Crossref、OpenAlex 和 NCBI E-utilities。",
-                    "如需生产环境启用，应配置缓存、速率限制和数据出境告知。",
-                    tool_id="reference_audit", tool_name="参考文献核验", input_type="reference_list",
+                    str(source), "info", "External metadata verification not enabled", "Crossref/OpenAlex/NCBI",
+                    "Default local/private runs do not send manuscript or reference information to external APIs.",
+                    "Crossref, OpenAlex, and NCBI E-utilities are only queried after using --external-lookups or setting PCR_ENABLE_EXTERNAL_LOOKUPS=1.",
+                    "For production use, configure caching, rate limiting, and data export disclosure.",
+                    tool_id="reference_audit", tool_name="Reference Audit", input_type="reference_list",
                     dependency_status="external_lookup_disabled",
-                    confidence_basis="合规降级记录，不是数据风险信号。",
+                    confidence_basis="Compliance downgrade record; not a data risk signal.",
                 )
             )
         return TableResult("reference_audit", 0, 0, findings)
@@ -146,11 +146,11 @@ def analyze_references(source: Path, config: AuditConfig | None = None) -> Table
             if openalex.get("is_retracted"):
                 findings.append(
                     finding(
-                        str(source), "medium", "撤稿引用信号", doi,
-                        "OpenAlex 标记该 DOI 对应作品为撤稿或撤回。",
+                        str(source), "medium", "Retraction citation signal", doi,
+                        "OpenAlex flags this DOI as retracted or withdrawn.",
                         str(openalex.get("id") or doi),
-                        "人工核对撤稿原因、引用语境和是否需要替换或说明。",
-                        tool_id="reference_audit", tool_name="参考文献核验", input_type="reference_list",
+                        "Manually verify retraction reason, citation context, and whether replacement or clarification is needed.",
+                        tool_id="reference_audit", tool_name="Reference Audit", input_type="reference_list",
                         external_records="; ".join(records),
                     )
                 )
@@ -161,33 +161,33 @@ def analyze_references(source: Path, config: AuditConfig | None = None) -> Table
             if overlap < 0.35:
                 findings.append(
                     finding(
-                        str(source), "medium", "DOI题名不匹配", doi,
-                        "稿件参考文献行与 Crossref 返回题名明显不一致。",
+                        str(source), "medium", "DOI title mismatch", doi,
+                        "Manuscript reference line is significantly inconsistent with Crossref returned title.",
                         f"overlap={overlap:.2f}; reported_line={reference_line[:180]}; crossref_title={crossref_title[:180]}",
-                        "人工核对 DOI 是否贴错、参考文献题名是否误填，或排版/抽取是否错行。",
-                        tool_id="reference_audit", tool_name="参考文献核验", input_type="reference_list",
+                        "Manually verify whether DOI is misapplied, reference title is mis-entered, or layout/extraction caused line misalignment.",
+                        tool_id="reference_audit", tool_name="Reference Audit", input_type="reference_list",
                         external_records="; ".join(records),
                     )
                 )
         if not crossref and not openalex and _metadata_status_error(records):
             findings.append(
                 finding(
-                    str(source), "medium", "DOI外部元数据不可核验", doi,
-                    "该 DOI 在外部元数据服务中未能获得有效记录。",
+                    str(source), "medium", "DOI external metadata unverifiable", doi,
+                    "This DOI could not retrieve a valid record from external metadata services.",
                     "; ".join(records),
-                    "核对 DOI 是否拼写错误、是否为未注册标识符，或外部服务是否临时不可用。",
-                    tool_id="reference_audit", tool_name="参考文献核验", input_type="reference_list",
+                    "Verify whether DOI is misspelled, is an unregistered identifier, or external service is temporarily unavailable.",
+                    tool_id="reference_audit", tool_name="Reference Audit", input_type="reference_list",
                     external_records="; ".join(records),
                 )
             )
         if records:
             findings.append(
                 finding(
-                    str(source), "info", "DOI元数据核验", doi,
-                    "已尝试查询 DOI 外部元数据。",
+                    str(source), "info", "DOI metadata verification", doi,
+                    "Attempted to query DOI external metadata.",
                     "; ".join(records),
-                    "若元数据不匹配，应人工比对参考文献题名、作者、年份和期刊。",
-                    tool_id="reference_audit", tool_name="参考文献核验", input_type="reference_list",
+                    "If metadata does not match, manually compare reference title, author, year, and journal.",
+                    tool_id="reference_audit", tool_name="Reference Audit", input_type="reference_list",
                     external_records="; ".join(records),
                 )
             )
@@ -210,21 +210,21 @@ def analyze_references(source: Path, config: AuditConfig | None = None) -> Table
             if overlap < 0.35:
                 findings.append(
                     finding(
-                        str(source), "medium", "PMID题名不匹配", pmid,
-                        "稿件参考文献行与 NCBI 返回题名明显不一致。",
+                        str(source), "medium", "PMID title mismatch", pmid,
+                        "Manuscript reference line is significantly inconsistent with NCBI returned title.",
                         f"overlap={overlap:.2f}; reported_line={reference_line[:180]}; ncbi_title={ncbi_title[:180]}",
-                        "人工核对 PMID 是否贴错、参考文献题名是否误填，或排版/抽取是否错行。",
-                        tool_id="reference_audit", tool_name="参考文献核验", input_type="reference_list",
+                        "Manually verify whether PMID is misapplied, reference title is mis-entered, or layout/extraction caused line misalignment.",
+                        tool_id="reference_audit", tool_name="Reference Audit", input_type="reference_list",
                         external_records=json.dumps((ncbi or {}).get("result", {}).get(pmid, {}), ensure_ascii=False)[:500],
                     )
                 )
         findings.append(
             finding(
-                str(source), "info", "PMID元数据核验", pmid,
-                "已尝试查询 PMID 外部元数据。",
+                str(source), "info", "PMID metadata verification", pmid,
+                "Attempted to query PMID external metadata.",
                 record,
-                "若元数据不匹配，应人工比对参考文献题名、作者、年份和期刊。",
-                tool_id="reference_audit", tool_name="参考文献核验", input_type="reference_list",
+                "If metadata does not match, manually compare reference title, author, year, and journal.",
+                tool_id="reference_audit", tool_name="Reference Audit", input_type="reference_list",
                 external_records=json.dumps((ncbi or {}).get("result", {}).get(pmid, {}), ensure_ascii=False)[:500],
             )
         )
@@ -239,11 +239,11 @@ def analyze_citation_claims(source: Path, config: AuditConfig | None = None) -> 
     if not matches:
         findings.append(
             finding(
-                str(source), "info", "引用主张抽取", "正文引用",
-                "未抽取到可自动复核的带引用主张。",
-                "当前轻量规则识别数字方括号引用或作者-年份引用。",
-                "如需引用支持关系复核，建议提供结构化正文和参考文献，或接入GROBID/RAG流程。",
-                tool_id="citation_claim_check", tool_name="引用支持关系辅助复核", input_type="reference_list",
+                str(source), "info", "Citation claim extraction", "In-text citation",
+                "No auto-reviewable citation-bearing claims extracted.",
+                "Current lightweight rules recognize numeric bracket citations or author-year citations.",
+                "For citation support review, provide structured text and references, or integrate GROBID/RAG pipeline.",
+                tool_id="citation_claim_check", tool_name="Citation Support Review", input_type="reference_list",
                 dependency_status="insufficient_material",
             )
         )
@@ -251,12 +251,12 @@ def analyze_citation_claims(source: Path, config: AuditConfig | None = None) -> 
         sample = "；".join(matches[:5])
         findings.append(
             finding(
-                str(source), "info", "引用主张抽取", "正文引用",
-                "已抽取带引用主张，供人工或RAG流程复核。",
-                f"候选主张={len(matches)}；样例：{sample}",
-                "逐条核对引用文献是否支持正文主张，尤其是强因果、临床有效性和机制性表述。",
-                tool_id="citation_claim_check", tool_name="引用支持关系辅助复核", input_type="reference_list",
-                calculation_trace="轻量正则抽取，不调用LLM；判断支持/反对需要人工或受控RAG证据片段。",
+                str(source), "info", "Citation claim extraction", "In-text citation",
+                "Citation-bearing claims extracted for human or RAG pipeline review.",
+                f"Candidate claims={len(matches)}; examples: {sample}",
+                "Check each citation for whether it supports the in-text claim, especially strong causal, clinical efficacy, and mechanistic statements.",
+                tool_id="citation_claim_check", tool_name="Citation Support Review", input_type="reference_list",
+                calculation_trace="Lightweight regex extraction; no LLM call; support/oppose judgments require human or controlled RAG evidence snippets.",
             )
         )
     return TableResult("citation_claim_check", 0, 0, findings)
@@ -272,21 +272,21 @@ def analyze_papermill_signals(source: Path, config: AuditConfig | None = None) -
         evidence = "; ".join(f"{phrase} -> {intended}" for phrase, intended in hits[:10])
         findings.append(
             finding(
-                str(source), "medium", "异常短语/论文工厂轻量信号", "正文",
-                "发现疑似 tortured phrases 或机器替换短语。",
+                str(source), "medium", "Abnormal phrase/paper mill light signal", "Body text",
+                "Found suspected tortured phrases or machine-substituted phrases.",
                 evidence,
-                "人工检查术语是否为领域内真实表达；若为异常替换，应回查文本来源和引用网络。",
-                tool_id="papermill_light_signals", tool_name="论文工厂轻量信号", input_type="plain_text",
+                "Manually verify whether terms are genuine domain expressions; if abnormal substitution is found, review text provenance and citation network.",
+                tool_id="papermill_light_signals", tool_name="Paper mill light signal", input_type="plain_text",
             )
         )
     elif text:
         findings.append(
             finding(
-                str(source), "info", "论文工厂轻量信号", "正文",
-                "轻量短语扫描完成，未发现内置异常短语。",
-                f"扫描字符数={len(text)}，规则数={len(TORTURED_PHRASES)}",
-                "该结果不等于无论文工厂风险；跨库相似性和投稿行为需要机构版数据。",
-                tool_id="papermill_light_signals", tool_name="论文工厂轻量信号", input_type="plain_text",
+                str(source), "info", "Paper mill light signal", "Body text",
+                "Lightweight phrase scan completed; no built-in abnormal phrases found.",
+                f"Scanned chars={len(text)}, rules={len(TORTURED_PHRASES)}",
+                "This result does not equal no paper mill risk; cross-corpus similarity and submission behavior require institutional data.",
+                tool_id="papermill_light_signals", tool_name="Paper mill light signal", input_type="plain_text",
             )
         )
     return TableResult("papermill_light_signals", 0, 0, findings)

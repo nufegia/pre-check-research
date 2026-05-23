@@ -40,7 +40,7 @@ pcr-audit route path/to/material --json build/route.json
 pcr-audit run path/to/material --scenario auto --out build/audit.md --json build/audit.json
 ```
 
-See [`llms.txt`](https://github.com/PreCheckResearch/pre-check-research/blob/main/llms.txt) for the concise AI-agent entry point.
+See [`llms.txt`](https://github.com/nufegia/pre-check-research/blob/main/llms.txt) for the concise AI-agent entry point.
 
 ## Teaching and Benchmarking
 

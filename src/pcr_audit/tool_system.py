@@ -26,7 +26,7 @@ class ToolSpec:
     dependency_module: str | None = None
     r_package: str | None = None
     detector_runtime: str = "python"
-    reliability: str = "稳定"
+    reliability: str = "Stable"
     method_limitations: str = ""
 
 
@@ -45,231 +45,231 @@ class RoutingDecision:
     method_limitations: str
     detector_runtime: str = "python"
     dependency_status: str = "ready"
-    reliability: str = "稳定"
+    reliability: str = "Stable"
 
 
 TOOL_REGISTRY: dict[str, ToolSpec] = {
     "raw_data_rules": ToolSpec(
         tool_id="raw_data_rules",
-        display_name="基础表格规则",
-        category="原始数据",
-        description="空表、缺失、重复/高度重复、数字分布、列间关系、高频值、固定步长、连续重复、离群值等 Python 基础规则。",
+        display_name="Basic Table Rules",
+        category="Raw Data",
+        description="Empty tables, missing values, duplicate/highly similar rows, digit distribution, inter-column relationships, high-frequency values, fixed steps, consecutive repeats, outliers, and other Python basic rules.",
         accepted_input_types=("raw_observation_table", "figure_source_data"),
         minimum_sample_size=2,
         default_enabled=True,
-        reliability="稳定",
-        method_limitations="用于发现数据形态、数字分布和列间关系异常；实验设计变量、仪器阈值、批量导出格式、合法派生变量可能触发误报。",
+        reliability="Stable",
+        method_limitations="Detects data shape, digit distribution, and inter-column relationship anomalies; study design variables, instrument thresholds, batch export formats, and legitimate derived variables may trigger false positives.",
     ),
     "r_scrutiny": ToolSpec(
         tool_id="r_scrutiny",
         display_name="R scrutiny",
-        category="R 统计一致性",
-        description="通过 R scrutiny 执行 GRIM、GRIMMER、DEBIT 等摘要统计可行性检查。",
+        category="R Statistical Consistency",
+        description="Run GRIM, GRIMMER, DEBIT, and other summary statistic feasibility checks via R scrutiny.",
         accepted_input_types=("summary_statistics_table", "continuous_measure_summary", "likert_or_integer_scale_summary"),
         default_enabled=False,
         r_package="scrutiny",
         detector_runtime="r",
-        reliability="需 R",
-        method_limitations="适用于报告均值、SD、N、比例或二元数据摘要；需确认量表范围、四舍五入规则和变量类型。",
+        reliability="Requires R",
+        method_limitations="Applies to reported means, SDs, Ns, proportions, or binary data summaries; requires confirmation of scale range, rounding rules, and variable types.",
     ),
     "r_statcheck": ToolSpec(
         tool_id="r_statcheck",
         display_name="R statcheck",
-        category="R 正文统计",
-        description="通过 R statcheck 检查论文正文 APA 统计表达式与 p 值一致性。",
+        category="R In-text Statistics",
+        description="Check consistency between APA statistical expressions and p-values in manuscript text via R statcheck.",
         accepted_input_types=("apa_statistical_text",),
         default_enabled=False,
         r_package="statcheck",
         detector_runtime="r",
-        reliability="需 R",
-        method_limitations="只适用于可被 statcheck 解析的 APA/NHST 表达式；中文全角标点、非标准统计报告和抽取失败文本会降低覆盖率。",
+        reliability="Requires R",
+        method_limitations="Only applies to APA/NHST expressions parseable by statcheck; Chinese full-width punctuation, non-standard statistical reporting, and extraction failures reduce coverage.",
     ),
     "r_rsprite2": ToolSpec(
         tool_id="r_rsprite2",
         display_name="R rsprite2",
-        category="R 高级复核",
-        description="通过 R rsprite2 进行 SPRITE 离散分布反推，适合专家级复核。",
+        category="R Advanced Review",
+        description="Run SPRITE discrete distribution reconstruction via R rsprite2, suitable for expert-level review.",
         accepted_input_types=("likert_or_integer_scale_summary",),
         default_enabled=False,
         r_package="rsprite2",
         detector_runtime="r",
-        reliability="高级/需 R",
-        method_limitations="需要明确量表范围、精度和约束；结果解释成本高，只作为专家复核入口。",
+        reliability="Advanced/Requires R",
+        method_limitations="Requires clear scale range, precision, and constraints; high interpretation cost, intended as an expert review entry point only.",
     ),
     "crosscheck": ToolSpec(
         tool_id="crosscheck",
-        display_name="行级数学交叉校验",
-        category="统计一致性",
-        description="对摘要统计表执行 SE/SD/√N、CI/SE、percent/count/N、p/t/df 等纯数学交叉校验。",
+        display_name="Row-level Math Cross-check",
+        category="Statistical Consistency",
+        description="Run pure mathematical cross-checks on summary statistics tables: SE/SD/sqrt(N), CI/SE, percent/count/N, p/t/df.",
         accepted_input_types=("summary_statistics_table", "continuous_measure_summary", "likert_or_integer_scale_summary"),
         default_enabled=False,
-        reliability="稳定",
-        method_limitations="只校验表内派生统计量的数学一致性；无法判断原始观测是否真实或统计模型是否合适。",
+        reliability="Stable",
+        method_limitations="Only verifies mathematical consistency of derived statistics within a table; cannot determine whether original observations are real or whether the statistical model is appropriate.",
     ),
     "p_value_distribution": ToolSpec(
         tool_id="p_value_distribution",
-        display_name="p值集合弱信号检测",
-        category="统计一致性",
-        description="检查纯 p 值集合的定义域和边缘显著 p 值聚集弱信号。",
+        display_name="P-value Set Weak Signal Detection",
+        category="Statistical Consistency",
+        description="Check domain validity and marginally significant p-value clustering in pure p-value collections.",
         accepted_input_types=("p_value_collection",),
         minimum_sample_size=10,
         default_enabled=False,
-        reliability="弱信号",
-        method_limitations="只检查 p 值集合形态，不知道检验族、方向、校正方式或完整结果空间；边缘聚集只能作为选择性报告复核线索。",
+        reliability="Weak Signal",
+        method_limitations="Only checks p-value collection shape; does not know test family, direction, correction method, or full result space; marginal clustering is only a selective reporting review clue.",
     ),
     "image_forensics": ToolSpec(
         tool_id="image_forensics",
-        display_name="图像取证",
-        category="图像",
-        description="ELA、元数据、ORB copy-move 和感知哈希等图像弱信号检查。",
+        display_name="Image Forensics",
+        category="Image",
+        description="ELA, metadata, ORB copy-move, and perceptual hash image weak signal checks.",
         accepted_input_types=("scientific_image", "western_blot_or_gel_image"),
         default_enabled=False,
         dependency_module="PIL",
-        reliability="弱信号",
-        method_limitations="图像取证结果不能单独作为强结论；重复纹理、压缩流程和排版软件都可能导致误报。",
+        reliability="Weak Signal",
+        method_limitations="Image forensics results cannot stand alone as strong conclusions; repeated textures, compression pipelines, and layout software can all cause false positives.",
     ),
     "reference_audit": ToolSpec(
         tool_id="reference_audit",
-        display_name="参考文献核验",
-        category="文献与外部信号",
-        description="解析 DOI/PMID，并在显式启用时查询 Crossref、OpenAlex、NCBI 元数据和撤稿信号。",
+        display_name="Reference Audit",
+        category="Literature & External Signals",
+        description="Parse DOI/PMID and, when explicitly enabled, query Crossref, OpenAlex, NCBI metadata and retraction signals.",
         accepted_input_types=("reference_list", "paper_document", "plain_text", "apa_statistical_text"),
         default_enabled=False,
-        reliability="稳定/外部查询需启用",
-        method_limitations="默认不向外部 API 发送材料；外部元数据可能不完整，撤稿与争议信号需人工确认。",
+        reliability="Stable/External lookup requires opt-in",
+        method_limitations="Does not send materials to external APIs by default; external metadata may be incomplete; retraction and dispute signals require human confirmation.",
     ),
     "citation_claim_check": ToolSpec(
         tool_id="citation_claim_check",
-        display_name="引用支持关系辅助复核",
-        category="文献与外部信号",
-        description="抽取带引用的正文主张，生成需要人工或受控 RAG 复核的清单。",
+        display_name="Citation Support Review",
+        category="Literature & External Signals",
+        description="Extract in-text claims with citations and generate a checklist for human or controlled RAG review.",
         accepted_input_types=("reference_list", "paper_document", "plain_text", "apa_statistical_text"),
         default_enabled=False,
-        reliability="辅助",
-        method_limitations="轻量抽取不判断引用是否真正支持主张；必须保留证据片段并人工确认。",
+        reliability="Auxiliary",
+        method_limitations="Lightweight extraction does not judge whether citations actually support claims; must preserve evidence snippets for human confirmation.",
     ),
     "image_extract": ToolSpec(
         tool_id="image_extract",
-        display_name="图像抽取",
-        category="图像",
-        description="从图片文件、DOCX 或 PDF 中发现/抽取 figure 和基础元数据；PDF 为 best-effort。",
+        display_name="Image Extraction",
+        category="Image",
+        description="Discover/extract figures and basic metadata from image files, DOCX, or PDF; PDF is best-effort.",
         accepted_input_types=("scientific_image", "scientific_figure", "paper_document"),
         default_enabled=False,
-        reliability="稳定",
-        method_limitations="图片文件和 DOCX 抽取较稳定；PDF 图像抽取为 best-effort，复杂版式建议提供原始图片或 DOCX。",
+        reliability="Stable",
+        method_limitations="Image file and DOCX extraction is relatively stable; PDF image extraction is best-effort; for complex layouts, provide original images or DOCX.",
     ),
     "image_duplicate_internal": ToolSpec(
         tool_id="image_duplicate_internal",
-        display_name="稿件内部重复图初筛",
-        category="图像",
-        description="使用多种本地图像指纹和 ORB 特征筛查同稿件内部高度相似图片。",
+        display_name="Internal Duplicate Image Screening",
+        category="Image",
+        description="Screen for highly similar images within the same manuscript using multiple local image fingerprints and ORB features.",
         accepted_input_types=("scientific_image", "scientific_figure", "western_blot_or_gel_image"),
         default_enabled=False,
         dependency_module="PIL",
-        reliability="弱信号",
-        method_limitations="只能提示重复/复用复核线索，仅提示复核线索，不做判定；复杂裁剪、低质量压缩和重复纹理可能影响结果。",
+        reliability="Weak Signal",
+        method_limitations="Only flags duplicate/reuse review clues; does not make determinations; complex cropping, low-quality compression, and repeated textures may affect results.",
     ),
     "image_copy_move_internal": ToolSpec(
         tool_id="image_copy_move_internal",
-        display_name="图像局部复制初筛",
-        category="图像",
-        description="使用本地 ORB 特征在单张图内部筛查疑似 copy-move 局部复制信号。",
+        display_name="Image Copy-Move Screening",
+        category="Image",
+        description="Screen for suspected copy-move local duplication signals within single images using local ORB features.",
         accepted_input_types=("scientific_image", "scientific_figure", "western_blot_or_gel_image"),
         default_enabled=False,
         dependency_module="cv2",
-        reliability="弱信号",
-        method_limitations="局部复制初筛对重复纹理、图表元素和压缩噪声敏感；命中区域必须由人工结合原图复核。",
+        reliability="Weak Signal",
+        method_limitations="Local copy-move screening is sensitive to repeated textures, chart elements, and compression noise; hit regions must be reviewed by a human against the original image.",
     ),
     "image_metadata_audit": ToolSpec(
         tool_id="image_metadata_audit",
-        display_name="图像元数据与质量初筛",
-        category="图像",
-        description="读取图像格式、尺寸、EXIF、色彩模式和亮度动态范围等基础元数据。",
+        display_name="Image Metadata & Quality Screening",
+        category="Image",
+        description="Read basic metadata: image format, dimensions, EXIF, color mode, and brightness dynamic range.",
         accepted_input_types=("scientific_image", "scientific_figure", "western_blot_or_gel_image"),
         default_enabled=False,
         dependency_module="PIL",
-        reliability="辅助",
-        method_limitations="元数据容易被清除或被软件重写，只能作为文件流程复核线索。",
+        reliability="Auxiliary",
+        method_limitations="Metadata is easily cleared or rewritten by software; only serves as a file workflow review clue.",
     ),
     "western_blot_review_list": ToolSpec(
         tool_id="western_blot_review_list",
-        display_name="Western blot复核清单",
-        category="图像",
-        description="识别 blot/gel 候选图并生成原始材料复核清单。",
+        display_name="Western Blot Review Checklist",
+        category="Image",
+        description="Identify blot/gel candidate images and generate an original material review checklist.",
         accepted_input_types=("scientific_image", "western_blot_or_gel_image", "scientific_figure"),
         default_enabled=False,
-        reliability="辅助",
-        method_limitations="基于文件名和材料类型生成清单，不做专业图像取证结论。",
+        reliability="Auxiliary",
+        method_limitations="Generates a checklist based on filenames and material types; does not make professional image forensics conclusions.",
     ),
     "papermill_light_signals": ToolSpec(
         tool_id="papermill_light_signals",
-        display_name="论文工厂轻量信号",
-        category="论文工厂",
-        description="扫描 tortured phrases、模板化文本等轻量信号。",
+        display_name="Paper Mill Light Signals",
+        category="Paper Mill",
+        description="Scan for light signals such as tortured phrases and templated text.",
         accepted_input_types=("plain_text", "apa_statistical_text", "paper_document"),
         default_enabled=False,
-        reliability="弱信号",
-        method_limitations="轻量文本信号不能替代跨论文数据库、投稿行为和作者网络审查。",
+        reliability="Weak Signal",
+        method_limitations="Lightweight text signals cannot replace cross-paper database, submission behavior, and author network review.",
     ),
     "papermill_network_signals": ToolSpec(
         tool_id="papermill_network_signals",
-        display_name="本地论文工厂跨库信号",
-        category="论文工厂",
-        description="基于本地 corpus 索引筛查文本、引用、作者机构和图像指纹相似性。",
+        display_name="Local Paper Mill Cross-Corpus Signals",
+        category="Paper Mill",
+        description="Screen for text, citation, author affiliation, and image fingerprint similarity based on local corpus index.",
         accepted_input_types=("project_manifest", "paper_document", "raw_file_bundle"),
         default_enabled=False,
-        reliability="弱信号/需本地语料",
-        method_limitations="跨库信号强依赖本地语料覆盖；相似模板、共同方法和同团队系列研究都可能产生正常相似。",
+        reliability="Weak Signal/Requires Local Corpus",
+        method_limitations="Cross-corpus signals heavily depend on local corpus coverage; similar templates, shared methods, and serial studies from the same team can all produce normal similarity.",
     ),
     "provenance_hash": ToolSpec(
         tool_id="provenance_hash",
-        display_name="原始文件哈希存证",
-        category="溯源",
-        description="计算 SHA-256、文件大小和时间戳，生成版本链证据。",
+        display_name="Original File Hash Record",
+        category="Provenance",
+        description="Compute SHA-256, file size, and timestamp to generate version chain evidence.",
         accepted_input_types=("raw_file_bundle", "project_manifest", "raw_observation_table", "paper_document", "scientific_image"),
         default_enabled=False,
-        reliability="稳定",
-        method_limitations="哈希只能证明文件后续未变化，不能证明实验真实发生或上传文件就是最早原始文件。",
+        reliability="Stable",
+        method_limitations="Hashes only prove that files have not changed subsequently; they cannot prove that experiments actually occurred or that uploaded files are the earliest originals.",
     ),
     "provenance_chain_verify": ToolSpec(
         tool_id="provenance_chain_verify",
-        display_name="哈希版本链核验",
-        category="溯源",
-        description="读取追加式 JSONL 账本并核验项目文件 matched/changed/missing/new 状态。",
+        display_name="Hash Version Chain Verification",
+        category="Provenance",
+        description="Read the append-only JSONL ledger and verify project file matched/changed/missing/new status.",
         accepted_input_types=("raw_file_bundle", "project_manifest"),
         default_enabled=False,
-        reliability="稳定",
-        method_limitations="版本链只能证明登记后的文件完整性变化，不能证明登记前材料来源真实。",
+        reliability="Stable",
+        method_limitations="Version chains can only prove integrity changes of registered files; they cannot prove the authenticity of material sources before registration.",
     ),
     "code_rerun_audit": ToolSpec(
         tool_id="code_rerun_audit",
-        display_name="分析代码复跑审计",
-        category="代码复核",
-        description="轻量模式/正则扫描 R/Python/Stata/SPSS/SAS 脚本中的路径、输入、剔除和显著性筛选线索。",
+        display_name="Analysis Code Rerun Audit",
+        category="Code Review",
+        description="Lightweight pattern/regex scan of R/Python/Stata/SPSS/SAS scripts for path, input, exclusion, and significance filtering clues.",
         accepted_input_types=("analysis_code", "project_manifest"),
         default_enabled=False,
-        reliability="辅助",
-        method_limitations="该工具只读扫描复跑准备风险；Python AST 和更强多语言解析可后续增强。实际 Python/R 执行由 code_rerun_execute 在临时项目副本中处理。",
+        reliability="Auxiliary",
+        method_limitations="This tool only read-scans rerun readiness risks; Python AST and stronger multi-language parsing can be enhanced later. Actual Python/R execution is handled by code_rerun_execute in a temporary project copy.",
     ),
     "code_rerun_execute": ToolSpec(
         tool_id="code_rerun_execute",
-        display_name="分析脚本沙箱复跑",
-        category="代码复核",
-        description="在临时项目副本中执行 Python/R 脚本，捕获输出并把生成表格纳入跨材料对账；Stata/SPSS/SAS 记录为 info 并提示人工复跑。",
+        display_name="Analysis Script Sandbox Rerun",
+        category="Code Review",
+        description="Execute Python/R scripts in a temporary project copy, capture output, and feed generated tables into cross-material reconciliation; Stata/SPSS/SAS are recorded as info with manual rerun prompts.",
         accepted_input_types=("analysis_code", "project_manifest"),
         default_enabled=False,
-        reliability="辅助/本地沙箱",
-        method_limitations="本地临时目录隔离不能替代强安全容器；脚本失败、超时或缺包只记录为运行提示。",
+        reliability="Auxiliary/Local Sandbox",
+        method_limitations="Local temporary directory isolation cannot replace strong security containers; script failures, timeouts, or missing packages are only recorded as info.",
     ),
     "data_trace_crosscheck": ToolSpec(
         tool_id="data_trace_crosscheck",
-        display_name="跨材料数据对账",
-        category="统计一致性",
-        description="对稿件/补充材料摘要统计、原始数据自动汇总和脚本输出表做确定性对账。",
+        display_name="Cross-Material Data Reconciliation",
+        category="Statistical Consistency",
+        description="Deterministically reconcile manuscript/supplement summary statistics, raw data auto-aggregations, and script output tables.",
         accepted_input_types=("project_manifest",),
         default_enabled=False,
-        reliability="稳定",
-        method_limitations="只对可可靠匹配的变量和统计量对账；复杂分组、派生变量和抽取错误需要人工确认。",
+        reliability="Stable",
+        method_limitations="Only reconciles reliably matchable variables and statistics; complex groupings, derived variables, and extraction errors require human confirmation.",
     ),
 }
 
@@ -301,12 +301,12 @@ def r_package_available(package: str) -> bool:
 def dependency_status(spec: ToolSpec) -> tuple[str, str]:
     if spec.r_package:
         if not rscript_available():
-            return "missing_r", "未检测到 Rscript；请先安装 R，并确保 Rscript 在 PATH 中。"
+            return "missing_r", "Rscript not detected; please install R and ensure Rscript is in PATH."
         if not r_package_available(spec.r_package):
-            return "missing_r_package", f"缺少 R 包 {spec.r_package}；请在 R 中运行 install.packages('{spec.r_package}')。"
+            return "missing_r_package", f"Missing R package {spec.r_package}; run install.packages('{spec.r_package}') in R."
         return "ready", ""
     if spec.dependency_module and importlib.util.find_spec(spec.dependency_module) is None:
-        return "dependency_missing", f"缺少 Python 依赖模块 {spec.dependency_module}，已记录但不运行。"
+        return "dependency_missing", f"Missing Python dependency module {spec.dependency_module}; recorded but not run."
     return "ready", ""
 
 
@@ -331,14 +331,14 @@ def classify_table(df: pd.DataFrame, source_suffix: str = "") -> dict[str, Any]:
     if suffix in {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".webp"}:
         return {"primary_type": "scientific_image", "input_types": ["scientific_image"], "signals": {}}
 
-    n_cols = columns_matching(df, [r"^n$", r"样本量", r"例数", r"人数", r"samplesize", r"cases?"])
-    mean_cols = columns_matching(df, [r"^mean$", r"^means$", r"均值", r"均数", r"平均值", r"平均数"])
-    sd_cols = columns_matching(df, [r"^sd$", r"^std$", r"标准差", r"stdev"])
-    se_cols = columns_matching(df, [r"^se$", r"^sem$", r"标准误", r"standarderror"])
-    ci_cols = columns_matching(df, [r"(^|[^a-z])ci([^a-z]|$)", r"95%ci", r"置信区间", r"下限", r"上限", r"lcl", r"ucl"])
-    p_cols = columns_matching(df, [r"^p$", r"pvalue", r"p值", r"^pval"])
-    stat_cols = columns_matching(df, [r"^t$", r"^f$", r"chi", r"χ", r"卡方", r"^df$", r"自由度"])
-    score_cols = columns_matching(df, [r"score", r"likert", r"scale", r"评分", r"量表", r"总分"])
+    n_cols = columns_matching(df, [r"^n$", r"^sample[_ ]?size$", r"^cases?$", r"^number$", r"samplesize", r"样本量", r"例数", r"人数"])
+    mean_cols = columns_matching(df, [r"^mean$", r"^means$", r"^average$", r"均值", r"均数", r"平均值", r"平均数"])
+    sd_cols = columns_matching(df, [r"^sd$", r"^std$", r"^stdev$", r"标准差", r"stdev"])
+    se_cols = columns_matching(df, [r"^se$", r"^sem$", r"^standard[_ ]?error$", r"标准误", r"standarderror"])
+    ci_cols = columns_matching(df, [r"(^|[^a-z])ci([^a-z]|$)", r"95%ci", r"^lcl$", r"^ucl$", r"^lower$", r"^upper$", r"置信区间", r"下限", r"上限", r"lcl", r"ucl"])
+    p_cols = columns_matching(df, [r"^p$", r"^p[_ ]?value$", r"pvalue", r"^pval", r"p值"])
+    stat_cols = columns_matching(df, [r"^t$", r"^f$", r"^chi", r"χ", r"^df$", r"^dof$", r"卡方", r"自由度"])
+    score_cols = columns_matching(df, [r"score", r"likert", r"scale", r"rating", r"评分", r"量表", r"总分"])
 
     summary_score = bool(n_cols and mean_cols and score_cols)
     summary_stats = bool(n_cols and (mean_cols or sd_cols or se_cols or ci_cols or p_cols or stat_cols))
@@ -385,7 +385,7 @@ PMID_RE = re.compile(r"\bPMID\s*:?\s*\d{5,10}\b", re.I)
 
 def classify_text(text: str) -> dict[str, Any]:
     has_apa = bool(APA_STAT_RE.search(text or ""))
-    has_reference = bool(DOI_RE.search(text or "") or PMID_RE.search(text or "") or re.search(r"^\s*(references|参考文献)\s*$", text or "", re.I | re.M))
+    has_reference = bool(DOI_RE.search(text or "") or PMID_RE.search(text or "") or re.search(r"^\s*(references|bibliography|参考文献|参考|引用)\s*$", text or "", re.I | re.M))
     primary = "apa_statistical_text" if has_apa else ("reference_list" if has_reference else "plain_text")
     input_types = []
     if has_apa:
@@ -414,19 +414,19 @@ def route_tool(
     if not selected:
         return RoutingDecision(
             spec.tool_id, spec.display_name, spec.category, False, False, False, "not_selected",
-            "用户未勾选该工具包，本次不参与检测。", matched, available_fields, spec.method_limitations,
+            "User did not select this tool; it will not participate in this run.", matched, available_fields, spec.method_limitations,
             spec.detector_runtime, "not_selected", spec.reliability,
         )
     if not matched:
         return RoutingDecision(
             spec.tool_id, spec.display_name, spec.category, True, False, False, "not_applicable",
-            "当前数据类型不属于该工具包的适用范围。", "", available_fields, spec.method_limitations,
+            "Current data type is outside this tool's applicable scope.", "", available_fields, spec.method_limitations,
             spec.detector_runtime, "not_applicable", spec.reliability,
         )
     if spec.minimum_sample_size and row_count < spec.minimum_sample_size:
         return RoutingDecision(
             spec.tool_id, spec.display_name, spec.category, True, False, False, "insufficient_material",
-            f"样本量/行数不足：需要至少 {spec.minimum_sample_size} 行，当前 {row_count} 行。",
+            f"Insufficient sample/row count: requires at least {spec.minimum_sample_size} rows, currently {row_count} rows.",
             matched, available_fields, spec.method_limitations, spec.detector_runtime, "insufficient_material", spec.reliability,
         )
     dep_status, dep_reason = dependency_status(spec)

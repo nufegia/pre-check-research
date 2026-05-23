@@ -41,11 +41,11 @@ class Finding:
     detail: str
     suggestion: str
     tool_id: str = "raw_data_rules"
-    tool_name: str = "基础表格规则"
+    tool_name: str = "Basic Table Rules"
     module: str = "raw_observation_checks"
     input_type: str = "unknown"
-    routing_reason: str = "基础表格规则检测流程。"
-    method_limitations: str = "该结果来自规则筛查，只提示需要复核的风险信号，不构成数据风险校验判定。"
+    routing_reason: str = "Basic Table Rules detection process."
+    method_limitations: str = "This result comes from rule-based screening; it only flags risk signals requiring review and does not constitute a data integrity verdict."
     raw_output_ref: str = ""
     detector_runtime: str = "python"
     dependency_status: str = "ready"
@@ -72,7 +72,7 @@ class TableResult:
 
 
 LEVEL_SCORE = {"high": 3, "medium": 2, "low": 1, "info": 0}
-LEVEL_CN = {"high": "高", "medium": "中", "low": "低", "info": "提示"}
+LEVEL_LABEL = {"high": "High", "medium": "Medium", "low": "Low", "info": "Info"}
 
 
 def clean_cell(value: Any) -> Any:
@@ -93,7 +93,7 @@ def read_csv(path: Path) -> list[tuple[str, pd.DataFrame]]:
             return [(path.stem, df)]
         except Exception as exc:
             last_error = exc
-    raise RuntimeError(f"CSV 读取失败：{last_error}")
+    raise RuntimeError(f"CSV read failed: {last_error}")
 
 
 def read_excel(path: Path) -> list[tuple[str, pd.DataFrame]]:
@@ -126,7 +126,7 @@ def read_docx_tables(path: Path) -> list[tuple[str, pd.DataFrame]]:
             df = pd.DataFrame(normalized[1:], columns=first)
         else:
             df = pd.DataFrame(normalized)
-        tables.append((f"DOCX表格{idx}", df))
+        tables.append((f"DOCX_table_{idx}", df))
     return tables
 
 
@@ -134,7 +134,7 @@ def read_pdf_tables(path: Path) -> list[tuple[str, pd.DataFrame]]:
     try:
         import pdfplumber  # type: ignore
     except ImportError as exc:
-        raise RuntimeError("PDF 表格抽取需要安装 pdfplumber：pip install pdfplumber") from exc
+        raise RuntimeError("PDF table extraction requires pdfplumber: pip install pdfplumber") from exc
 
     tables: list[tuple[str, pd.DataFrame]] = []
     with pdfplumber.open(str(path)) as pdf:
@@ -151,7 +151,7 @@ def read_pdf_tables(path: Path) -> list[tuple[str, pd.DataFrame]]:
                     df = pd.DataFrame(rows[1:], columns=first)
                 else:
                     df = pd.DataFrame(rows)
-                tables.append((f"PDF第{page_no}页表格{table_no}", df))
+                tables.append((f"PDF_p{page_no}_table_{table_no}", df))
     return tables
 
 
@@ -165,7 +165,7 @@ def load_tables(path: Path) -> list[tuple[str, pd.DataFrame]]:
         return read_docx_tables(path)
     if suffix == ".pdf":
         return read_pdf_tables(path)
-    raise RuntimeError(f"暂不支持的文件类型：{suffix}。请使用 CSV/XLSX/DOCX/PDF。")
+    raise RuntimeError(f"Unsupported file type: {suffix}. Please use CSV/XLSX/DOCX/PDF.")
 
 
 def looks_numeric(value: Any) -> bool:
@@ -214,11 +214,13 @@ STRUCTURAL_INDEX_PATTERNS = [
     r"^order$",
     r"^row$",
     r"^item$",
-    r"^itemno$",
-    r"^itemnumber$",
+    r"^item[_ ]?no$",
+    r"^item[_ ]?number$",
     r"^question$",
-    r"^questionno$",
-    r"^qno$",
+    r"^question[_ ]?no$",
+    r"^q[_ ]?no$",
+    r"^seq$",
+    r"^serial$",
     r"序号",
     r"编号",
     r"题号",
@@ -301,13 +303,13 @@ def tag_findings(
 def enrich_finding_explanation(finding: Finding) -> None:
     """Populate user-facing interpretation fields when a detector did not."""
     if not finding.meaning:
-        finding.meaning = finding.summary or "该项表示检测器发现了需要人工复核的模式。"
+        finding.meaning = finding.summary or "This item indicates the detector found a pattern requiring human review."
     if not finding.normal_explanations:
         finding.normal_explanations = (
-            "可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。"
+            "Possible benign causes include study design, instrument thresholds, batch formatting, table extraction errors, or legitimate data cleaning."
         )
     if not finding.review_steps:
-        finding.review_steps = finding.suggestion or "回看原始记录、统计脚本和数据处理日志，确认该信号是否有合理来源。"
+        finding.review_steps = finding.suggestion or "Review original records, statistical scripts, and data processing logs to confirm whether this signal has a legitimate source."
     if finding.confidence_score is None or (
         finding.confidence_score == 0.6 and finding.confidence == "medium" and finding.level != "medium"
     ):
@@ -329,7 +331,7 @@ def enrich_finding_explanation(finding: Finding) -> None:
         finding.review_actions = finding.review_steps or finding.suggestion
     if not finding.confidence_basis:
         finding.confidence_basis = (
-            "基于确定性规则或可复算公式生成；仍需结合研究设计、原始记录和材料抽取质量人工判断。"
+            "Generated from deterministic rules or reproducible formulas; still requires human judgment considering study design, original records, and material extraction quality."
         )
 
 
@@ -343,7 +345,7 @@ def confidence_label(score: float) -> str:
 
 def cap_small_sample(score: float, n: int, basis: str) -> tuple[float, str]:
     if n < 15:
-        return min(score, 0.40), basis + "; 小样本n<15置信度封顶0.40"
+        return min(score, 0.40), basis + "; small sample n<15 confidence capped at 0.40"
     return score, basis
 
 
@@ -363,8 +365,8 @@ def weighted_confidence(parts: list[tuple[str, float, float]]) -> tuple[float, s
     total_weight = sum(weight for _, _, weight in parts) or 1.0
     score = sum(value * weight for _, value, weight in parts) / total_weight
     score = max(0.0, min(1.0, float(score)))
-    basis = ", ".join(f"{name}={value:.2g}(权重{weight:.0%})" for name, value, weight in parts)
-    return score, f"{basis}; 加权总分={score:.2f}"
+    basis = ", ".join(f"{name}={value:.2g}(weight {weight:.0%})" for name, value, weight in parts)
+    return score, f"{basis}; weighted total={score:.2f}"
 
 
 def effect_strength(value: float, medium: float, high: float) -> float:
@@ -410,12 +412,12 @@ def compact_value(value: Any) -> str:
 
 def compact_records(df: pd.DataFrame, limit: int = 3) -> str:
     if df.empty:
-        return "无样例"
+        return "No examples"
     pieces: list[str] = []
     for idx, row in df.head(limit).iterrows():
         cells = ", ".join(f"{col}={compact_value(value)}" for col, value in row.items())
         row_label = int(idx) + 1 if isinstance(idx, (int, np.integer)) else idx
-        pieces.append(f"行{row_label}: {cells}")
+        pieces.append(f"row {row_label}: {cells}")
     return "；".join(pieces)
 
 
@@ -484,20 +486,20 @@ def check_table_level(table_name: str, df: pd.DataFrame, findings: list[Finding]
     if rows == 0 or cols == 0:
         score, basis = weighted_confidence(
             [
-                ("可检测单元格", 1.0, 0.60),
-                ("抽取完整性", 0.6, 0.40),
+                ("Detectable cells", 1.0, 0.60),
+                ("Extraction completeness", 0.6, 0.40),
             ]
         )
         add_finding(
             findings,
             table_name,
             "high",
-            "空表",
-            "整表",
-            "表格没有可检测数据。",
-            f"行数={rows}，列数={cols}",
-            "核对文件是否抽取失败，或改用原始 CSV/XLSX 上传。",
-            "没有任何可参与检测的单元格。若来源是 PDF/DOCX，常见原因是表格抽取失败或文档内为图片表格。",
+            "Empty table",
+            "Entire table",
+            "Table has no detectable data.",
+            f"rows={rows}, cols={cols}",
+            "Check whether file extraction failed, or try uploading original CSV/XLSX.",
+            "No cells available for detection. If source is PDF/DOCX, common causes are table extraction failure or image-based tables in the document.",
             confidence_score=score,
             confidence_basis=basis,
         )
@@ -507,21 +509,21 @@ def check_table_level(table_name: str, df: pd.DataFrame, findings: list[Finding]
     if missing_rate >= 0.35:
         score, basis = weighted_confidence(
             [
-                ("表规模", sample_size_score(rows * max(cols, 1)), 0.25),
-                ("缺失比例", effect_strength(missing_rate, 0.35, 0.55), 0.50),
-                ("列覆盖", sample_size_score(cols), 0.25),
+                ("Table scale", sample_size_score(rows * max(cols, 1)), 0.25),
+                ("Missing rate", effect_strength(missing_rate, 0.35, 0.55), 0.50),
+                ("Column coverage", sample_size_score(cols), 0.25),
             ]
         )
         add_finding(
             findings,
             table_name,
             "medium",
-            "缺失模式",
-            "整表",
-            "整表缺失比例较高，可能影响后续判断。",
-            f"平均缺失比例={missing_rate:.1%}",
-            "核对缺失是否来自实验设计、数据脱敏、表格抽取失败或人为删改。",
-            "缺失最多的列："
+            "Missing pattern",
+            "Entire table",
+            "Overall missing rate is high; may affect subsequent judgments.",
+            f"Average missing rate={missing_rate:.1%}",
+            "Check whether missing values stem from study design, data anonymization, table extraction failure, or manual deletion.",
+            "Columns with most missing: "
             + "; ".join(
                 f"{col}={rate:.1%}"
                 for col, rate in df.isna().mean().sort_values(ascending=False).head(5).items()
@@ -536,21 +538,21 @@ def check_table_level(table_name: str, df: pd.DataFrame, findings: list[Finding]
         dup_ratio = duplicate_rows / rows
         score, basis = weighted_confidence(
             [
-                ("样本量充足度", sample_size_score(rows), 0.25),
-                ("重复比例", effect_strength(dup_ratio, 0.05, 0.15), 0.50),
-                ("重复行数", sample_size_score(duplicate_rows), 0.25),
+                ("Sample size adequacy", sample_size_score(rows), 0.25),
+                ("Duplicate ratio", effect_strength(dup_ratio, 0.05, 0.15), 0.50),
+                ("Duplicate row count", sample_size_score(duplicate_rows), 0.25),
             ]
         )
         add_finding(
             findings,
             table_name,
             "high",
-            "重复行",
-            "整表",
-            "发现较多完全重复行。",
-            f"重复行={duplicate_rows}/{rows} ({duplicate_rows / rows:.1%})",
-            "回看原始记录，确认是否存在复制粘贴、重复录入或样本编号复用。",
-            f"重复行样例（行号从 1 开始，不含表头）：{compact_records(dup_samples)}",
+            "Duplicate rows",
+            "Entire table",
+            "Found many fully duplicate rows.",
+            f"Duplicate rows={duplicate_rows}/{rows} ({duplicate_rows / rows:.1%})",
+            "Review original records to confirm whether copy-paste, duplicate entry, or sample ID reuse occurred.",
+            f"Duplicate row examples (row numbers start from 1, excluding header): {compact_records(dup_samples)}",
             confidence_score=score,
             confidence_basis=basis,
         )
@@ -565,21 +567,21 @@ def check_table_level(table_name: str, df: pd.DataFrame, findings: list[Finding]
         pairs = "; ".join(f"{a} = {b}" for a, b in duplicated_cols[:5])
         score, basis = weighted_confidence(
             [
-                ("行数充足度", sample_size_score(rows), 0.40),
-                ("完全一致性", 1.0, 0.45),
-                ("命中列对数", sample_size_score(len(duplicated_cols)), 0.15),
+                ("Row count adequacy", sample_size_score(rows), 0.40),
+                ("Exact match", 1.0, 0.45),
+                ("Matched column pair count", sample_size_score(len(duplicated_cols)), 0.15),
             ]
         )
         add_finding(
             findings,
             table_name,
             "medium",
-            "重复列",
-            "整表",
-            "发现内容完全相同的列。",
+            "Duplicate columns",
+            "Entire table",
+            "Found columns with identical content.",
             pairs,
-            "确认这些列是否本应相同；若不是，优先排查表格复制或列映射错误。",
-            f"完全相同的列对数量={len(duplicated_cols)}。样例列对：{pairs}",
+            "Confirm whether these columns should be identical; if not, prioritize checking for table copy or column mapping errors.",
+            f"Identical column pair count={len(duplicated_cols)}. Example pairs: {pairs}",
             confidence_score=score,
             confidence_basis=basis,
         )
@@ -670,17 +672,17 @@ def check_high_similarity_rows(table_name: str, df: pd.DataFrame, findings: list
     )
     sample_lines = []
     for ratio, left_idx, right_idx, same, comparable, diffs in hits[:8]:
-        diff_text = f"，差异字段: {', '.join(diffs)}" if diffs else ""
-        sample_lines.append(f"行{left_idx + 1}↔行{right_idx + 1}: {same}/{comparable}列相同({ratio:.1%}){diff_text}")
+        diff_text = f", diff fields: {', '.join(diffs)}" if diffs else ""
+        sample_lines.append(f"row {left_idx + 1}↔row {right_idx + 1}: {same}/{comparable} cols identical ({ratio:.1%}){diff_text}")
     score, basis = weighted_confidence(
         [
-            ("样本量充足度", sample_size_score(rows), 0.25),
+            ("Sample size adequacy", sample_size_score(rows), 0.25),
                 (
-                    "最高相似度",
+                    "Highest similarity",
                     1.0 if best >= CONFIG.similarity.row_threshold_high else 0.7 if best >= CONFIG.similarity.row_threshold_medium else 0.5,
                     0.45,
                 ),
-                ("命中稀缺性", 1.0 if len(hits) <= 3 else 0.7 if len(hits) <= 10 else 0.5, 0.30),
+                ("Hit rarity", 1.0 if len(hits) <= 3 else 0.7 if len(hits) <= 10 else 0.5, 0.30),
         ]
     )
     score, basis = cap_small_sample(score, rows, basis)
@@ -688,12 +690,12 @@ def check_high_similarity_rows(table_name: str, df: pd.DataFrame, findings: list
         findings,
         table_name,
         level,
-        "高度重复行",
-        "整表",
-        "发现非完全相同但高度相似的行对。",
+        "Highly similar rows",
+        "Entire table",
+        "Found non-identical but highly similar row pairs.",
         "；".join(sample_lines),
-        "逐对核查差异字段是否有实验逻辑支撑；若大量字段完全一致仅少数字段不同，需回看原始记录。",
-        f"对表内行进行候选分桶比对，总列对空间 {all_pair_count} 对，最多检查 {max_pairs} 对；本次检查 {checked} 对，命中 {len(hits)} 对。",
+        "Check each pair whether differing fields have experimental logic support; if many fields are identical with only a few differing, review original records.",
+        f"Performed candidate bucket comparison across table rows; total pair space {all_pair_count} pairs, max {max_pairs} pairs checked; this run checked {checked} pairs, {len(hits)} pairs hit.",
         confidence_score=score,
         confidence_basis=basis,
     )
@@ -741,13 +743,13 @@ def check_high_similarity_cols(table_name: str, df: pd.DataFrame, findings: list
     level = "high" if best >= CONFIG.similarity.col_threshold_high else "medium"
     sample_lines = []
     for ratio, left, right, same, comparable, diff_rows in hits[:8]:
-        diff_text = f"，差异行: {', '.join(map(str, diff_rows))}" if diff_rows else ""
-        sample_lines.append(f"{left}↔{right}: {same}/{comparable}行相同({ratio:.1%}){diff_text}")
+        diff_text = f", diff rows: {', '.join(map(str, diff_rows))}" if diff_rows else ""
+        sample_lines.append(f"{left}↔{right}: {same}/{comparable} rows identical ({ratio:.1%}){diff_text}")
     score, basis = weighted_confidence(
         [
-            ("样本量充足度", sample_size_score(df.shape[0]), 0.25),
-            ("最高相似度", 1.0 if best >= CONFIG.similarity.col_threshold_high else 0.7, 0.50),
-            ("命中稀缺性", 1.0 if len(hits) <= 2 else 0.7 if len(hits) <= 6 else 0.5, 0.25),
+            ("Sample size adequacy", sample_size_score(df.shape[0]), 0.25),
+            ("Highest similarity", 1.0 if best >= CONFIG.similarity.col_threshold_high else 0.7, 0.50),
+            ("Hit rarity", 1.0 if len(hits) <= 2 else 0.7 if len(hits) <= 6 else 0.5, 0.25),
         ]
     )
     score, basis = cap_small_sample(score, df.shape[0], basis)
@@ -755,12 +757,12 @@ def check_high_similarity_cols(table_name: str, df: pd.DataFrame, findings: list
         findings,
         table_name,
         level,
-        "高度重复列",
-        "整表",
-        "发现非完全相同但高度相似的列对。",
+        "Highly similar columns",
+        "Entire table",
+        "Found non-identical but highly similar column pairs.",
         "；".join(sample_lines),
-        "核查差异行的原始记录，确认两列是否为独立测量、合理派生或复制后局部修改。",
-        f"对 {len(columns)} 列进行两两比对，命中 {len(hits)} 对相似度>=90%的列对。",
+        "Review original records for differing rows; confirm whether the two columns are independent measurements, legitimate derivations, or copy-with-partial-edit.",
+        f"Compared {len(columns)} columns pairwise; {len(hits)} pairs hit with similarity >=90%.",
         confidence_score=score,
         confidence_basis=basis,
     )
@@ -807,21 +809,21 @@ def check_terminal_digits(
         distribution = ", ".join(f"{i}:{int(counts[i])}" for i in range(10))
         score, basis = weighted_confidence(
             [
-                ("样本量充足度", sample_size_score(len(digits)), 0.30),
-                ("卡方显著性", p_value_strength(float(p_value)), 0.35),
-                ("最大尾数占比", effect_strength(max_share, 0.22, 0.30), 0.35),
+                ("Sample size adequacy", sample_size_score(len(digits)), 0.30),
+                ("Chi-square significance", p_value_strength(float(p_value)), 0.35),
+                ("Max terminal digit share", effect_strength(max_share, 0.22, 0.30), 0.35),
             ]
         )
         add_finding(
             findings,
             table_name,
             "medium",
-            "尾数分布",
+            "Terminal digit distribution",
             col,
-            "末位数字分布明显不均匀。",
-            f"n={len(digits)}，chi-square p={p_value:.3g}，数字 {max_digit} 占比 {max_share:.1%}",
-            "核对该列是否经过统一四舍五入、阈值截断、公式生成，或存在人工编写数字的痕迹。",
-            f"0-9 末位数字计数：{distribution}。自然测量数据通常不会长期集中到少数几个末位数字，除非存在固定精度、阈值或批量处理规则。",
+            "Terminal digit distribution is significantly uneven.",
+            f"n={len(digits)}, chi-square p={p_value:.3g}, digit {max_digit} share {max_share:.1%}",
+            "Check whether this column underwent uniform rounding, threshold truncation, formula generation, or shows signs of manual number fabrication.",
+            f"0-9 terminal digit counts: {distribution}. Natural measurement data typically does not concentrate on a few terminal digits long-term, unless fixed precision, thresholds, or batch processing rules exist.",
             confidence_score=score,
             confidence_basis=basis,
         )
@@ -841,24 +843,24 @@ def check_decimal_precision(
     place, count = counts.most_common(1)[0]
     share = count / len(places)
     if share >= 0.9 and place >= 2:
-        distribution = ", ".join(f"{k}位:{v}" for k, v in sorted(counts.items()))
+        distribution = ", ".join(f"{k}dp:{v}" for k, v in sorted(counts.items()))
         score, basis = weighted_confidence(
             [
-                ("样本量充足度", sample_size_score(len(places)), 0.30),
-                ("一致小数位占比", effect_strength(share, 0.90, 0.98), 0.50),
-                ("精度位数", 1.0 if place >= 3 else 0.7, 0.20),
+                ("Sample size adequacy", sample_size_score(len(places)), 0.30),
+                ("Uniform decimal place share", effect_strength(share, 0.90, 0.98), 0.50),
+                ("Precision digits", 1.0 if place >= 3 else 0.7, 0.20),
             ]
         )
         add_finding(
             findings,
             table_name,
             "low",
-            "小数位模式",
+            "Decimal place pattern",
             col,
-            "该列小数位数高度一致。",
-            f"{place} 位小数占 {share:.1%}",
-            "这可能只是格式化结果；若该列应来自原始测量，建议检查是否由公式批量生成或过度整理。",
-            f"小数位分布：{distribution}。如果这是论文整理表，可能正常；如果这是未经整理的原始观测值，则需要确认仪器精度或导出格式。",
+            "Decimal places in this column are highly uniform.",
+            f"{place} decimal places account for {share:.1%}",
+            "This may just be formatting; if this column should come from raw measurements, check whether it was batch-generated by formula or over-tidied.",
+            f"Decimal place distribution: {distribution}. If this is a formatted publication table, it may be normal; if this is unprocessed raw data, confirm instrument precision or export format.",
             confidence_score=score,
             confidence_basis=basis,
         )
@@ -882,13 +884,13 @@ def check_arithmetic_sequences(
         start = int(matching[0])
         sample_pos = list(range(start, min(start + 6, len(clean))))
         sample = ", ".join(
-            f"行{int(clean.index[pos]) + 1}={clean.iloc[pos]:.6g}" for pos in sample_pos
+            f"row {int(clean.index[pos]) + 1}={clean.iloc[pos]:.6g}" for pos in sample_pos
         )
         score, basis = weighted_confidence(
             [
-                ("样本量充足度", sample_size_score(len(clean)), 0.25),
-                ("固定步长占比", effect_strength(share, 0.70, 0.90), 0.50),
-                ("连续片段长度", sample_size_score(count + 1), 0.25),
+                ("Sample size adequacy", sample_size_score(len(clean)), 0.25),
+                ("Fixed step share", effect_strength(share, 0.70, 0.90), 0.50),
+                ("Consecutive segment length", sample_size_score(count + 1), 0.25),
             ]
         )
         score, basis = cap_small_sample(score, len(clean), basis)
@@ -896,12 +898,12 @@ def check_arithmetic_sequences(
             findings,
             table_name,
             "high",
-            "等差/固定步长",
+            "Arithmetic/fixed step",
             col,
-            "按当前行顺序观察，该列存在明显固定步长变化。",
-            f"连续差值 {float(step):.6g} 出现 {count}/{len(rounded)} 次 ({share:.1%})",
-            "核对行顺序是否有意义；若不是实验设计产生的梯度，需重点复核原始记录来源。",
-            f"触发逻辑：相邻两行差值大量重复。片段样例：{sample}。如果该列不是时间、剂量、编号、标准曲线等设计变量，固定步长可能提示公式填充或人工构造。",
+            "Observing current row order, this column shows clear fixed-step changes.",
+            f"Consecutive difference {float(step):.6g} appears {count}/{len(rounded)} times ({share:.1%})",
+            "Check whether row order is meaningful; if not a gradient produced by study design, prioritize reviewing original record sources.",
+            f"Trigger logic: consecutive row differences are heavily repeated. Sample segments: {sample}. If this column is not a design variable like time, dose, serial number, or standard curve, fixed steps may indicate formula fill or manual construction.",
             confidence_score=score,
             confidence_basis=basis,
         )
@@ -912,13 +914,13 @@ def check_arithmetic_sequences(
         start = int(zero_positions[0]) if len(zero_positions) else 0
         sample_pos = list(range(start, min(start + 6, len(clean))))
         sample = ", ".join(
-            f"行{int(clean.index[pos]) + 1}={clean.iloc[pos]:.6g}" for pos in sample_pos
+            f"row {int(clean.index[pos]) + 1}={clean.iloc[pos]:.6g}" for pos in sample_pos
         )
         score, basis = weighted_confidence(
             [
-                ("样本量充足度", sample_size_score(len(clean)), 0.25),
-                ("连续重复长度", sample_size_score(zero_runs + 1), 0.45),
-                ("重复片段占比", effect_strength((zero_runs + 1) / len(clean), 0.30, 0.60), 0.30),
+                ("Sample size adequacy", sample_size_score(len(clean)), 0.25),
+                ("Consecutive repeat length", sample_size_score(zero_runs + 1), 0.45),
+                ("Repeat segment share", effect_strength((zero_runs + 1) / len(clean), 0.30, 0.60), 0.30),
             ]
         )
         score, basis = cap_small_sample(score, len(clean), basis)
@@ -926,12 +928,12 @@ def check_arithmetic_sequences(
             findings,
             table_name,
             "medium",
-            "连续重复值",
+            "Consecutive repeated values",
             col,
-            "该列存在较长连续重复片段。",
-            f"最长连续重复差值长度={zero_runs}",
-            "确认连续重复是否来自分组设计、检测下限、复制填充或录入错误。",
-            f"片段样例：{sample}。需要确认这些连续相同值是否来自真实检测下限、分组赋值、缺失值编码，还是复制填充。",
+            "This column has long consecutive repeat segments.",
+            f"Longest consecutive repeat difference length={zero_runs}",
+            "Confirm whether consecutive repeats come from group design, detection limits, copy-fill, or data entry errors.",
+            f"Sample segments: {sample}. Need to confirm whether these consecutive identical values come from real detection limits, group assignments, missing value encoding, or copy-fill.",
             confidence_score=score,
             confidence_basis=basis,
         )
@@ -961,21 +963,21 @@ def check_dominant_values(
         hit_rows = clean[clean.round(12) == top_value].index
         score, basis = weighted_confidence(
             [
-                ("样本量充足度", sample_size_score(len(clean)), 0.30),
-                ("最高值占比", effect_strength(share, 0.50, 0.75), 0.50),
-                ("取值多样性", 1.0 if clean.nunique() >= 5 else 0.6, 0.20),
+                ("Sample size adequacy", sample_size_score(len(clean)), 0.30),
+                ("Top value share", effect_strength(share, 0.50, 0.75), 0.50),
+                ("Value diversity", 1.0 if clean.nunique() >= 5 else 0.6, 0.20),
             ]
         )
         add_finding(
             findings,
             table_name,
             "medium",
-            "高频数值",
+            "High frequency value",
             col,
-            "单个数值出现比例过高。",
-            f"值 {top_value} 出现 {counts.iloc[0]}/{len(clean)} 次 ({share:.1%})",
-            "检查该值是否为默认值、检测下限、缺失值编码、复制填充或真实集中分布。",
-            f"高频值所在行样例：{data_rows(hit_rows)}。如果该值代表检测下限、默认填充值或缺失编码，应在数据字典中说明。",
+            "A single value appears with disproportionately high frequency.",
+            f"Value {top_value} appears {counts.iloc[0]}/{len(clean)} times ({share:.1%})",
+            "Check whether this value is a default, detection limit, missing value encoding, copy-fill, or genuine concentration.",
+            f"High-frequency value row examples: {data_rows(hit_rows)}. If this value represents a detection limit, default fill, or missing encoding, it should be documented in the data dictionary.",
             confidence_score=score,
             confidence_basis=basis,
         )
@@ -994,15 +996,15 @@ def check_outliers(table_name: str, col: str, values: pd.Series, findings: list[
     if outliers >= 2 and outliers / len(clean) >= 0.05:
         sample = robust_z[robust_z > 3.5].sort_values(ascending=False).head(5)
         sample_text = "; ".join(
-            f"行{int(idx) + 1}: 值={clean.loc[idx]:.6g}, robust_z={z:.2f}" for idx, z in sample.items()
+            f"row {int(idx) + 1}: value={clean.loc[idx]:.6g}, robust_z={z:.2f}" for idx, z in sample.items()
         )
         outlier_ratio = outliers / len(clean)
         max_z = float(sample.iloc[0]) if len(sample) else 0.0
         score, basis = weighted_confidence(
             [
-                ("样本量充足度", sample_size_score(len(clean)), 0.30),
-                ("离群比例", effect_strength(outlier_ratio, 0.05, 0.15), 0.35),
-                ("最大稳健Z", effect_strength(max_z, 3.5, 6.0), 0.35),
+                ("Sample size adequacy", sample_size_score(len(clean)), 0.30),
+                ("Outlier ratio", effect_strength(outlier_ratio, 0.05, 0.15), 0.35),
+                ("Max robust Z", effect_strength(max_z, 3.5, 6.0), 0.35),
             ]
         )
         score, basis = cap_small_sample(score, len(clean), basis)
@@ -1010,12 +1012,12 @@ def check_outliers(table_name: str, col: str, values: pd.Series, findings: list[
             findings,
             table_name,
             "low",
-            "离群值",
+            "Outliers",
             col,
-            "发现多个稳健 Z 分数较高的离群值。",
-            f"离群点={outliers}/{len(clean)}，median={median:.6g}，MAD={mad:.6g}",
-            "离群值需结合实验记录确认是否为真实极端值、单位错误或录入错误。",
-            f"离群样例：{sample_text}",
+            "Found multiple outliers with high robust Z-scores.",
+            f"Outliers={outliers}/{len(clean)}, median={median:.6g}, MAD={mad:.6g}",
+            "Outliers require confirmation against lab records whether they are genuine extreme values, unit errors, or data entry errors.",
+            f"Outlier examples: {sample_text}",
             confidence_score=score,
             confidence_basis=basis,
         )
@@ -1046,21 +1048,21 @@ def check_benford(table_name: str, col: str, values: pd.Series, findings: list[F
         magnitude_span = float(clean.max() / max(clean.min(), 1e-12))
         score, basis = weighted_confidence(
             [
-                ("样本量充足度", sample_size_score(len(first_digits)), 0.30),
-                ("Benford适配跨度", effect_strength(math.log10(magnitude_span), 2.0, 3.0), 0.30),
-                ("卡方显著性", p_value_strength(p_value), 0.40),
+                ("Sample size adequacy", sample_size_score(len(first_digits)), 0.30),
+                ("Benford fit span", effect_strength(math.log10(magnitude_span), 2.0, 3.0), 0.30),
+                ("Chi-square significance", p_value_strength(p_value), 0.40),
             ]
         )
         add_finding(
             findings,
             table_name,
             "low",
-            "首位数字分布",
+            "First digit distribution",
             col,
-            "首位数字分布偏离 Benford 期望。",
+            "First digit distribution deviates from Benford expectation.",
             f"n={len(first_digits)}，chi-square p={p_value:.3g}",
-            "Benford 只适合跨多个数量级的自然数据；先判断适用性，再作为弱信号复核。",
-            f"首位数字计数：{distribution}。该检查只适合正数且跨多个数量级的数据，不适合比例、评分、截断范围或小样本实验数据。",
+            "Benford only suits natural data spanning multiple orders of magnitude; assess applicability first, then treat as weak signal review.",
+            f"First digit counts: {distribution}. This check only suits positive data spanning multiple orders of magnitude; not suitable for proportions, scores, truncated ranges, or small-sample experimental data.",
             confidence_score=score,
             confidence_basis=basis,
         )
@@ -1115,23 +1117,23 @@ def check_column_linear_transform(
         fit_score = 1.0 if r2 >= CONFIG.linear_transform.r2_threshold_high else 0.7
         score, basis = weighted_confidence(
             [
-                ("样本量充足度", sample_size_score(n), 0.25),
-                ("拟合优度", fit_score, 0.50),
-                ("斜率偏离特殊值", slope_score, 0.25),
+                ("Sample size adequacy", sample_size_score(n), 0.25),
+                ("Goodness of fit", fit_score, 0.50),
+                ("Slope deviation from special values", slope_score, 0.25),
             ]
         )
         score, basis = cap_small_sample(score, n, basis)
-        relation = "固定差值模式；" if fixed_diff else ""
+        relation = "Fixed difference pattern; " if fixed_diff else ""
         add_finding(
             findings,
             table_name,
             level,
-            "列间线性变换",
+            "Inter-column linear transform",
             f"{left} -> {right}",
-            "两列之间存在近似完美的线性变换关系。",
-            f"{relation}有效行数N={n}，R²={r2:.6f}，回归式: {right} = {slope:.6g} × {left} + {intercept:.6g}",
-            "确认两列在研究设计中是否本应存在函数关系；若不应线性相关，需回查原始测量记录。",
-            f"对数值列两两拟合线性模型，当前列对 R² 超过 {CONFIG.linear_transform.r2_threshold_medium:.3f} 阈值；本次最多检查 {max_pairs} 对，实际检查 {checked} 对。",
+            "Near-perfect linear transform relationship exists between two columns.",
+            f"{relation}Valid rows N={n}, R²={r2:.6f}, regression: {right} = {slope:.6g} × {left} + {intercept:.6g}",
+            "Confirm whether the two columns should have a functional relationship in the study design; if they should not be linearly related, review original measurement records.",
+            f"Fitted linear models to all numeric column pairs; current pair R² exceeds {CONFIG.linear_transform.r2_threshold_medium:.3f} threshold; max {max_pairs} pairs checked, actual {checked} pairs checked.",
             confidence_score=score,
             confidence_basis=basis,
         )
@@ -1185,9 +1187,9 @@ def check_column_high_correlation(
         rarity_score = 1.0 if high_ratio < CONFIG.correlation.table_ratio_threshold_medium else 0.6
         score, basis = weighted_confidence(
             [
-                ("样本量充足度", sample_size_score(n), 0.30),
-                ("相关系数强度", corr_score, 0.40),
-                ("相关对稀缺性", rarity_score, 0.30),
+                ("Sample size adequacy", sample_size_score(n), 0.30),
+                ("Correlation coefficient strength", corr_score, 0.40),
+                ("Correlation pair rarity", rarity_score, 0.30),
             ]
         )
         score, basis = cap_small_sample(score, n, basis)
@@ -1195,12 +1197,12 @@ def check_column_high_correlation(
             findings,
             table_name,
             level,
-            "列间过高相关性",
+            "Inter-column high correlation",
             f"{left} ↔ {right}",
-            "两列之间存在异常高的相关性。",
-            f"Pearson |r|={abs_r:.4f}，Spearman |ρ|={abs_spearman:.4f}，有效行数N={n}",
-            "确认两变量在研究设计中的应有关系；若应独立，需排查是否来自同一数据生成模板。",
-            "高相关性是统计依赖信号，需结合领域知识、变量语义和采集流程判断。",
+            "Abnormally high correlation exists between two columns.",
+            f"Pearson |r|={abs_r:.4f}, Spearman |ρ|={abs_spearman:.4f}, valid rows N={n}",
+            "Confirm the expected relationship between the two variables in the study design; if they should be independent, investigate whether they originate from the same data generation template.",
+            "High correlation is a statistical dependency signal; requires judgment combining domain knowledge, variable semantics, and collection procedures.",
             confidence_score=score,
             confidence_basis=basis,
         )
@@ -1209,21 +1211,21 @@ def check_column_high_correlation(
         median_r = float(np.median(correlations)) if correlations else 0.0
         score, basis = weighted_confidence(
             [
-                ("样本量充足度", sample_size_score(min(len(values.dropna()) for _, values in cols)), 0.30),
-                ("高相关占比", 1.0 if high_ratio >= CONFIG.correlation.table_ratio_threshold_high else 0.7, 0.50),
-                ("矩阵中位相关", 1.0 if median_r >= CONFIG.correlation.table_median_r_threshold else 0.6, 0.20),
+                ("Sample size adequacy", sample_size_score(min(len(values.dropna()) for _, values in cols)), 0.30),
+                ("High correlation ratio", 1.0 if high_ratio >= CONFIG.correlation.table_ratio_threshold_high else 0.7, 0.50),
+                ("Matrix median correlation", 1.0 if median_r >= CONFIG.correlation.table_median_r_threshold else 0.6, 0.20),
             ]
         )
         add_finding(
             findings,
             table_name,
             level,
-            "相关矩阵结构异常",
-            "整表",
-            "数值列之间的相关性整体偏高。",
-            f"共 {len(cols)} 个数值列，{pair_count} 对可比列对中 {high_count} 对({high_ratio:.1%}) |r|>={CONFIG.correlation.r_threshold_medium:.2f}，|r|中位数={median_r:.4f}",
-            "核查所有数值变量的测量来源是否独立；若声称来自不同仪器、方法或时间点，高度一致的相关结构需解释。",
-            "全表相关矩阵偏高可能来自同源变量、总分/子分关系或系统性构造，需要人工结合语义复核。",
+            "Correlation matrix structure anomaly",
+            "Entire table",
+            "Correlation among numeric columns is globally elevated.",
+            f"Total {len(cols)} numeric columns; out of {pair_count} comparable pairs, {high_count} pairs ({high_ratio:.1%}) |r|>={CONFIG.correlation.r_threshold_medium:.2f}, median |r|={median_r:.4f}",
+            "Verify whether measurement sources for all numeric variables are independent; if claimed to come from different instruments, methods, or time points, highly consistent correlation structure requires explanation.",
+            "Globally elevated table correlation matrix may come from common-source variables, total/subscore relationships, or systematic construction; requires human review combined with semantics.",
             confidence_score=score,
             confidence_basis=basis,
         )
@@ -1259,21 +1261,21 @@ def check_rare_categories(table_name: str, df: pd.DataFrame, findings: list[Find
         rare_text = "；".join(f"{category}: {count}/{len(series)}({count/len(series):.1%})" for category, count in rare.items())
         score, basis = weighted_confidence(
             [
-                ("样本量充足度", sample_size_score(len(series)), 0.30),
-                ("类别稀有度", 1.0 if level == "high" else 0.7, 0.40),
-                ("类别数适配度", 1.0 if 3 <= unique_count <= 10 else 0.7, 0.30),
+                ("Sample size adequacy", sample_size_score(len(series)), 0.30),
+                ("Category rarity", 1.0 if level == "high" else 0.7, 0.40),
+                ("Category count fit", 1.0 if 3 <= unique_count <= 10 else 0.7, 0.30),
             ]
         )
         add_finding(
             findings,
             table_name,
             level,
-            "低频类别",
+            "Low-frequency category",
             col_name,
-            "分类或低基数变量中存在极低频率的孤立类别。",
+            "Isolated categories with extremely low frequency exist in categorical or low-cardinality variables.",
             rare_text,
-            "核实孤立类别的样本来源，确认是否为真实罕见情况、编码错误、清洗残余或人为补入。",
-            f"类别总数={unique_count}；类别分布：" + "；".join(f"{k}={v}" for k, v in counts.head(12).items()),
+            "Verify sample sources for isolated categories; confirm whether genuine rare cases, coding errors, cleaning residuals, or manual additions.",
+            f"Total categories={unique_count}; distribution: " + "; ".join(f"{k}={v}" for k, v in counts.head(12).items()),
             confidence_score=score,
             confidence_basis=basis,
         )
@@ -1316,23 +1318,23 @@ def check_ordinal_extreme_concentration(table_name: str, df: pd.DataFrame, findi
             level = "low"
         score, basis = weighted_confidence(
             [
-                ("样本量充足度", sample_size_score(len(values)), 0.25),
-                ("两端集中度", 1.0 if extreme_ratio >= CONFIG.ordinal.extreme_ratio_high else 0.6, 0.45),
-                ("中间断层", 1.0 if missing_middle else 0.5, 0.30),
+                ("Sample size adequacy", sample_size_score(len(values)), 0.25),
+                ("Extreme-end concentration", 1.0 if extreme_ratio >= CONFIG.ordinal.extreme_ratio_high else 0.6, 0.45),
+                ("Middle gap", 1.0 if missing_middle else 0.5, 0.30),
             ]
         )
         distribution = "；".join(f"{value:g}: {int(count)}({count/len(values):.1%})" for value, count in counts.items())
-        gap_text = f"，中间缺失取值={missing_middle}" if missing_middle else ""
+        gap_text = f", missing middle values={missing_middle}" if missing_middle else ""
         add_finding(
             findings,
             table_name,
             level,
-            "有序变量极端集中",
+            "Ordinal variable extreme concentration",
             col_name,
-            "有序或离散变量的取值集中于两端或存在中间断层。",
-            f"两端合计={extreme_ratio:.1%}{gap_text}",
-            "核对量表/分级变量在同类人群中的典型分布，并抽查两端取值样本的原始记录。",
-            f"取值分布：{distribution}",
+            "Ordinal or discrete variable values concentrated at extremes or showing middle gaps.",
+            f"Extreme ends combined={extreme_ratio:.1%}{gap_text}",
+            "Verify typical distribution of scale/ordinal variable in comparable populations, and spot-check original records for extreme-value samples.",
+            f"Value distribution: {distribution}",
             confidence_score=score,
             confidence_basis=basis,
         )
@@ -1361,21 +1363,21 @@ def check_missing_by_group(table_name: str, df: pd.DataFrame, findings: list[Fin
                 evidence = "; ".join(f"{group}: {rate:.1%}" for group, rate in rates.sort_values(ascending=False).items())
                 score, basis = weighted_confidence(
                     [
-                        ("样本量充足度", sample_size_score(len(frame)), 0.30),
-                        ("缺失率差异", 1.0 if spread >= 0.50 else 0.7, 0.50),
-                        ("最高缺失率", 1.0 if float(rates.max()) >= 0.50 else 0.7, 0.20),
+                        ("Sample size adequacy", sample_size_score(len(frame)), 0.30),
+                        ("Missing rate difference", 1.0 if spread >= 0.50 else 0.7, 0.50),
+                        ("Highest missing rate", 1.0 if float(rates.max()) >= 0.50 else 0.7, 0.20),
                     ]
                 )
                 add_finding(
                     findings,
                     table_name,
                     "medium",
-                    "缺失集中于分组",
+                    "Missing concentrated by group",
                     f"{group_col} -> {value_col}",
-                    "缺失值在不同分组之间分布差异较大。",
+                    "Missing values show large distribution differences across groups.",
                     evidence,
-                    "复核缺失是否由实验流程、纳排标准、仪器批次或后续剔除造成，并在论文中说明。",
-                    f"分组缺失率最大差={spread:.1%}。",
+                    "Review whether missingness is caused by experimental procedures, inclusion/exclusion criteria, instrument batches, or subsequent exclusion, and document in the paper.",
+                    f"Max group missing rate difference={spread:.1%}.",
                     confidence_score=score,
                     confidence_basis=basis,
                 )
@@ -1391,20 +1393,20 @@ def check_summary_stat_table(
         return
 
     n_col = first_existing(
-        columns_matching(df, [r"^n$", r"样本量", r"例数", r"人数", r"cases?", r"samplesize", r"number"])
+        columns_matching(df, [r"^n$", r"^sample[_ ]?size$", r"^cases?$", r"^number$", r"samplesize", r"样本量", r"例数", r"人数"])
     )
-    mean_col = first_existing(columns_matching(df, [r"^mean$", r"均值", r"平均值", r"平均数"]))
-    sd_col = first_existing(columns_matching(df, [r"^sd$", r"std", r"标准差", r"stdev"]))
-    se_col = first_existing(columns_matching(df, [r"^se$", r"sem", r"标准误", r"standarderror"]))
-    ci_low_col = first_existing(columns_matching(df, [r"cilow", r"lowerci", r"lcl", r"下限", r"95%ci下"]))
-    ci_high_col = first_existing(columns_matching(df, [r"cihigh", r"upperci", r"ucl", r"上限", r"95%ci上"]))
-    p_cols = columns_matching(df, [r"^p$", r"pvalue", r"p值", r"^pval"])
-    t_col = first_existing(columns_matching(df, [r"^t$", r"tvalue", r"t统计", r"tstat"]))
-    f_col = first_existing(columns_matching(df, [r"^f$", r"fvalue", r"f统计", r"fstat"]))
-    chi_col = first_existing(columns_matching(df, [r"chi", r"χ", r"卡方", r"x2", r"chisquare"]))
-    df_col = first_existing(columns_matching(df, [r"^df$", r"自由度", r"degreeoffreedom"]))
-    df1_col = first_existing(columns_matching(df, [r"df1", r"分子自由度"]))
-    df2_col = first_existing(columns_matching(df, [r"df2", r"分母自由度"]))
+    mean_col = first_existing(columns_matching(df, [r"^mean$", r"^means$", r"^average$", r"均值", r"平均值", r"平均数"]))
+    sd_col = first_existing(columns_matching(df, [r"^sd$", r"^std$", r"^stdev$", r"标准差", r"stdev"]))
+    se_col = first_existing(columns_matching(df, [r"^se$", r"^sem$", r"^standard[_ ]?error$", r"标准误", r"standarderror"]))
+    ci_low_col = first_existing(columns_matching(df, [r"cilow", r"cilower", r"lowerci", r"lcl", r"^lower$", r"下限", r"95%ci下"]))
+    ci_high_col = first_existing(columns_matching(df, [r"cihigh", r"ciupper", r"upperci", r"ucl", r"^upper$", r"上限", r"95%ci上"]))
+    p_cols = columns_matching(df, [r"^p$", r"p[_ ]?value", r"pvalue", r"^pval", r"p值"])
+    t_col = first_existing(columns_matching(df, [r"^t$", r"t[_ ]?value", r"tvalue", r"t统计", r"tstat"]))
+    f_col = first_existing(columns_matching(df, [r"^f$", r"f[_ ]?value", r"fvalue", r"f统计", r"fstat"]))
+    chi_col = first_existing(columns_matching(df, [r"chi", r"χ", r"^chisq$", r"x2", r"chisquare", r"卡方"]))
+    df_col = first_existing(columns_matching(df, [r"^df$", r"^dof$", r"自由度", r"degreeoffreedom"]))
+    df1_col = first_existing(columns_matching(df, [r"df1", r"^df[_ ]?1$", r"分子自由度"]))
+    df2_col = first_existing(columns_matching(df, [r"df2", r"^df[_ ]?2$", r"分母自由度"]))
 
     check_basic_summary_values(table_name, df, num_cols, findings, n_col, sd_col, se_col, p_cols)
     if n_col and sd_col and se_col:
@@ -1446,12 +1448,12 @@ def check_basic_summary_values(
                 findings,
                 table_name,
                 "high",
-                "统计表N异常",
+                "Summary table N anomaly",
                 n_col,
-                "样本量列存在非正数或非整数。",
-                f"异常单元格={len(bad)} 个",
-                "样本量通常应为正整数；请核对是否列识别错误、单位错误或表格录入错误。",
-                f"样例：{'; '.join(f'行{int(i)+1}: {v:g}' for i, v in bad.head(8).items())}",
+                "Sample size column contains non-positive or non-integer values.",
+                f"Abnormal cells={len(bad)}",
+                "Sample size should usually be a positive integer; check for column identification errors, unit errors, or table entry errors.",
+                f"Examples: {'; '.join(f'row {int(i)+1}: {v:g}' for i, v in bad.head(8).items())}",
             )
 
     for label, col in [("SD", sd_col), ("SE", se_col)]:
@@ -1464,12 +1466,12 @@ def check_basic_summary_values(
                 findings,
                 table_name,
                 "high",
-                f"统计表{label}异常",
+                f"Summary table {label} anomaly",
                 col,
-                f"{label} 列出现负数。",
-                f"异常单元格={len(bad)} 个",
-                f"{label} 不应为负数；请核对统计表生成公式或录入。",
-                f"样例：{'; '.join(f'行{int(i)+1}: {v:g}' for i, v in bad.head(8).items())}",
+                f"{label} column contains negative values.",
+                f"Abnormal cells={len(bad)}",
+                f"{label} should not be negative; check summary table generation formula or data entry.",
+                f"Examples: {'; '.join(f'row {int(i)+1}: {v:g}' for i, v in bad.head(8).items())}",
             )
 
     for p_col in p_cols:
@@ -1489,25 +1491,25 @@ def check_basic_summary_values(
                 findings,
                 table_name,
                 "high",
-                "P值范围异常",
+                "P-value range anomaly",
                 p_col,
-                "p 值列存在超出 [0, 1] 的数值。",
-                f"异常单元格={len(bad_indexes)} 个",
-                "p 值数学上必须位于 0 到 1 之间；请核对统计软件输出或录入。",
-                "样例："
-                + "; ".join(f"行{int(i)+1}: {op}{v:g}" for i, op, v in bad_indexes[:8]),
+                "P-value column contains values outside [0, 1].",
+                f"Abnormal cells={len(bad_indexes)}",
+                "P-values must mathematically be between 0 and 1; check statistical software output or data entry.",
+                "Examples: "
+                + "; ".join(f"row {int(i)+1}: {op}{v:g}" for i, op, v in bad_indexes[:8]),
             )
         if exact_extreme:
             add_finding(
                 findings,
                 table_name,
                 "low",
-                "P值格式异常",
+                "P-value format anomaly",
                 p_col,
-                "p 值出现精确 0 或 1。",
-                f"精确极值={len(exact_extreme)} 个",
-                "很多统计软件会输出非常小的 p 值为 0.000，但论文表格中通常应写为 p<0.001。",
-                "样例：" + "; ".join(f"行{int(i)+1}: p={v:g}" for i, v in exact_extreme[:8]),
+                "P-values contain exact 0 or 1.",
+                f"Exact extremes={len(exact_extreme)}",
+                "Many statistical packages output very small p-values as 0.000, but publication tables should usually report p<0.001.",
+                "Examples: " + "; ".join(f"row {int(i)+1}: p={v:g}" for i, v in exact_extreme[:8]),
             )
 
 
@@ -1536,18 +1538,18 @@ def check_se_sd_n(
         for idx, row in bad.head(8).iterrows():
             exp = row["sd"] / math.sqrt(row["n"])
             sample.append(
-                f"行{int(idx)+1}: n={row['n']:.6g}, SD={row['sd']:.6g}, SE={row['se']:.6g}, 应约={exp:.6g}"
+                f"row {int(idx)+1}: n={row['n']:.6g}, SD={row['sd']:.6g}, SE={row['se']:.6g}, expected≈{exp:.6g}"
             )
         add_finding(
             findings,
             table_name,
             "high",
-            "SE/SD/N一致性",
+            "SE/SD/N consistency",
             f"{sd_col}, {se_col}, {n_col}",
-            "SE 与 SD/sqrt(N) 不一致。",
-            f"不一致行={len(bad)}/{len(rows)}",
-            "若表格中的 SE 确实是标准误，应回查统计脚本；也可能是列名误标，实际填的是 SD、CI 或其他指标。",
-            "样例：" + "; ".join(sample),
+            "SE inconsistent with SD/sqrt(N).",
+            f"Inconsistent rows={len(bad)}/{len(rows)}",
+            "If the SE column is truly standard error, review the statistical script; it may also be mislabeled, actually containing SD, CI, or other measures.",
+            "Examples: " + "; ".join(sample),
         )
 
 
@@ -1579,14 +1581,14 @@ def check_ci_mean_se(
             findings,
             table_name,
             "high",
-            "CI区间异常",
+            "CI interval anomaly",
             f"{low_col}, {high_col}",
-            "置信区间下限大于上限。",
-            f"异常行={len(inverted)}",
-            "核对 CI 下限/上限是否列顺序写反，或表格抽取时发生错列。",
-            "样例："
+            "CI lower bound greater than upper bound.",
+            f"Abnormal rows={len(inverted)}",
+            "Check whether CI lower/upper column order is reversed, or column misalignment occurred during table extraction.",
+            "Examples: "
             + "; ".join(
-                f"行{int(i)+1}: low={r['low']:.6g}, high={r['high']:.6g}"
+                f"row {int(i)+1}: low={r['low']:.6g}, high={r['high']:.6g}"
                 for i, r in inverted.head(8).iterrows()
             ),
         )
@@ -1603,14 +1605,14 @@ def check_ci_mean_se(
             findings,
             table_name,
             "medium",
-            "CI中心一致性",
+            "CI center consistency",
             f"{mean_col}, {low_col}, {high_col}",
-            "均值没有位于置信区间中心附近。",
-            f"异常行={len(not_centered)}/{len(rows)}",
-            "对称均值 CI 通常应以均值为中心；若使用非对称区间、变换后回转或比例指标，需要在方法中说明。",
-            "样例："
+            "Mean is not near the center of the confidence interval.",
+            f"Abnormal rows={len(not_centered)}/{len(rows)}",
+            "Symmetric mean CI should normally be centered on the mean; if using asymmetric intervals, back-transformed values, or ratio measures, this must be explained in methods.",
+            "Examples: "
             + "; ".join(
-                f"行{int(i)+1}: mean={r['mean']:.6g}, CI中心={(r['low']+r['high'])/2:.6g}"
+                f"row {int(i)+1}: mean={r['mean']:.6g}, CI center={(r['low']+r['high'])/2:.6g}"
                 for i, r in not_centered.head(8).iterrows()
             ),
         )
@@ -1626,14 +1628,14 @@ def check_ci_mean_se(
             findings,
             table_name,
             "medium",
-            "CI/SE一致性",
+            "CI/SE consistency",
             f"{se_col}, {low_col}, {high_col}",
-            "CI 半宽与 SE 的比例不符合常见 95% CI 范围。",
-            f"异常行={len(far)}/{len(valid)}",
-            "95% CI 半宽通常约为 1.96*SE，小样本 t 分布会更大；若比例过小或过大，应核对 CI、SE 或置信水平。",
-            "样例："
+            "CI half-width to SE ratio does not match common 95% CI range.",
+            f"Abnormal rows={len(far)}/{len(valid)}",
+            "95% CI half-width is usually about 1.96*SE; small-sample t-distribution would be larger; if ratio is too small or too large, check CI, SE, or confidence level.",
+            "Examples: "
             + "; ".join(
-                f"行{int(i)+1}: half_width={abs((r['high']-r['low'])/2):.6g}, SE={r['se']:.6g}, 比例={ratio.loc[i]:.3g}"
+                f"row {int(i)+1}: half_width={abs((r['high']-r['low'])/2):.6g}, SE={r['se']:.6g}, ratio={ratio.loc[i]:.3g}"
                 for i, r in far.head(8).iterrows()
             ),
         )
@@ -1649,7 +1651,7 @@ def check_percent_count_consistency(
     percent_cols = [
         col
         for col in df.columns
-        if "%" in str(col) or "percent" in normalize_name(col) or "percentage" in normalize_name(col) or "比例" in str(col)
+        if "%" in str(col) or "percent" in normalize_name(col) or "percentage" in normalize_name(col) or "prop" in str(col)
     ]
     if not percent_cols:
         return
@@ -1659,7 +1661,7 @@ def check_percent_count_consistency(
         if col != n_col
         and col not in percent_cols
         and not any(token in normalize_name(col) for token in ["mean", "sd", "std", "se", "sem", "ci", "pvalue"])
-        and not any(token in str(col) for token in ["均值", "平均", "标准差", "标准误", "上限", "下限"])
+        and not any(token in str(col) for token in ["mean", "average", "sd", "se", "upper", "lower"])
     ]
     n = coerce_numeric(df[n_col])
     for pct_col in percent_cols[:6]:
@@ -1685,14 +1687,14 @@ def check_percent_count_consistency(
                 findings,
                 table_name,
                 "medium",
-                "百分比/计数一致性",
+                "Percent/count consistency",
                 f"{count_col}, {pct_col}, {n_col}",
-                "百分比与 count/N 反算结果不一致。",
-                f"不一致行={len(bad)}/{len(rows)}，容差=1个百分点",
-                "若百分比列对应的是该计数列，应核对四舍五入、分母选择或表格录入；若不是对应关系，可忽略该项。",
-                "样例："
+                "Percentage inconsistent with count/N back-calculation.",
+                f"Inconsistent rows={len(bad)}/{len(rows)}, tolerance=1 percentage point",
+                "If the percentage column corresponds to this count column, check rounding, denominator selection, or table entry; if not corresponding, this item can be ignored.",
+                "Examples: "
                 + "; ".join(
-                    f"行{int(i)+1}: count={r['count']:.6g}, N={r['n']:.6g}, 表内%={r['pct']:.6g}, 应约={r['count']/r['n']*100:.2f}%"
+                    f"row {int(i)+1}: count={r['count']:.6g}, N={r['n']:.6g}, table %={r['pct']:.6g}, expected≈{r['count']/r['n']*100:.2f}%"
                     for i, r in bad.head(8).iterrows()
                 ),
             )
@@ -1724,7 +1726,7 @@ def check_reported_p_values(
                 table_name,
                 rows,
                 f"{t_col}, {df_col}, {p_col}",
-                "t检验P值一致性",
+                "t-test p-value consistency",
                 lambda r: float(2 * stats.t.sf(abs(r["stat"]), r["df"])),
                 findings,
             )
@@ -1741,7 +1743,7 @@ def check_reported_p_values(
                 table_name,
                 rows,
                 f"{f_col}, {df1_col}, {df2_col}, {p_col}",
-                "F检验P值一致性",
+                "F-test p-value consistency",
                 lambda r: float(stats.f.sf(r["stat"], r["df1"], r["df2"])),
                 findings,
             )
@@ -1757,7 +1759,7 @@ def check_reported_p_values(
                 table_name,
                 rows,
                 f"{chi_col}, {df_col}, {p_col}",
-                "卡方P值一致性",
+                "Chi-square p-value consistency",
                 lambda r: float(stats.chi2.sf(r["stat"], r["df"])),
                 findings,
             )
@@ -1797,12 +1799,12 @@ def compare_computed_p(
             "high",
             check_name,
             target,
-            "表内统计量反算 p 值与报告 p 值不一致。",
-            f"不一致行={len(bad)}/{usable}",
-            "优先核对统计量、自由度、单双侧检验和 p 值列是否匹配；这类不一致常来自复制表格、手工改数或统计口径混用。",
-            "样例："
+            "Back-calculated p-value from table statistics inconsistent with reported p-value.",
+            f"Inconsistent rows={len(bad)}/{usable}",
+            "Prioritize checking whether statistic, degrees of freedom, one/two-tailed test, and p-value columns match; such inconsistencies often come from copied tables, manual number changes, or mixed statistical conventions.",
+            "Examples: "
             + "; ".join(
-                f"行{int(idx)+1}: 反算p={format_p(computed)}, 报告p={op}{value:g}"
+                f"row {int(idx)+1}: back-calc p={format_p(computed)}, reported p={op}{value:g}"
                 for idx, computed, (op, value) in bad[:8]
             ),
         )
@@ -1845,10 +1847,10 @@ def analyze_grim_grimmer_rules(
     df = prepare_table(df)
     findings: list[Finding] = []
     n_col = first_existing(
-        columns_matching(df, [r"^n$", r"样本量", r"例数", r"人数", r"cases?", r"samplesize", r"number"])
+        columns_matching(df, [r"^n$", r"^sample[_ ]?size$", r"^cases?$", r"^number$", r"samplesize", r"样本量", r"例数", r"人数"])
     )
     mean_col = first_existing(columns_matching(df, [r"^mean$", r"均值", r"平均值", r"平均数", r"score", r"评分", r"量表"]))
-    sd_col = first_existing(columns_matching(df, [r"^sd$", r"std", r"标准差", r"stdev"]))
+    sd_col = first_existing(columns_matching(df, [r"^sd$", r"^std$", r"^stdev$", r"标准差", r"stdev"]))
     if not n_col or not mean_col:
         return TableResult(name=name, rows=int(df.shape[0]), columns=int(df.shape[1]), findings=findings)
 
@@ -1868,7 +1870,7 @@ def analyze_grim_grimmer_rules(
         precision = numeric_precision(df.loc[idx, mean_col])
         if not grim_possible(mean_float, n_int, precision, scale_min, scale_max):
             bad_grim.append(
-                f"行{int(idx)+1}: N={n_int}, mean={mean_float:g}, 默认整数评分范围={scale_min}-{scale_max}"
+                f"row {int(idx)+1}: N={n_int}, mean={mean_float:g}, default integer scale range={scale_min}-{scale_max}"
             )
         if sd_col:
             sd_value = coerce_numeric(pd.Series([df.loc[idx, sd_col]])).iloc[0]
@@ -1876,7 +1878,7 @@ def analyze_grim_grimmer_rules(
                 max_sd = max_discrete_sd(n_int, mean_float, scale_min, scale_max)
                 if max_sd and float(sd_value) > max_sd + 10 ** (-(precision + 1)):
                     bad_boundary.append(
-                        f"行{int(idx)+1}: N={n_int}, mean={mean_float:g}, SD={float(sd_value):g}, 最大可行SD约={max_sd:.4g}"
+                        f"row {int(idx)+1}: N={n_int}, mean={mean_float:g}, SD={float(sd_value):g}, max feasible SD≈{max_sd:.4g}"
                     )
 
     if bad_grim:
@@ -1884,34 +1886,34 @@ def analyze_grim_grimmer_rules(
             findings,
             name,
             "high",
-            "GRIM均值可行性",
+            "GRIM mean feasibility",
             f"{mean_col}, {n_col}",
-            "离散整数评分条件下，部分均值与样本量数学上不可同时成立。",
-            f"不通过行={len(bad_grim)}",
-            "核对量表范围、样本量、四舍五入规则和原始评分；若该变量不是整数评分，应关闭 GRIM/GRIMMER 工具包。",
-            "样例：" + "; ".join(bad_grim[:8]),
+            "Under discrete integer score conditions, some means and sample sizes are mathematically incompatible.",
+            f"Failed rows={len(bad_grim)}",
+            "Verify scale range, sample size, rounding rules, and original scores; if the variable is not integer scores, disable the GRIM/GRIMMER tool set.",
+            "Examples: " + "; ".join(bad_grim[:8]),
         )
     if bad_boundary:
         add_finding(
             findings,
             name,
             "medium",
-            "GRIMMER/SD边界",
+            "GRIMMER/SD boundary",
             f"{mean_col}, {sd_col}, {n_col}",
-            "离散评分条件下，部分 SD 超出由均值和量表范围决定的粗略可行边界。",
-            f"边界异常行={len(bad_boundary)}",
-            "该项是保守边界检查，不等同于完整 SPRITE 穷举；建议人工确认量表范围后复核。",
-            "样例：" + "; ".join(bad_boundary[:8]),
+            "Under discrete score conditions, some SDs exceed rough feasible boundaries determined by mean and scale range.",
+            f"Boundary anomaly rows={len(bad_boundary)}",
+            "This is a conservative boundary check, not equivalent to full SPRITE enumeration; recommend human confirmation of scale range before review.",
+            "Examples: " + "; ".join(bad_boundary[:8]),
         )
 
     tag_findings(
         findings,
         "discrete_summary_feasibility_python",
-        "Python 离散摘要可行性规则",
+        "Python discrete summary feasibility rules",
         "discrete_summary_feasibility",
         input_type,
-        "离散摘要可行性检查用于基础命令行场景；统计一致性以 R scrutiny 输出为主。",
-        "该 Python 函数提供轻量可行性检查；完整 GRIM/GRIMMER/DEBIT 复核以 R scrutiny 输出为准。",
+        "Discrete summary feasibility checks are for basic CLI scenarios; statistical consistency is primarily based on R scrutiny output.",
+        "This Python function provides lightweight feasibility checks; full GRIM/GRIMMER/DEBIT review is based on R scrutiny output.",
     )
     return TableResult(name=name, rows=int(df.shape[0]), columns=int(df.shape[1]), findings=findings)
 
@@ -1946,11 +1948,11 @@ def analyze_raw_data_rules(name: str, df: pd.DataFrame, input_type: str = "raw_o
     tag_findings(
         findings,
         "raw_data_rules",
-        "基础表格规则",
+        "Basic Table Rules",
         "raw_observation_checks",
         input_type,
-        "用户已勾选，且当前表格可作为原始观测/通用表格进行规则扫描。",
-        "基础规则用于发现重复、缺失、数字分布、列间关系、固定步长、离群值和高频填充值等异常模式；正常实验设计、仪器阈值或数据清洗也可能触发。",
+        "User selected, and the current table can be scanned as raw observations/general table with rule-based checks.",
+        "Basic rules detect anomaly patterns such as duplicates, missing values, digit distribution, inter-column relationships, fixed steps, outliers, and high-frequency fill values; normal study design, instrument thresholds, or data cleaning may also trigger.",
     )
     return TableResult(name=name, rows=int(df.shape[0]), columns=int(df.shape[1]), findings=findings)
 
@@ -1961,11 +1963,11 @@ def analyze_table(name: str, df: pd.DataFrame) -> TableResult:
     tag_findings(
         findings,
         "raw_data_rules",
-        "基础表格规则",
+        "Basic Table Rules",
         "raw_observation_checks",
         "unknown",
-        "基础表格规则会运行当前内置的原始观测表检测项。",
-        "基础表格规则用于发现需要人工复核的数据模式；具体解释需结合研究设计和原始记录。",
+        "Basic Table Rules will run current built-in raw observation table checks.",
+        "Basic Table Rules detect data patterns requiring human review; specific interpretation requires combining study design and original records.",
     )
     return TableResult(name=name, rows=int(df.shape[0]), columns=int(df.shape[1]), findings=findings)
 
@@ -1987,24 +1989,24 @@ def render_markdown(source: Path, results: list[TableResult], extraction_notes: 
     level = overall_level(all_findings)
     counts = Counter(f.level for f in all_findings)
     lines = [
-        "# 数据审计报告",
+        "# Data Audit Report",
         "",
-        "## 结论先行",
+        "## Key Findings",
         "",
-        f"- 文件：`{source.name}`",
-        f"- 总体风险：{LEVEL_CN[level]}",
-        f"- 检测表格：{len(results)} 个",
-        f"- 问题信号：高 {counts['high']} / 中 {counts['medium']} / 低 {counts['low']} / 提示 {counts['info']}",
+        f"- File: `{source.name}`",
+        f"- Overall risk: {LEVEL_LABEL[level]}",
+        f"- Tables examined: {len(results)}",
+        f"- Risk signals: High {counts['high']} / Medium {counts['medium']} / Low {counts['low']} / Info {counts['info']}",
         "",
-        "> 本报告只识别数据中的异常模式和人工痕迹信号，不构成数据风险校验结论。高风险项表示需要优先回看原始记录、实验日志或统计脚本。",
+        "> This report only identifies anomaly patterns and artifact signals in data; it does not constitute a data integrity verification conclusion. High-risk items indicate priority for reviewing original records, lab notebooks, or statistical scripts.",
         "",
     ]
     if extraction_notes:
-        lines += ["## 解析说明", ""]
+        lines += ["## Extraction Notes", ""]
         lines += [f"- {note}" for note in extraction_notes]
         lines.append("")
 
-    lines += ["## 表格概览", "", "| 表格 | 行数 | 列数 | 高 | 中 | 低 |", "|---|---:|---:|---:|---:|---:|"]
+    lines += ["## Table Overview", "", "| Table | Rows | Columns | H | M | L |", "|---|---:|---:|---:|---:|---:|"]
     for result in results:
         counter = Counter(f.level for f in result.findings)
         lines.append(
@@ -2012,41 +2014,41 @@ def render_markdown(source: Path, results: list[TableResult], extraction_notes: 
         )
     lines.append("")
 
-    lines += ["## 问题清单", ""]
+    lines += ["## Finding List", ""]
     if not all_findings:
-        lines += ["未发现明显异常模式。建议仍结合原始记录、实验设计和统计脚本进行人工复核。", ""]
+        lines += ["No obvious anomalous patterns found. Manual review against original records, study design, and statistical scripts is still recommended.", ""]
     else:
         ordered = sorted(all_findings, key=lambda f: LEVEL_SCORE[f.level], reverse=True)
         lines += [
-            "| 风险 | 表格 | 检查项 | 对象 | 发现 | 证据 | 建议 |",
+            "| Risk | Table | Check | Target | Finding | Evidence | Suggestion |",
             "|---|---|---|---|---|---|---|",
         ]
         for f in ordered:
             lines.append(
-                f"| {LEVEL_CN[f.level]} | {markdown_cell(f.table)} | {markdown_cell(f.check)} | {markdown_cell(f.target)} | {markdown_cell(f.summary)} | {markdown_cell(f.evidence)} | {markdown_cell(f.suggestion)} |"
+                f"| {LEVEL_LABEL[f.level]} | {markdown_cell(f.table)} | {markdown_cell(f.check)} | {markdown_cell(f.target)} | {markdown_cell(f.summary)} | {markdown_cell(f.evidence)} | {markdown_cell(f.suggestion)} |"
             )
         lines.append("")
 
-        lines += ["## 问题详情", ""]
+        lines += ["## Finding Details", ""]
         for idx, f in enumerate(ordered, start=1):
             lines += [
-                f"### {idx}. {LEVEL_CN[f.level]}风险：{f.check}（{f.target}）",
+                f"### {idx}. {LEVEL_LABEL[f.level]} Risk: {f.check} ({f.target})",
                 "",
-                f"- 表格：{f.table}",
-                f"- 发现：{f.summary}",
-                f"- 触发证据：{f.evidence}",
+                f"- Table: {f.table}",
+                f"- Finding: {f.summary}",
+                f"- Trigger evidence: {f.evidence}",
             ]
             if f.detail:
-                lines.append(f"- 详细说明：{f.detail}")
+                lines.append(f"- Detail: {f.detail}")
             lines += [
-                f"- 复核建议：{f.suggestion}",
+                f"- Review suggestion: {f.suggestion}",
                 "",
             ]
 
     lines += [
-        "## 已运行检测",
+        "## Checks Run",
         "",
-        "- 完全重复行、完全重复列",
+        "- Fully duplicate rows, fully duplicate columns",
         "- 高度重复行、高度重复列",
         "- 缺失比例与缺失模式",
         "- 高频默认值/复制填充值",

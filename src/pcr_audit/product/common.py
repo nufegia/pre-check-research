@@ -249,24 +249,24 @@ def extract_text_with_grobid(source: Path, config: AuditConfig, findings: list[F
             raise ValueError("GROBID returned TEI without text content")
         findings.append(
             finding(
-                str(source), "info", "GROBID结构抽取", "PDF",
-                "GROBID REST 抽取成功，已用于参考文献/正文辅助解析。",
+                str(source), "info", "GROBID structure extraction", "PDF",
+                "GROBID REST extraction succeeded; used for reference/body text assisted parsing.",
                 f"grobid_url={config.grobid_url}; extracted_chars={len(text)}",
-                "GROBID 抽取仍需结合原文版式人工复核。",
-                tool_id="grobid_extract", tool_name="GROBID REST结构抽取", input_type="paper_document",
+                "GROBID extraction still requires human review against original document layout.",
+                tool_id="grobid_extract", tool_name="GROBID REST structure extraction", input_type="paper_document",
             )
         )
         return text
     except Exception as exc:
         findings.append(
             finding(
-                str(source), "info", "GROBID结构抽取", "PDF",
-                "GROBID 不可用或返回内容无法解析，已回退到本地文本抽取。",
+                str(source), "info", "GROBID structure extraction", "PDF",
+                "GROBID unavailable or returned unparseable content; fell back to local text extraction.",
                 str(exc),
-                "确认 GROBID 服务地址、网络和PDF可解析性；该提示不计入数据风险。",
-                tool_id="grobid_extract", tool_name="GROBID REST结构抽取", input_type="paper_document",
+                "Verify GROBID service address, network, and PDF parsability; this notice does not count as a data risk.",
+                tool_id="grobid_extract", tool_name="GROBID REST structure extraction", input_type="paper_document",
                 dependency_status="grobid_unavailable",
-                confidence_basis="外部抽取降级记录，不是数据风险信号。",
+                confidence_basis="External extraction downgrade record; not a data risk signal.",
             )
         )
         return ""

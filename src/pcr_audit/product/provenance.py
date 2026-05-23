@@ -181,16 +181,16 @@ def provenance_diff(source: Path, ledger: Path | None = None, left_batch: str = 
     return {"ledger": str(ledger_path), "left_batch": left_batch, "right_batch": right_batch, "changes": changes}
 
 
-def provenance_payload_to_result(source: Path, payload: dict[str, Any], tool_name: str = "哈希版本链核验") -> TableResult:
+def provenance_payload_to_result(source: Path, payload: dict[str, Any], tool_name: str = "Hash Version Chain Verification") -> TableResult:
     findings: list[Finding] = []
     statuses = payload.get("statuses") or payload.get("changes") or []
     if not statuses:
         findings.append(
             finding(
                 str(source), "info", tool_name, "ledger",
-                "哈希版本链账本没有可报告的文件状态。",
+                "Hash version chain ledger has no reportable file statuses.",
                 f"ledger={payload.get('ledger')}; records={payload.get('records', 0)}",
-                "先运行 provenance record 登记项目材料，再执行 verify/diff。",
+                "Run provenance record to register project materials first, then execute verify/diff.",
                 tool_id="provenance_chain_verify", tool_name=tool_name, input_type="raw_file_bundle",
                 dependency_status="insufficient_material",
             )
@@ -201,12 +201,12 @@ def provenance_payload_to_result(source: Path, payload: dict[str, Any], tool_nam
         findings.append(
             finding(
                 str(source), level, tool_name, str(item.get("relative_path") or ""),
-                f"哈希版本链状态：{status}",
+                f"Hash version chain status: {status}",
                 json.dumps(item, ensure_ascii=False, sort_keys=True),
-                "对 changed/modified/missing/new 文件核对原始记录、上传批次和操作者说明。",
+                "For changed/modified/missing/new files, verify original records, upload batches, and operator notes.",
                 tool_id="provenance_chain_verify", tool_name=tool_name, input_type="raw_file_bundle",
-                calculation_trace="读取 JSONL 账本最新记录并对当前文件重新计算 SHA-256。",
-                confidence_basis="SHA-256 与文件大小是确定性完整性证据；不证明实验真实性。",
+                calculation_trace="Read JSONL ledger latest records and recompute SHA-256 for current files.",
+                confidence_basis="SHA-256 and file size are deterministic integrity evidence; they do not prove experimental authenticity.",
             )
         )
     return TableResult("provenance_chain_verify", len(statuses), 0, findings)
@@ -219,13 +219,13 @@ def analyze_provenance_paths(source: Path, paths: list[Path]) -> TableResult:
         stat = path.stat()
         findings.append(
             finding(
-                str(source), "info", "SHA-256文件存证", path.name,
-                "已计算文件哈希和基础元数据。",
+                str(source), "info", "SHA-256 File Record", path.name,
+                "File hash and basic metadata computed.",
                 f"sha256={digest}; size={stat.st_size}; mtime={int(stat.st_mtime)}",
-                "保存该JSON作为版本链证据；哈希只能证明文件后续未改动，不能证明实验真实发生。",
-                tool_id="provenance_hash", tool_name="原始文件哈希存证", input_type="raw_file_bundle",
-                calculation_trace="本地读取文件字节并计算 SHA-256。",
-                confidence_basis="哈希是确定性文件完整性证据，但不是实验真实性证据。",
+                "Save this JSON as version chain evidence; hashes only prove files have not changed subsequently, not that experiments actually occurred.",
+                tool_id="provenance_hash", tool_name="Original File Hash Record", input_type="raw_file_bundle",
+                calculation_trace="Local byte-read of file and SHA-256 computation.",
+                confidence_basis="Hash is deterministic file integrity evidence, but not experimental authenticity evidence.",
             )
         )
     return TableResult("provenance_hash", len(paths), 0, findings)

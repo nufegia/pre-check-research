@@ -28,7 +28,7 @@ def extract_main(argv: list[str] | None = None) -> int:
         print(exc, file=sys.stderr)
         return 2
     except Exception as exc:
-        print(f"抽取失败：{exc}", file=sys.stderr)
+        print(f"Extraction failed: {exc}", file=sys.stderr)
         return 1
     if args.json:
         write_json(Path(args.json).expanduser().resolve(), payload)
@@ -49,18 +49,18 @@ def raw_audit_main(argv: list[str] | None = None) -> int:
         print(exc, file=sys.stderr)
         return 2
     except Exception as exc:
-        print(f"读取失败：{exc}", file=sys.stderr)
+        print(f"Read failed: {exc}", file=sys.stderr)
         return 1
     if not tables:
-        print("没有抽取到可检测表格。", file=sys.stderr)
+        print("No detectable tables were extracted.", file=sys.stderr)
         return 1
     results = [analyze_raw_data_rules(name, df) for name, df in tables]
-    notes = ["当前输入来自文档抽取，重要结论建议用原始 CSV/XLSX 复测。"] if source.suffix.lower() in {".pdf", ".docx"} else []
+    notes = ["Current input is from document extraction; key conclusions should be verified using original CSV/XLSX."] if source.suffix.lower() in {".pdf", ".docx"} else []
     out_path = markdown_out(args.out)
     out_path.write_text(render_markdown(source, results, notes), encoding="utf-8")
     if args.json:
         save_json(Path(args.json).expanduser().resolve(), source, results)
-    print(f"报告已生成：{out_path}")
+    print(f"Report generated: {out_path}")
     return 0
 
 
@@ -80,21 +80,21 @@ def crosscheck_main(argv: list[str] | None = None) -> int:
         print(exc, file=sys.stderr)
         return 2
     except Exception as exc:
-        print(f"读取失败：{exc}", file=sys.stderr)
+        print(f"Read failed: {exc}", file=sys.stderr)
         return 1
     if not tables:
-        print("没有抽取到可检测表格。", file=sys.stderr)
+        print("No detectable tables were extracted.", file=sys.stderr)
         return 1
 
     from pcr_audit.crosscheck import crosscheck_table
 
     results = [crosscheck_table(name, df) for name, df in tables]
-    notes = ["当前输入来自文档抽取，交叉验证结果建议用原始 CSV/XLSX 复测。"] if source.suffix.lower() in {".pdf", ".docx"} else []
+    notes = ["Current input is from document extraction; cross-validation results should be verified using original CSV/XLSX."] if source.suffix.lower() in {".pdf", ".docx"} else []
     out_path = markdown_out(args.out)
     out_path.write_text(render_markdown(source, results, notes), encoding="utf-8")
     if args.json:
         save_json(Path(args.json).expanduser().resolve(), source, results)
-    print(f"报告已生成：{out_path}")
+    print(f"Report generated: {out_path}")
     return 0
 
 
@@ -118,9 +118,9 @@ def report_main(argv: list[str] | None = None) -> int:
         print(exc, file=sys.stderr)
         return 2
     except Exception as exc:
-        print(f"合并失败：{exc}", file=sys.stderr)
+        print(f"Merge failed: {exc}", file=sys.stderr)
         return 1
-    print(f"合并报告已生成：{markdown_out(args.out)}")
+    print(f"Merged report generated: {markdown_out(args.out)}")
     return 0
 
 
@@ -230,15 +230,15 @@ def audit_main(argv: list[str] | None = None) -> int:
             out = Path(args.out).expanduser().resolve()
             payload = build_corpus_index(source)
             write_json(out, payload)
-            print(f"本地语料索引已生成：{out}")
+            print(f"Local corpus index generated: {out}")
             return 0
         index = read_json(Path(args.index).expanduser().resolve())
         result = analyze_papermill_network_signals(source, index)
         out = markdown_out(args.out)
-        out.write_text(render_markdown(source, [result], ["本报告基于本地 corpus-index.json 进行跨稿件弱信号筛查。"]), encoding="utf-8")
+        out.write_text(render_markdown(source, [result], ["This report is based on local corpus-index.json for cross-manuscript weak signal screening."]), encoding="utf-8")
         if args.json:
             save_json(Path(args.json).expanduser().resolve(), source, [result])
-        print(f"本地语料筛查报告已生成：{out}")
+        print(f"Local corpus screening report generated: {out}")
         return 0
 
     if args.command == "project":
@@ -264,7 +264,7 @@ def audit_main(argv: list[str] | None = None) -> int:
             print(json.dumps(payload, ensure_ascii=False, indent=2))
             return 0
         if not args.out:
-            print("project 审计需要 --out；若只想预检材料，请使用 --inspect。", file=sys.stderr)
+            print("Project audit requires --out; to only preview materials, use --inspect.", file=sys.stderr)
             return 2
         out = markdown_out(args.out)
         workdir = Path(args.workdir).expanduser().resolve() if args.workdir else None
@@ -281,9 +281,9 @@ def audit_main(argv: list[str] | None = None) -> int:
             code_timeout=args.code_timeout,
         )
         if code != 0:
-            print("没有生成任何可合并结果。", file=sys.stderr)
+            print("No mergeable results were generated.", file=sys.stderr)
             return code
-        print(f"项目审计报告已生成：{out}")
+        print(f"Project audit report generated: {out}")
         return 0
 
     if args.command == "route" or args.dry_run:
@@ -298,9 +298,9 @@ def audit_main(argv: list[str] | None = None) -> int:
     json_out = Path(args.json).expanduser().resolve() if args.json else None
     code = run_audit(source, out, json_out, workdir, args.scenario, False)
     if code != 0:
-        print("没有生成任何可合并结果。", file=sys.stderr)
+        print("No mergeable results were generated.", file=sys.stderr)
         return code
-    print(f"合并报告已生成：{out}")
+    print(f"Merged report generated: {out}")
     return 0
 
 

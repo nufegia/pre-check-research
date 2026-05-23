@@ -35,8 +35,8 @@ def _weighted_confidence(parts: list[tuple[str, float, float]]) -> tuple[float, 
     total_weight = sum(weight for _, _, weight in parts) or 1.0
     score = sum(value * weight for _, value, weight in parts) / total_weight
     score = max(0.0, min(1.0, float(score)))
-    basis = ", ".join(f"{name}={value:.2g}(权重{weight:.0%})" for name, value, weight in parts)
-    return score, f"{basis}; 加权总分={score:.2f}"
+    basis = ", ".join(f"{name}={value:.2g} (weight {weight:.0%})" for name, value, weight in parts)
+    return score, f"{basis}; weighted total={score:.2f}"
 
 
 def _r_confidence(tool_id: str, level: str, effective_n: int, status: str = "", parse_quality: float = 1.0) -> tuple[float, str]:
@@ -58,16 +58,16 @@ def _r_confidence(tool_id: str, level: str, effective_n: int, status: str = "", 
     severity_score = {"high": 0.90, "medium": 0.70, "low": 0.45, "info": 0.20}.get(level, 0.60)
     score, basis = _weighted_confidence(
         [
-            ("R包方法确定性", tool_score, 0.35),
-            ("有效输入量", _sample_size_score(effective_n), 0.20),
-            ("状态证据强度", status_score, 0.25),
-            ("解析质量", parse_quality, 0.10),
-            ("风险等级一致性", severity_score, 0.10),
+            ("R package method determinism", tool_score, 0.35),
+            ("Effective input volume", _sample_size_score(effective_n), 0.20),
+            ("Status evidence strength", status_score, 0.25),
+            ("Parse quality", parse_quality, 0.10),
+            ("Risk level consistency", severity_score, 0.10),
         ]
     )
     if effective_n < 15 and level != "info":
         score = min(score, 0.40)
-        basis += "; 小样本n<15置信度封顶0.40"
+        basis += "; small sample n<15 confidence capped at 0.40"
     return score, basis
 
 
@@ -85,17 +85,17 @@ def _info_finding(
     finding = Finding(
         table=source_name,
         level="info",
-        check=f"{spec.display_name}运行记录",
-        target="R 运行时",
+        check=f"{spec.display_name} run record",
+        target="R runtime",
         summary=summary,
         evidence=dependency_status,
         detail=detail,
-        suggestion="确认 R、CRAN 包版本和输入格式后重试；本次报告已跳过该 R 模块。",
+        suggestion="Verify R, CRAN package versions, and input format, then retry; this R module has been skipped for this report.",
         tool_id=tool_id,
         tool_name=spec.display_name,
         module=module,
         input_type=input_type,
-        routing_reason="用户已勾选 R 检测模块，且路由认为当前输入类型适用。",
+        routing_reason="User selected R detection modules, and routing determined current input type is applicable.",
         method_limitations=spec.method_limitations,
         detector_runtime="r",
         dependency_status=dependency_status,

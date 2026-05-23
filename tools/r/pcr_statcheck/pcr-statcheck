@@ -39,7 +39,7 @@ finding_json <- function(level, check, target, summary, evidence, detail, sugges
     "\"detail\":", jstr(detail), ",",
     "\"suggestion\":", jstr(suggestion), ",",
     "\"meaning\":", jstr(summary), ",",
-    "\"normal_explanations\":", jstr("可能的正常原因包括四舍五入、单双侧检验、统计量抽取错误或同一结果不同版本未同步。"), ",",
+    "\"normal_explanations\":", jstr("Possible benign causes include rounding, one/two-tailed testing, statistic extraction errors, or unsynchronized versions of the same result."), ",",
     "\"review_steps\":", jstr(suggestion), ",",
     "\"confidence\":", jstr(confidence), ",",
     "\"confidence_score\":", sprintf("%.2f", confidence_score(confidence, level)), ",",
@@ -48,7 +48,7 @@ finding_json <- function(level, check, target, summary, evidence, detail, sugges
     "\"tool_name\":\"R statcheck\",",
     "\"detector_runtime\":\"r\",",
     "\"dependency_status\":", jstr(dependency_status), ",",
-    "\"confidence_basis\":", jstr("基于 R statcheck 可解析表达式、统计量反算结果和依赖状态生成；需结合报告格式、单双侧检验和抽取质量人工判断。"),
+    "\"confidence_basis\":", jstr("Generated from R statcheck parseable expressions, statistic back-calculation results, and dependency status; requires human judgment combining reporting format, one/two-tailed testing, and extraction quality."),
     "}"
   )
 }
@@ -111,11 +111,11 @@ if (!file.exists(input)) {
 
 if (!requireNamespace("statcheck", quietly = TRUE)) {
   f <- finding_json(
-    "info", "R statcheck运行记录", "R 包",
-    "缺少 R 包 statcheck，正文统计一致性检测已跳过。",
+    "info", "R statcheck run record", "R 包",
+    "Missing R package statcheck; in-text statistical consistency check skipped.",
     "dependency_status=missing_r_package",
     "Install with install.packages('statcheck').",
-    "安装 statcheck 后重试；工具缺失不计入数据风险。",
+    "Install statcheck and retry; missing tool does not count as data risk.",
     "missing_r_package", "low", "low"
   )
   write_payload(normalizePath(input), "apa_statistical_text", "missing_r_package", c(f), json_path)
@@ -132,11 +132,11 @@ res <- tryCatch({
 
 if (".pcr_cli_error" %in% names(res)) {
   f <- finding_json(
-    "info", "R statcheck运行记录", "statcheck API",
-    "R statcheck API 调用失败。",
+    "info", "R statcheck run record", "statcheck API",
+    "R statcheck API call failed.",
     "dependency_status=error",
     res$.pcr_cli_error[[1]],
-    "确认文本格式、statcheck 版本和输入编码后重试。",
+    "Verify text format, statcheck version, and input encoding, then retry.",
     "error", "low", "low"
   )
   write_payload(normalizePath(input), "apa_statistical_text", "error", c(f), json_path)
@@ -150,18 +150,18 @@ if (nrow(res) > 0) {
     error <- row_bool(row, c("Error", "error"))
     decision_error <- row_bool(row, c("Decision_Error", "decision_error"))
     if (!error && !decision_error) next
-    raw <- row_value(row, c("Raw", "raw", "Source"), "APA统计表达式")
+    raw <- row_value(row, c("Raw", "raw", "Source"), "APA statistical expression")
     reported <- row_value(row, c("Reported_P_Value", "reported_p"), "")
     computed <- row_value(row, c("Computed_P_Value", "computed_p"), "")
     detail <- paste(paste(names(row), as.character(row[1, ]), sep = "="), collapse = "; ")
     findings <- c(findings, finding_json(
       ifelse(decision_error, "high", "medium"),
-      "R statcheck正文统计一致性",
+      "R statcheck in-text statistical consistency",
       substr(raw, 1, 120),
-      "R statcheck 发现正文统计量与报告 p 值不一致。",
-      paste0("报告p=", reported, "，反算p=", computed),
+      "R statcheck found inconsistency between in-text statistics and reported p-value.",
+      paste0("Reported p=", reported, ", back-calculated p=", computed),
       detail,
-      "优先核对统计量、自由度、单双侧检验和 p 值是否来自同一次分析。",
+      "Prioritize checking whether statistic, df, one/two-tailed test, and p-value are from the same analysis.",
       "ready",
       ifelse(decision_error, "high", "medium"),
       "medium"
@@ -171,11 +171,11 @@ if (nrow(res) > 0) {
 
 if (length(findings) == 0) {
   findings <- c(finding_json(
-    "info", "R statcheck运行记录", "APA/NHST 文本",
-    "R statcheck 已运行，未发现可报告的不一致。",
-    paste0("文本长度=", nchar(txt)),
+    "info", "R statcheck run record", "APA/NHST 文本",
+    "R statcheck ran; no reportable inconsistencies found.",
+    paste0("Text length=", nchar(txt)),
     "",
-    "若论文统计表达式不是 APA/NHST 格式，应改用表格摘要统计工具或人工复核。",
+    "If the manuscript statistical expressions are not in APA/NHST format, use table summary statistics tools or manual review instead.",
     "ready", "low", "low"
   ))
 }

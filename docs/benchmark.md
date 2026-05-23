@@ -8,8 +8,8 @@ The latest checked-in offline report covers 13 synthetic cases, with 13 passing 
 
 See the repository files for full details:
 
-- [`benchmark/BENCHMARK.md`](https://github.com/PreCheckResearch/pre-check-research/blob/main/benchmark/BENCHMARK.md)
-- [`benchmark/BENCHMARK_REPORT.md`](https://github.com/PreCheckResearch/pre-check-research/blob/main/benchmark/BENCHMARK_REPORT.md)
+- [`benchmark/BENCHMARK.md`](https://github.com/nufegia/pre-check-research/blob/main/benchmark/BENCHMARK.md)
+- [`benchmark/BENCHMARK_REPORT.md`](https://github.com/nufegia/pre-check-research/blob/main/benchmark/BENCHMARK_REPORT.md)
 
 ## Run Locally
 

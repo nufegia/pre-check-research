@@ -48,12 +48,12 @@ def test_report_merge_combines_payloads(tmp_path: Path) -> None:
     assert report_main(["merge", str(raw_json), "--out", str(merged)]) == 0
 
     text = merged.read_text(encoding="utf-8")
-    assert "数据审计报告" in text
-    assert "预审范围与判读口径" in text
-    assert "材料清单" in text
-    assert "工具运行明细" in text
-    assert "覆盖缺口与未运行原因" in text
-    assert "问题清单" in text
+    assert "Data Audit Report" in text
+    assert "Audit Scope and Interpretation Guide" in text
+    assert "Material Inventory" in text
+    assert "Tool Run Details" in text
+    assert "Coverage Gaps and Skip Reasons" in text
+    assert "Risk Finding List" in text
 
 
 def test_audit_route_outputs_deterministic_json(tmp_path: Path) -> None:
@@ -103,8 +103,8 @@ def test_audit_auto_summary_runs_crosscheck_and_records_missing_r_package(tmp_pa
     assert all(finding["level"] == "info" for finding in r_infos)
     assert all(finding["dependency_status"] == "missing_r_package" for finding in r_infos)
     report = out.read_text(encoding="utf-8")
-    assert "工具运行明细" in report
-    assert "覆盖缺口与未运行原因" in report
+    assert "Tool Run Details" in report
+    assert "Coverage Gaps and Skip Reasons" in report
     assert "r_scrutiny" in report
     assert "missing_r_package" in report
 
@@ -168,8 +168,8 @@ def test_audit_auto_p_value_collection_runs_detector(tmp_path: Path) -> None:
     payload = json.loads(merged_json.read_text(encoding="utf-8"))
     findings = [finding for result in payload["results"] for finding in result["findings"]]
 
-    assert any(finding["tool_id"] == "p_value_distribution" and finding["check"] == "p值定义域" for finding in findings)
-    assert any(finding["tool_id"] == "p_value_distribution" and finding["check"] == "边缘显著p值聚集" for finding in findings)
+    assert any(finding["tool_id"] == "p_value_distribution" and finding["check"] == "P-value domain" for finding in findings)
+    assert any(finding["tool_id"] == "p_value_distribution" and finding["check"] == "Marginally significant p-value clustering" for finding in findings)
 
 
 def test_audit_auto_single_python_code_runs_sandbox(tmp_path: Path) -> None:
@@ -183,7 +183,7 @@ def test_audit_auto_single_python_code_runs_sandbox(tmp_path: Path) -> None:
     findings = [finding for result in payload["results"] for finding in result["findings"]]
 
     assert any(finding["tool_id"] == "code_rerun_audit" for finding in findings)
-    assert any(finding["tool_id"] == "code_rerun_execute" and "完成" in finding["summary"] for finding in findings)
+    assert any(finding["tool_id"] == "code_rerun_execute" and "completed" in finding["summary"] for finding in findings)
 
 
 def test_audit_auto_unsupported_code_records_info(tmp_path: Path) -> None:
@@ -199,7 +199,7 @@ def test_audit_auto_unsupported_code_records_info(tmp_path: Path) -> None:
     assert any(
         finding["tool_id"] == "code_rerun_execute"
         and finding["level"] == "info"
-        and "不支持" in finding["check"]
+        and "unsupported" in finding["check"]
         for finding in findings
     )
 
@@ -261,11 +261,11 @@ def test_audit_project_example_and_flags(tmp_path: Path, monkeypatch) -> None:
     assert route["project_id"] == "project-minimal"
     assert route["policy"]["grobid_url"] == "http://localhost:8070"
     assert route["policy"]["contact_email"] == "audit@example.org"
-    assert "预审范围与判读口径" in report
-    assert "材料清单" in report
-    assert "工具运行明细" in report
-    assert "覆盖缺口与未运行原因" in report
-    assert "人工复核任务表" in report
+    assert "Audit Scope and Interpretation Guide" in report
+    assert "Material Inventory" in report
+    assert "Tool Run Details" in report
+    assert "Coverage Gaps and Skip Reasons" in report
+    assert "Manual Review Task List" in report
     assert "paper.md" in report
     assert "data.csv" in report
     assert "reference_audit" in tool_ids
@@ -314,13 +314,13 @@ def test_project_sample_reports_are_stable_enough_for_golden_checks(tmp_path: Pa
         payload = json.loads(merged_json.read_text(encoding="utf-8"))
         tool_ids = {finding["tool_id"] for result in payload["results"] for finding in result["findings"]}
 
-        assert "导师摘要" in report
-        assert "预审范围与判读口径" in report
-        assert "材料清单" in report
-        assert "材料覆盖矩阵" in report
-        assert "工具运行明细" in report
-        assert "覆盖缺口与未运行原因" in report
-        assert "人工复核任务表" in report
+        assert "Executive Summary" in report
+        assert "Audit Scope and Interpretation Guide" in report
+        assert "Material Inventory" in report
+        assert "Material Coverage Matrix" in report
+        assert "Tool Run Details" in report
+        assert "Coverage Gaps and Skip Reasons" in report
+        assert "Manual Review Task List" in report
         assert "reference_audit" in tool_ids
         assert "provenance_hash" in tool_ids
         if sample == "project_biomed":

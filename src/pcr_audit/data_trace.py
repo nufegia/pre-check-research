@@ -18,11 +18,11 @@ from pcr_audit.models import Finding, TableResult, enrich_finding_explanation
 
 
 STAT_NAMES = {
-    "n": ("n", "样本量", "例数", "人数", "cases", "samplesize", "number"),
-    "mean": ("mean", "means", "均值", "均数", "平均值", "平均数"),
-    "sd": ("sd", "std", "标准差", "stdev"),
-    "se": ("se", "sem", "标准误", "sterr"),
-    "count": ("count", "频数", "计数", "n_pos"),
+    "n": ("n", "sample_size", "cases", "samplesize", "number", "样本量", "例数", "人数"),
+    "mean": ("mean", "means", "average", "均值", "均数", "平均值", "平均数"),
+    "sd": ("sd", "std", "stdev", "标准差"),
+    "se": ("se", "sem", "standard_error", "标准误", "sterr"),
+    "count": ("count", "freq", "frequency", "n_pos", "频数", "计数"),
     "percent": ("percent", "percentage", "prop", "rate", "百分比", "比例", "率"),
 }
 
@@ -72,7 +72,7 @@ def _finding(
     suggestion: str,
     detail: str = "",
     tool_id: str = "data_trace_crosscheck",
-    tool_name: str = "跨材料数据对账",
+    tool_name: str = "Cross-Material Data Reconciliation",
     module: str = "data_trace",
 ) -> Finding:
     item = Finding(
@@ -88,8 +88,8 @@ def _finding(
         tool_name=tool_name,
         module=module,
         input_type="project_manifest",
-        routing_reason="项目级审计同时存在文档/补充材料和原始数据或脚本输出。",
-        method_limitations="该模块只做可确定匹配的描述统计对账；变量名、分组名或文档抽取不可靠时只输出复核提示。",
+        routing_reason="Project-level audit has both documents/supplements and raw data or script outputs.",
+        method_limitations="This module only performs deterministically matchable descriptive statistics reconciliation; when variable names, group names, or document extraction are unreliable, only review prompts are output.",
         detector_runtime="python",
         dependency_status="ready",
     )
@@ -188,11 +188,11 @@ def analyze_data_trace(documents: list[Path], raw_data: list[Path], derived_outp
         findings.append(
             _finding(
                 "info",
-                "跨材料对账材料不足",
+                "Insufficient materials for cross-material reconciliation",
                 "project",
-                "未获得足够的原始数据统计量或文档摘要统计表，跨材料对账未运行。",
+                "Insufficient raw data statistics or document summary statistics tables obtained; cross-material reconciliation not run.",
                 f"raw_stats={len(raw)}; summary_values={len(summaries)}",
-                "补充可解析的原始 CSV/XLSX、稿件表格或脚本输出统计表后重试。",
+                "Retry after providing parseable raw CSV/XLSX, manuscript tables, or script output statistics tables.",
             )
         )
         return TableResult("data_trace_crosscheck", len(summaries), 0, findings)
@@ -203,7 +203,7 @@ def analyze_data_trace(documents: list[Path], raw_data: list[Path], derived_outp
         item = _match_raw(summary, raw)
         if item is None:
             if len(unmatched) < 8:
-                unmatched.append(f"{summary.source.name}:{summary.table}:行{summary.row}:{summary.variable}/{summary.stat}")
+                unmatched.append(f"{summary.source.name}:{summary.table}:row {summary.row}:{summary.variable}/{summary.stat}")
             continue
         expected = getattr(item, summary.stat, None)
         if expected is None:
@@ -213,33 +213,33 @@ def analyze_data_trace(documents: list[Path], raw_data: list[Path], derived_outp
             findings.append(
                 _finding(
                     "high" if summary.stat in {"n", "mean", "sd"} else "medium",
-                    "原始数据/稿件摘要统计对账",
+                    "Raw data/manuscript summary statistics reconciliation",
                     f"{summary.variable} {summary.stat}",
-                    "稿件或脚本输出中的摘要统计量与原始数据自动汇总不一致。",
+                    "Summary statistics in manuscript or script output are inconsistent with raw data auto-aggregation.",
                     f"reported={summary.value:.6g}; raw={float(expected):.6g}; source={summary.source.name}:{summary.table}:row{summary.row}; raw_source={item.source.name}:{item.variable}",
-                    "核对变量名映射、分组筛选、缺失剔除规则和稿件表格是否来自同一版数据。",
+                    "Verify variable name mapping, group filtering, missing value exclusion rules, and whether manuscript tables come from the same version of data.",
                 )
             )
     if compared == 0:
         findings.append(
             _finding(
                 "info",
-                "跨材料变量匹配不足",
+                "Insufficient cross-material variable matching",
                 "summary/raw",
-                "发现摘要统计和原始数据，但无法可靠匹配变量名。",
-                "未匹配样例：" + "；".join(unmatched),
-                "统一稿件表格变量名与原始数据列名，或在 manifest 中补充分组/变量映射。",
+                "Summary statistics and raw data found, but unable to reliably match variable names.",
+                "Unmatched examples: " + "; ".join(unmatched),
+                "Align manuscript table variable names with raw data column names, or supplement group/variable mapping in manifest.",
             )
         )
     elif not findings:
         findings.append(
             _finding(
                 "info",
-                "跨材料对账完成",
+                "Cross-material reconciliation complete",
                 "summary/raw",
-                "可匹配的摘要统计量与原始数据自动汇总一致。",
+                "Matchable summary statistics are consistent with raw data auto-aggregation.",
                 f"compared={compared}; unmatched={len(unmatched)}",
-                "对未匹配变量和复杂分组仍建议人工复核。",
+                "Manual review is still recommended for unmatched variables and complex groupings.",
             )
         )
     return TableResult("data_trace_crosscheck", len(summaries), len(raw), findings)
@@ -297,15 +297,15 @@ def _script_command(path: Path) -> list[str] | None:
 def run_code_sandbox(project_source: Path, code_paths: list[Path], workdir: Path, timeout: int = 60, enabled: bool = True) -> tuple[TableResult, list[Path]]:
     findings: list[Finding] = []
     if not enabled:
-        findings.append(_code_finding("info", "分析脚本复跑跳过", "analysis_code", "用户关闭了脚本沙箱复跑。", "rerun_code=false", "如需复跑，请启用 --rerun-code。"))
+        findings.append(_code_finding("info", "Analysis script rerun skipped", "analysis_code", "User disabled script sandbox rerun.", "rerun_code=false", "To rerun, enable --rerun-code."))
         return TableResult("code_rerun_execute", 0, 0, findings), []
 
     runnable = [path for path in code_paths if path.suffix.lower() in {".py", ".r"}]
     unsupported = [path for path in code_paths if path.suffix.lower() not in {".py", ".r"}]
     for path in unsupported[:20]:
-        findings.append(_code_finding("info", "分析脚本复跑不支持", path.name, "当前版本不执行 Stata/SPSS/SAS 等脚本。", str(path), "请在受控统计环境中人工复跑，并提供输出表。"))
+        findings.append(_code_finding("info", "Analysis script rerun unsupported", path.name, "Current version does not execute Stata/SPSS/SAS scripts.", str(path), "Please manually rerun in a controlled statistical environment and provide output tables."))
     if not runnable:
-        findings.append(_code_finding("info", "分析脚本复跑材料不足", "analysis_code", "未发现可复跑的 Python/R 脚本。", f"code_files={len(code_paths)}", "提供 Python 或 R 分析脚本后重试。"))
+        findings.append(_code_finding("info", "Insufficient materials for analysis script rerun", "analysis_code", "No rerunnable Python/R scripts found.", f"code_files={len(code_paths)}", "Retry after providing Python or R analysis scripts."))
         return TableResult("code_rerun_execute", 0, 0, findings), []
 
     sandbox_project = _copy_project(project_source, workdir / "code-sandbox")
@@ -330,7 +330,7 @@ def run_code_sandbox(project_source: Path, code_paths: list[Path], workdir: Path
         script = sandbox_project / rel
         cmd = _script_command(script)
         if cmd is None:
-            findings.append(_code_finding("info", "分析脚本解释器缺失", original.name, "缺少脚本运行时，已跳过复跑。", str(original), "安装 Python/Rscript 及依赖后重试。"))
+            findings.append(_code_finding("info", "Analysis script interpreter missing", original.name, "Script runtime missing; rerun skipped.", str(original), "Retry after installing Python/Rscript and dependencies."))
             continue
         before = _snapshot(sandbox_project)
         try:
@@ -338,20 +338,20 @@ def run_code_sandbox(project_source: Path, code_paths: list[Path], workdir: Path
             changed = _changed_files(before, sandbox_project)
             derived.extend(path for path in changed if path.suffix.lower() in {".csv", ".xlsx", ".xls", ".txt", ".md", ".json"})
             level = "info"
-            summary = "分析脚本沙箱复跑完成。" if proc.returncode == 0 else "分析脚本沙箱复跑失败，已记录为运行提示。"
+            summary = "Analysis script sandbox rerun completed." if proc.returncode == 0 else "Analysis script sandbox rerun failed; recorded as info."
             evidence = f"returncode={proc.returncode}; changed_files={len(changed)}; stdout={proc.stdout[-300:]}; stderr={proc.stderr[-300:]}"
         except subprocess.TimeoutExpired as exc:
             level = "info"
-            summary = "分析脚本沙箱复跑超时，已跳过。"
+            summary = "Analysis script sandbox rerun timed out; skipped."
             evidence = f"timeout={timeout}s; stdout={(exc.stdout or '')[-300:]}; stderr={(exc.stderr or '')[-300:]}"
         findings.append(
             _code_finding(
                 level,
-                "分析脚本沙箱复跑",
+                "Analysis script sandbox rerun",
                 original.name,
                 summary,
                 evidence,
-                "核对脚本依赖、输入路径、随机种子和生成输出；沙箱失败不计入数据风险。",
+                "Verify script dependencies, input paths, random seeds, and generated outputs; sandbox failures do not count as data risks.",
             )
         )
     return TableResult("code_rerun_execute", len(runnable), 0, findings), sorted(set(derived))
@@ -366,6 +366,6 @@ def _code_finding(level: str, check: str, target: str, summary: str, evidence: s
         evidence,
         suggestion,
         tool_id="code_rerun_execute",
-        tool_name="分析脚本沙箱复跑",
+        tool_name="Analysis Script Sandbox Rerun",
         module="code_rerun_execute",
     )

@@ -23,13 +23,13 @@ from pcr_audit.models import Finding, TableResult, enrich_finding_explanation
 # ---------------------------------------------------------------------------
 
 COLUMN_PATTERNS: dict[str, list[str]] = {
-    "N":        [r"^n$", r"samplesize", r"cases?", r"样本量", r"例数", r"人数", r"^number$"],
-    "Mean":     [r"^mean$", r"^means$", r"均值", r"均数", r"平均值", r"平均数"],
-    "SD":       [r"^sd$", r"^std$", r"标准差", r"stdev"],
-    "SE":       [r"^se$", r"^sem$", r"标准误", r"sterr"],
-    "CI_low":   [r"cilow", r"cilower", r"ci[_\- ]?l", r"lcl", r"置信区间下限", r"下限", r"^low$"],
-    "CI_high":  [r"cihigh", r"ciupper", r"ci[_\- ]?u", r"ucl", r"置信区间上限", r"上限", r"^high$"],
-    "count":    [r"^count$", r"n[_\- ]?pos", r"频数", r"计数"],
+    "N":        [r"^n$", r"^sample[_ ]?size$", r"^cases?$", r"^number$", r"samplesize", r"样本量", r"例数", r"人数"],
+    "Mean":     [r"^mean$", r"^means$", r"^average$", r"均值", r"均数", r"平均值", r"平均数"],
+    "SD":       [r"^sd$", r"^std$", r"^stdev$", r"标准差", r"stdev"],
+    "SE":       [r"^se$", r"^sem$", r"^standard[_ ]?error$", r"标准误", r"sterr"],
+    "CI_low":   [r"cilow", r"cilower", r"ci[_\- ]?l", r"lcl", r"^lower$", r"置信区间下限", r"下限", r"^low$"],
+    "CI_high":  [r"cihigh", r"ciupper", r"ci[_\- ]?u", r"ucl", r"^upper$", r"置信区间上限", r"上限", r"^high$"],
+    "count":    [r"^count$", r"n[_\- ]?pos", r"^freq$", r"频数", r"计数"],
     "percent":  [r"percent", r"percentage", r"^prop$", r"^rate$", r"百分比", r"比例", r"率"],
     "effect":   [r"^or$", r"oddsratio", r"^rr$", r"riskratio", r"^hr$", r"hazardratio", r"效应量", r"比值比", r"风险比"],
     "t":        [r"^t$", r"t[_\- ]?value", r"t[_\- ]?stat", r"t统计"],
@@ -85,23 +85,23 @@ def weighted_confidence(parts: list[tuple[str, float, float]]) -> tuple[float, s
     total_weight = sum(weight for _, _, weight in parts) or 1.0
     score = sum(value * weight for _, value, weight in parts) / total_weight
     score = max(0.0, min(1.0, float(score)))
-    basis = ", ".join(f"{name}={value:.2g}(权重{weight:.0%})" for name, value, weight in parts)
-    return score, f"{basis}; 加权总分={score:.2f}"
+    basis = ", ".join(f"{name}={value:.2g} (weight {weight:.0%})" for name, value, weight in parts)
+    return score, f"{basis}; weighted total={score:.2f}"
 
 
 def level_confidence(level: str, row_count: int, parsable_fields: int = 2) -> tuple[float, str]:
     severity_score = {"high": 0.90, "medium": 0.70, "low": 0.50, "info": 0.20}.get(level, 0.60)
     score, basis = weighted_confidence(
         [
-            ("公式确定性", 1.0 if level != "info" else 0.4, 0.45),
-            ("表规模", sample_size_score(row_count), 0.25),
-            ("可解析字段", sample_size_score(parsable_fields * 15), 0.15),
-            ("偏差等级", severity_score, 0.15),
+            ("Formula determinism", 1.0 if level != "info" else 0.4, 0.45),
+            ("Table scale", sample_size_score(row_count), 0.25),
+            ("Parsable fields", sample_size_score(parsable_fields * 15), 0.15),
+            ("Deviation level", severity_score, 0.15),
         ]
     )
     if row_count < 15 and level != "info":
         score = min(score, 0.40)
-        basis += "; 小样本n<15置信度封顶0.40"
+        basis += "; small sample n<15 confidence capped at 0.40"
     return score, basis
 
 
@@ -262,10 +262,10 @@ def _check_se_sd_n(
     level = "high" if rel_err > tol.se_relative * 3 else "medium"
     add_finding(
         findings, table_name, level,
-        "SE/SD/√N一致性", f"行{row_idx}",
-        f"标准误SE与SD/√N不一致（偏差={rel_err:.1%}）",
-        f"SE报告={se:.6g}，SD/√N={expected:.6g}，N={n:.6g}，SD={sd:.6g}",
-        "核对SE是否为标准误（非SD或CI半宽），确认统计脚本输出。",
+        "SE/SD/√N consistency", f"row {row_idx}",
+        f"Standard error SE inconsistent with SD/√N（deviation={rel_err:.1%}）",
+        f"SE reported={se:.6g}，SD/√N={expected:.6g}，N={n:.6g}，SD={sd:.6g}",
+        "Verify whether SE is standard error (not SD or CI half-width); confirm statistical script output.",
     )
 
 
@@ -291,10 +291,10 @@ def _check_ci_centering(
     level = "high" if rel_err > tol.ci_center_relative * 3 else "medium"
     add_finding(
         findings, table_name, level,
-        "CI中心一致性", f"行{row_idx}",
-        f"均值未位于CI区间中心（偏差={rel_err:.1%}的CI半宽）",
-        f"均值={mean:.6g}，CI中心={(ci_low + ci_high) / 2:.6g}，CI=[{ci_low:.6g}, {ci_high:.6g}]",
-        "对称CI应以均值为中心；非对称CI需在方法中说明。",
+        "CI center consistency", f"row {row_idx}",
+        f"Mean not centered in CI interval（deviation={rel_err:.1%} of CI half-width）",
+        f"Mean={mean:.6g}，CI center={(ci_low + ci_high) / 2:.6g}，CI=[{ci_low:.6g}, {ci_high:.6g}]",
+        "Symmetric CI should be centered on the mean; asymmetric CI must be explained in methods.",
     )
 
 
@@ -325,10 +325,10 @@ def _check_ci_span_vs_se(
         return
     add_finding(
         findings, table_name, "medium",
-        "CI宽度/SE一致性", f"行{row_idx}",
-        f"CI宽度与SE×t临界值不一致（偏差={rel_err:.1%}）",
-        f"CI宽度={ci_span:.6g}，2×t({df_for_t:.6g})×SE={expected_span:.6g}",
-        "核对CI的置信水平（通常95%）和SE是否对应。",
+        "CI width/SE consistency", f"row {row_idx}",
+        f"CI width inconsistent with SE×t critical value（deviation={rel_err:.1%}）",
+        f"CI width={ci_span:.6g}，2×t({df_for_t:.6g})×SE={expected_span:.6g}",
+        "Verify CI confidence level (usually 95%) and whether SE corresponds.",
     )
 
 
@@ -346,10 +346,10 @@ def _check_ci_validity(
     if ci_low > ci_high:
         add_finding(
             findings, table_name, "high",
-            "CI区间倒置", f"行{row_idx}",
-            "置信区间下限大于上限。",
-            f"CI=[{ci_low:.6g}, {ci_high:.6g}]，下限 > 上限",
-            "CI列顺序可能写反，或表格抽取时发生错列。",
+            "CI interval inverted", f"row {row_idx}",
+            "CI lower bound greater than upper bound.",
+            f"CI=[{ci_low:.6g}, {ci_high:.6g}], lower > upper",
+            "CI column order may be reversed, or column misalignment occurred during table extraction.",
         )
         return
     mean = row.get("Mean")
@@ -358,10 +358,10 @@ def _check_ci_validity(
         if mean < ci_low - eps or mean > ci_high + eps:
             add_finding(
                 findings, table_name, "high",
-                "均值不在CI区间内", f"行{row_idx}",
-                "均值未包含在置信区间内。",
-                f"均值={mean:.6g}，CI=[{ci_low:.6g}, {ci_high:.6g}]",
-                "核对均值与CI是否来自同一分析；CI可能写反或均值可能标错。",
+                "Mean outside CI interval", f"row {row_idx}",
+                "Mean not contained within the confidence interval.",
+                f"Mean={mean:.6g}, CI=[{ci_low:.6g}, {ci_high:.6g}]",
+                "Verify mean and CI are from the same analysis; CI may be reversed or mean may be mislabeled.",
             )
 
 
@@ -386,10 +386,10 @@ def _check_percent_count(
     level = "high" if diff > tol.percent_absolute * 3 else "medium"
     add_finding(
         findings, table_name, level,
-        "百分比/计数一致性", f"行{row_idx}",
-        f"百分比与count/N反算不一致（差值={diff:.3f}）",
-        f"报告={pct:.6g}，count/N×{tol.pct_scale:.0f}={expected:.6g}，count={cnt:.6g}，N={n:.6g}",
-        "核对百分比的分母是否为该行的N；确认count是否正确。",
+        "Percent/count consistency", f"row {row_idx}",
+        f"Percentage inconsistent with count/N back-calculation (diff={diff:.3f})",
+        f"reported={pct:.6g}, count/N×{tol.pct_scale:.0f}={expected:.6g}, count={cnt:.6g}, N={n:.6g}",
+        "Verify percentage denominator is the row N; confirm count is correct.",
     )
 
 
@@ -411,10 +411,10 @@ def _check_p_validity(
             continue
         add_finding(
             findings, table_name, "high",
-            "p值超出定义域", f"行{row_idx}",
-            f"p值超出[0, 1]范围。",
-            f"报告p值={p_raw}（{p_col}）",
-            "p值必须介于0到1之间；可能是录入错误或小数点位错。",
+            "P-value outside domain", f"row {row_idx}",
+            f"P-value outside [0, 1] range.",
+            f"Reported p-value={p_raw}（{p_col}）",
+            "P-value must be between 0 and 1; may be data entry error or decimal point misplacement.",
         )
 
 
@@ -454,10 +454,10 @@ def _check_p_vs_t(
         level = "high" if diff > tol.p_absolute_loose else "medium"
         add_finding(
             findings, table_name, level,
-            "p值/t统计量一致性", f"行{row_idx}",
-            f"p值与t统计量(df)反算不一致（差值={diff:.4f}）",
-            f"报告p={p_raw}（解析为{reported_p:.6g}），t={t_val:.6g}，df={df_val:.6g}，反算p={computed_p:.6g}",
-            "核对t、df和p值是否来自同一次分析，是否为单侧检验。",
+            "P-value/t-statistic consistency", f"row {row_idx}",
+            f"P-value inconsistent with t-statistic(df) back-calculation (diff={diff:.4f})",
+            f"Reported p={p_raw} (parsed as {reported_p:.6g}), t={t_val:.6g}, df={df_val:.6g}, back-calculated p={computed_p:.6g}",
+            "Verify t, df, and p-value are from the same analysis; check if one-tailed test.",
         )
 
 
@@ -482,10 +482,10 @@ def _check_df_vs_n(
     # Not an exact match for common patterns — note as low.
     add_finding(
         findings, table_name, "low",
-        "自由度/样本量关系", f"行{row_idx}",
-        "自由度df与样本量N的关系不匹配常见检验设计。",
-        f"df={df_val:.6g}，N={n_val:.6g}（N-1={n_val - 1:.6g}，N-2={n_val - 2:.6g}）",
-        "若检验设计非单样本或两独立样本等组设计，可忽略此项。",
+        "df/sample size relationship", f"row {row_idx}",
+        "df and sample size N relationship does not match common test designs.",
+        f"df={df_val:.6g}, N={n_val:.6g} (N-1={n_val - 1:.6g}, N-2={n_val - 2:.6g})",
+        "If test design is not one-sample or two-independent-sample equal-group design, this can be ignored.",
     )
 
 
@@ -513,26 +513,26 @@ def _check_ratio_ci_p_direction(
         if ci_crosses_null and significant:
             add_finding(
                 findings, table_name, "high",
-                "OR/RR/HR-CI-p一致性", f"行{row_idx}",
-                "比值型效应量的95%CI包含1，但p值显示显著。",
+                "OR/RR/HR-CI-p consistency", f"row {row_idx}",
+                "Ratio-type effect size 95% CI contains 1, but p-value indicates significance.",
                 f"effect={effect:.6g}, CI=[{ci_low:.6g}, {ci_high:.6g}], {p_col}={p_raw}",
-                "核对CI、p值和效应量是否来自同一模型；比值型指标的无效值通常为1。",
+                "Verify CI, p-value, and effect size are from the same model; null value for ratio-type measures is usually 1.",
             )
         if not ci_crosses_null and not significant and op in {"=", ">", ">="}:
             add_finding(
                 findings, table_name, "medium",
-                "OR/RR/HR-CI-p一致性", f"行{row_idx}",
-                "比值型效应量的95%CI未包含1，但p值未显示显著。",
+                "OR/RR/HR-CI-p consistency", f"row {row_idx}",
+                "Ratio-type effect size 95% CI does not contain 1, but p-value does not indicate significance.",
                 f"effect={effect:.6g}, CI=[{ci_low:.6g}, {ci_high:.6g}], {p_col}={p_raw}",
-                "核对CI置信水平、p值精度和单双侧检验说明。",
+                "Verify CI confidence level, p-value precision, and one/two-tailed test specification.",
             )
     if effect < ci_low or effect > ci_high:
         add_finding(
             findings, table_name, "medium",
-            "效应量/CI方向一致性", f"行{row_idx}",
-            "效应量点估计不在置信区间内。",
+            "Effect size/CI direction consistency", f"row {row_idx}",
+            "Effect size point estimate not within confidence interval.",
             f"effect={effect:.6g}, CI=[{ci_low:.6g}, {ci_high:.6g}]",
-            "核对点估计、CI列和方向是否发生错列或复制错误。",
+            "Verify point estimate, CI columns, and direction for column misalignment or copy errors.",
         )
 
 
@@ -557,10 +557,10 @@ def _check_mean_ci_p_direction(
         if crosses_zero and significant:
             add_finding(
                 findings, table_name, "medium",
-                "CI-p显著性方向", f"行{row_idx}",
-                "CI包含0，但p值显示显著。",
+                "CI-p significance direction", f"row {row_idx}",
+                "CI contains 0, but p-value indicates significance.",
                 f"CI=[{ci_low:.6g}, {ci_high:.6g}], {p_col}={p_raw}",
-                "若这是差值或回归系数，CI与p值结论应一致；若不是零为无效值的指标，请在方法中说明。",
+                "If this is a difference or regression coefficient, CI and p-value conclusions should agree; if null is not zero, explain in methods.",
             )
 
 
@@ -572,11 +572,11 @@ def _check_p_curve_weak_signal(name: str, p_values: list[float], findings: list[
     if len(edge) >= 3 and len(edge) / max(len(sig), 1) >= 0.30:
         add_finding(
             findings, name, "medium",
-            "边缘显著p值聚集", "p值集合",
-            "多个p值集中在0.045-0.050区间。",
-            f"边缘显著={len(edge)}，显著p值={len(sig)}，总p值={len(p_values)}",
-            "这只能提示选择性报告或多重比较风险；需结合方法、预注册和完整结果表人工复核。",
-            "该规则不判断p-hacking，只作为多重比较透明度复核线索。",
+            "Marginally significant p-value clustering", "p-value collection",
+            "Multiple p-values concentrated in the 0.045-0.050 interval.",
+            f"Marginally significant={len(edge)}, significant p-values={len(sig)}, total p-values={len(p_values)}",
+            "This only indicates selective reporting or multiple comparison risk; requires human review combining methods, preregistration, and complete result tables.",
+            "This rule does not judge p-hacking; only serves as a multiple comparison transparency review clue.",
         )
 
 
@@ -629,11 +629,11 @@ def crosscheck_table(
         tag_findings(
             findings,
             tool_id="crosscheck",
-            tool_name="交叉验证",
+            tool_name="Cross-check",
             module="crosscheck",
             input_type="summary_statistics_table",
-            routing_reason="摘要统计表逐行数学交叉验证。",
-            method_limitations="交叉验证基于统计量的数学定义（SE=SD/√N、CI=mean±t×SE等），不做结论性判定。离群值需人工复核。",
+            routing_reason="Row-level mathematical cross-check on summary statistics table.",
+            method_limitations="Cross-check is based on mathematical definitions of statistics (SE=SD/√N, CI=mean±t×SE, etc.); does not make conclusive judgments. Outliers require human review.",
         )
         return TableResult(name=name, rows=0, columns=len(df.columns), findings=findings)
 
@@ -672,19 +672,19 @@ def crosscheck_table(
     if not findings:
         add_finding(
             findings, name, "info",
-            "交叉验证运行记录", "摘要统计表",
-            "逐行交叉验证已完成，未发现统计量内部不一致。",
-            f"检查行数={len(df)}",
-            "若变量类型或检验设计与假设不符，仍建议人工复核原始分析。",
+            "Cross-check run record", "Summary statistics table",
+            "Row-level cross-check completed; no internal statistic inconsistencies found.",
+            f"Rows checked={len(df)}",
+            "If variable types or test designs do not match assumptions, manual review of original analysis is still recommended.",
         )
 
     tag_findings(
         findings,
         tool_id="crosscheck",
-        tool_name="交叉验证",
+        tool_name="Cross-check",
         module="crosscheck",
         input_type="summary_statistics_table",
-        routing_reason="摘要统计表逐行数学交叉验证。",
-        method_limitations="交叉验证基于统计量的数学定义（SE=SD/√N、CI=mean±t×SE等），不做结论性判定。离群值需人工复核。",
+        routing_reason="Row-level mathematical cross-check on summary statistics table.",
+        method_limitations="Cross-check is based on mathematical definitions of statistics (SE=SD/√N, CI=mean±t×SE, etc.); does not make conclusive judgments. Outliers require human review.",
     )
     return TableResult(name=name, rows=len(df), columns=len(df.columns), findings=findings)

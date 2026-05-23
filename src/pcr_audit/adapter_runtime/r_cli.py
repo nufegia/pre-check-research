@@ -48,7 +48,7 @@ def run_r_tool_payload(source: Path, tool_id: str, input_path: Path, workdir: Pa
     tool = find_r_tool(tool_key)
     out_json = workdir / f"{tool_key}.json"
     if not tool:
-        payloads.append(info_payload(source, tool_id, "对应 R CLI 不存在，已跳过。", R_TOOL_COMMANDS[tool_key]))
+        payloads.append(info_payload(source, tool_id, "Corresponding R CLI not found; skipped.", R_TOOL_COMMANDS[tool_key]))
         return
 
     actual_input = input_path
@@ -61,7 +61,7 @@ def run_r_tool_payload(source: Path, tool_id: str, input_path: Path, workdir: Pa
     if out_json.exists():
         payloads.append(read_json(out_json))
     elif proc.returncode != 0:
-        payloads.append(info_payload(source, tool_id, "R CLI 运行失败，已跳过。", proc.stderr.strip()))
+        payloads.append(info_payload(source, tool_id, "R CLI run failed; skipped.", proc.stderr.strip()))
 
 
 def csv_inputs_for_r_tool(
@@ -103,7 +103,7 @@ def r_adapter(context: AuditRunContext, tool_id: str) -> None:
             context.extraction_manifest,
         )
     except Exception as exc:
-        context.payloads.append(info_payload(context.source, tool_id, "表格抽取失败，R CLI 已跳过。", str(exc), "extract_failed"))
+        context.payloads.append(info_payload(context.source, tool_id, "Table extraction failed; R CLI skipped.", str(exc), "extract_failed"))
         return
     for idx, r_input in enumerate(r_inputs, start=1):
         tool_workdir = context.workdir / f"{tool_id}_{idx}"

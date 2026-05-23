@@ -21,8 +21,8 @@ class Finding:
     tool_name: str = "Unknown tool"
     module: str = "unknown"
     input_type: str = "unknown"
-    routing_reason: str = "由确定性路由选择该工具。"
-    method_limitations: str = "该结果只提示需要复核的风险信号，不构成数据风险校验判定。"
+    routing_reason: str = "This tool was selected by deterministic routing."
+    method_limitations: str = "This result only flags risk signals that need human review and does not constitute a data integrity verdict."
     raw_output_ref: str = ""
     detector_runtime: str = "python"
     dependency_status: str = "ready"
@@ -49,7 +49,7 @@ class TableResult:
 
 
 LEVEL_SCORE = {"high": 3, "medium": 2, "low": 1, "info": 0}
-LEVEL_CN = {"high": "高", "medium": "中", "low": "低", "info": "提示"}
+LEVEL_LABEL = {"high": "High", "medium": "Medium", "low": "Low", "info": "Info"}
 
 
 def validate_finding(finding: Finding) -> None:
@@ -71,13 +71,13 @@ def validate_results(results: list[TableResult]) -> None:
 
 def enrich_finding_explanation(finding: Finding) -> None:
     if not finding.meaning:
-        finding.meaning = finding.summary or "该项表示检测器发现了需要人工复核的模式。"
+        finding.meaning = finding.summary or "This item indicates the detector found a pattern requiring human review."
     if not finding.normal_explanations:
         finding.normal_explanations = (
-            "可能的正常原因包括实验设计、仪器阈值、批量格式化、表格抽取误差或合理的数据清洗。"
+            "Possible benign causes include study design, instrument thresholds, batch formatting, table extraction errors, or legitimate data cleaning."
         )
     if not finding.review_steps:
-        finding.review_steps = finding.suggestion or "回看原始记录、统计脚本和数据处理日志，确认该信号是否有合理来源。"
+        finding.review_steps = finding.suggestion or "Review original records, statistical scripts, and data processing logs to confirm whether this signal has a legitimate source."
     if finding.confidence_score is None or (
         finding.confidence_score == 0.6 and finding.confidence == "medium" and finding.level != "medium"
     ):
@@ -101,7 +101,7 @@ def enrich_finding_explanation(finding: Finding) -> None:
         finding.review_actions = finding.review_steps
     if not finding.confidence_basis:
         finding.confidence_basis = (
-            "基于确定性规则或可复算公式生成；仍需结合研究设计、原始记录和材料抽取质量人工判断。"
+            "Generated from deterministic rules or reproducible formulas; still requires human judgment considering study design, original records, and material extraction quality."
         )
 
 
@@ -117,7 +117,7 @@ def finding_from_mapping(source: str, raw: dict) -> Finding:
     finding = Finding(
         table=str(raw.get("table") or raw.get("source") or source),
         level=raw_level,
-        check=str(raw.get("check") or "运行记录"),
+        check=str(raw.get("check") or "Run Record"),
         target=str(raw.get("target") or ""),
         summary=str(raw.get("summary") or ""),
         evidence=str(raw.get("evidence") or ""),
@@ -157,12 +157,12 @@ def info_finding(
     finding = Finding(
         table=source,
         level="info",
-        check="工具运行记录",
+        check="Tool Run Record",
         target=tool_id,
         summary=summary,
         evidence=evidence,
         detail="",
-        suggestion="安装或修复该 CLI 后重试；其他可用工具的结果不受影响。",
+        suggestion="Install or repair this CLI and retry; results from other available tools are unaffected.",
         tool_id=tool_id,
         tool_name=tool_id,
         module="routing",
@@ -170,14 +170,14 @@ def info_finding(
         detector_runtime="cli",
         dependency_status=dependency_status,
         meaning=summary,
-        normal_explanations="工具缺失、依赖缺失或路由跳过不是数据风险。",
-        review_steps="检查 PATH、Rscript、对应 R 包安装状态和 route JSON。",
+        normal_explanations="Missing tool, missing dependency, or routing skip is not a data risk.",
+        review_steps="Check PATH, Rscript, corresponding R package installation status, and route JSON.",
         confidence="low",
         confidence_score=0.1,
         false_positive_risk="low",
         evidence_id=f"{tool_id}:info:{source}",
         location=source,
-        review_actions="检查 PATH、Rscript、对应 R 包安装状态和 route JSON。",
-        confidence_basis="该项来自工具路由或依赖检查，不是数据风险信号。",
+        review_actions="Check PATH, Rscript, corresponding R package installation status, and route JSON.",
+        confidence_basis="This item originates from tool routing or dependency checks and is not a data risk signal.",
     )
     return finding

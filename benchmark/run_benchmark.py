@@ -110,9 +110,9 @@ def findings_from_payload(path: Path) -> list[dict[str, Any]]:
             {
                 "level": "medium" if item.get("status") in {"changed", "modified", "missing"} else "info",
                 "tool_id": "provenance_chain_verify",
-                "check": "哈希版本链核验",
+                "check": "Hash Version Chain Verification",
                 "target": item.get("relative_path", ""),
-                "summary": f"哈希版本链状态：{item.get('status')}",
+                "summary": f"Hash version chain status: {item.get('status')}",
                 "evidence": json.dumps(item, ensure_ascii=False),
             }
             for item in payload["statuses"]
@@ -269,45 +269,45 @@ def render_markdown(results: list[CaseResult], include_network: bool) -> str:
     total_info = sum(item.info_findings for item in results)
     network_result = next((item for item in results if item.case_id == "external_refs_online"), None)
     network_text = (
-        "已执行。有效 DOI/PMID 的 Crossref/OpenAlex/NCBI 查询返回 status=ok；故意构造的错误 DOI 返回 404，并被检测为“外部元数据不可核验”。"
+        "Executed. Valid DOI/PMID Crossref/OpenAlex/NCBI queries returned status=ok; intentionally malformed DOI returned 404 and was detected as 'external metadata unverifiable'."
         if include_network and network_result and network_result.ok
-        else ("未执行（本次使用 --no-network）。" if not include_network else "已执行，但存在失败或证据缺口。")
+        else ("Not executed (--no-network used)." if not include_network else "Executed, but failures or evidence gaps exist.")
     )
     network_findings = findings_from_payload(REPORTS / "pcr.external_refs_online.json") if include_network else []
     network_reference_findings = [item for item in network_findings if item.get("tool_id") == "reference_audit"]
     lines = [
-        "# PCR Benchmark 总报告",
+        "# PCR Benchmark Report",
         "",
-        "## 总体结论",
+        "## Overall Conclusion",
         "",
-        f"本轮 benchmark 共运行 {len(results)} 个测评用例，PASS {passed} 个，FAIL {failed} 个。"
-        + ("整体通过。" if failed == 0 else "存在未通过用例，需优先查看下方缺口。"),
+        f"This benchmark ran {len(results)} test cases, {passed} PASS, {failed} FAIL. "
+        + ("All passed." if failed == 0 else "Some cases failed; review gaps below first."),
         "",
-        f"- Benchmark 根目录：`{repo_path(ROOT)}`",
-        f"- 联网测评：{network_text}",
-        f"- 风险信号总数：{total_risk}",
-        f"- 运行/覆盖提示总数：{total_info}",
+        f"- Benchmark root: `{repo_path(ROOT)}`",
+        f"- Network tests: {network_text}",
+        f"- Total risk signals: {total_risk}",
+        f"- Total run/info records: {total_info}",
         "",
-        "结论：当前工程的核心检测链路可以被自动化 benchmark 稳定覆盖。确定性数学类、哈希溯源类和项目级对账类检查可作为较可靠的工程回归指标；图像、raw 表格中的数字分布/列间关系弱信号、论文工厂/跨稿件相似等能力适合衡量“是否能提出复核线索”，不能作为强结论指标。",
+        "Conclusion: The core detection pipeline is stably covered by automated benchmarks. Deterministic mathematical checks, hash provenance, and project-level reconciliation checks serve as reliable engineering regression indicators; image checks, raw table digit distribution/inter-column relationship weak signals, and paper mill/cross-manuscript similarity are suitable for measuring 'whether review leads are surfaced', not as strong conclusion indicators.",
         "",
-        "## 覆盖结论",
+        "## Coverage Summary",
         "",
-        "- 原始数据：覆盖重复/高度重复行列、固定步长、高频值、缺失分组集中、尾数分布、列间关系和非连续变量异常；干净对照保持 0 个风险信号。",
-        "- 摘要统计：覆盖 SE/SD/N、CI、百分比/计数、p/t/df、p 值定义域，以及 R scrutiny/SPRITE 可行性检查。",
-        "- 正文统计：覆盖 R statcheck 对 APA/NHST 表达式的 p 值一致性检查。",
-        "- 文献与联网：覆盖 DOI/PMID 解析、Crossref/OpenAlex/NCBI 元数据查询、引用主张抽取。",
-        "- 图像：覆盖图片发现、内部重复图、局部 copy-move、元数据质量、Western blot/凝胶复核清单。",
-        "- 代码与项目：覆盖 Python/R 脚本复跑、Stata/SPSS/SAS 只读提示、跨材料数据对账、项目 manifest、provenance 版本链和本地 corpus 筛查。",
+        "- Raw data: Covers duplicate/highly similar rows and columns, fixed steps, high-frequency values, missing-concentrated-by-group, terminal digit distribution, inter-column relationships, and non-continuous variable anomalies; clean controls maintain 0 risk signals.",
+        "- Summary statistics: Covers SE/SD/N, CI, percent/count, p/t/df, p-value domain, and R scrutiny/SPRITE feasibility checks.",
+        "- In-text statistics: Covers R statcheck p-value consistency checks on APA/NHST expressions.",
+        "- Literature & network: Covers DOI/PMID parsing, Crossref/OpenAlex/NCBI metadata queries, and citation claim extraction.",
+        "- Images: Covers image discovery, internal duplicates, local copy-move, metadata quality, and Western blot/gel review checklist.",
+        "- Code & project: Covers Python/R script reruns, Stata/SPSS/SAS read-only prompts, cross-material data reconciliation, project manifest, provenance version chain, and local corpus screening.",
         "",
-        "## 可靠性分层",
+        "## Reliability Tiers",
         "",
-        "| 层级 | 工具/能力 | Benchmark 判读 |",
+        "| Tier | Tools / Capabilities | Benchmark Interpretation |",
         "|---|---|---|",
-        "| 较可靠 | `crosscheck`, `p_value_distribution`, `data_trace_crosscheck`, `provenance_hash`, `provenance_chain_verify` | 数学、定义域或哈希规则明确，适合作为回归门槛。 |",
-        "| 中等可靠 | `raw_data_rules`, `r_statcheck`, `r_scrutiny`, `r_rsprite2`, `code_rerun_execute` | 对输入格式、列名、R 包版本、脚本依赖较敏感；适合作为覆盖和主要异常捕获指标。 |",
-        "| 弱信号 | `raw_data_rules` 中的数字分布/列间关系/非连续变量形态信号、图像重复/copy-move, `papermill_light_signals`, `papermill_network_signals` | 只能说明产生了人工复核线索，误报/漏报风险较高。 |",
+        "| More Reliable | `crosscheck`, `p_value_distribution`, `data_trace_crosscheck`, `provenance_hash`, `provenance_chain_verify` | Mathematics, domain, or hash rules are explicit; suitable as regression thresholds. |",
+        "| Moderately Reliable | `raw_data_rules`, `r_statcheck`, `r_scrutiny`, `r_rsprite2`, `code_rerun_execute` | Sensitive to input format, column names, R package versions, and script dependencies; suitable as coverage and primary anomaly capture indicators. |",
+        "| Weak Signal | `raw_data_rules` digit distribution/inter-column relationship/non-continuous variable shape signals, image duplicate/copy-move, `papermill_light_signals`, `papermill_network_signals` | Only indicate that human review leads were generated; higher false positive/negative risk. |",
         "",
-        "## 联网模块测试结论",
+        "## Network Module Test Conclusion",
         "",
         network_text,
         "",
@@ -317,17 +317,17 @@ def render_markdown(results: list[CaseResult], include_network: bool) -> str:
             lines.append(f"- {item.get('check')}：{item.get('target')}；{item.get('evidence')}")
         lines.append("")
     lines.extend([
-        "## 用例矩阵",
+        "## Case Matrix",
         "",
-        "| 用例 | 类型 | 通过 | 秒 | 风险信号 | 提示 | 缺失工具 | 缺失检查 |",
-        "|---|---:|---:|---:|---:|---:|---|---|",
+        "| Case | Type | Pass | Seconds | Risk Signals | Info | Missing Tools | Missing Checks |",
+        "|---|---:|---:|---:|---:|---|---|",
     ])
     for item in results:
         lines.append(
             "| {case} | {kind} | {ok} | {seconds} | {risk} | {info} | {tools} | {checks} |".format(
                 case=item.case_id,
                 kind=item.kind,
-                ok="是" if item.ok else "否",
+                ok="Yes" if item.ok else "No",
                 seconds=item.seconds,
                 risk=item.risk_findings,
                 info=item.info_findings,
@@ -335,25 +335,25 @@ def render_markdown(results: list[CaseResult], include_network: bool) -> str:
                 checks=", ".join(item.missing_checks),
             )
         )
-    lines.extend(["", "## 工具覆盖", ""])
+    lines.extend(["", "## Tool Coverage", ""])
     coverage: dict[str, int] = {}
     for item in results:
         for tool in item.tools_seen:
             coverage[tool] = coverage.get(tool, 0) + 1
     for tool, count in sorted(coverage.items()):
-        lines.append(f"- `{tool}`：{count} 个用例")
-    lines.extend(["", "## 运行记录", ""])
+        lines.append(f"- `{tool}`: {count} cases")
+    lines.extend(["", "## Run Log", ""])
     for item in results:
         if item.notes:
             lines.append(f"- `{item.case_id}`: " + " | ".join(item.notes))
     lines.extend(
         [
             "",
-            "## 判读边界",
+            "## Interpretation Boundaries",
             "",
-            "本报告中的 high/medium/low 是 benchmark 风险信号，不是学术不端、造假或舞弊结论。`info` 是运行状态、依赖状态、跳过原因或覆盖提示，不计入风险结论。",
-            "联网用例依赖 Crossref、OpenAlex、NCBI 的实时可用性、证书链和限流状态。若联网用例失败，应先查看 evidence 中的 HTTP/SSL/限流信息，再判断是否为检测器回归。",
-            "所有弱信号类工具只用于提示人工复核方向。最终复核应回到原始数据、脚本、图像原文件、文献元数据和审计日志。",
+            "The high/medium/low levels in this report are benchmark risk signals, not conclusions of academic misconduct, fabrication, or fraud. `info` records are run statuses, dependency states, skip reasons, or coverage notes; they do not count toward risk conclusions.",
+            "Network test cases depend on real-time availability, certificate chains, and rate limiting of Crossref, OpenAlex, and NCBI. If network cases fail, first check HTTP/SSL/rate-limit information in evidence before concluding it is a detector regression.",
+            "All weak-signal tools are only for surfacing human review directions. Final review should return to original data, scripts, image source files, literature metadata, and audit logs.",
         ]
     )
     return "\n".join(lines) + "\n"

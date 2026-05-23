@@ -6,9 +6,9 @@ date-released: "2026-05-23"
 type: software
 license: MIT
 authors:
-  - name: "PreCheckResearch contributors"
-repository-code: "https://github.com/PreCheckResearch/pre-check-research"
-url: "https://github.com/PreCheckResearch/pre-check-research"
+  - name: "pre-check-research contributors"
+repository-code: "https://github.com/nufegia/pre-check-research"
+url: "https://github.com/nufegia/pre-check-research"
 abstract: >-
   pre-check-research (pcr) is a local-first CLI toolkit for pre-submission
   research data audit workflows, including reproducibility checks, statistical

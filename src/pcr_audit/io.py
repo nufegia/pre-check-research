@@ -13,7 +13,7 @@ import pandas as pd
 def source_path(path: str) -> Path:
     source = Path(path).expanduser().resolve()
     if not source.exists():
-        raise FileNotFoundError(f"输入文件不存在：{source}")
+        raise FileNotFoundError(f"Input file not found: {source}")
     return source
 
 
@@ -51,7 +51,7 @@ def read_csv(path: Path) -> list[tuple[str, pd.DataFrame]]:
             return [(path.stem, pd.read_csv(path, encoding=encoding).map(clean_cell))]
         except Exception as exc:
             last_error = exc
-    raise ValueError(f"无法读取 CSV：{last_error}")
+    raise ValueError(f"Cannot read CSV: {last_error}")
 
 
 def read_excel(path: Path) -> list[tuple[str, pd.DataFrame]]:
@@ -111,7 +111,7 @@ def load_tables(path: Path) -> list[tuple[str, pd.DataFrame]]:
         return read_docx_tables(path)
     if suffix == ".pdf":
         return read_pdf_tables(path)
-    raise ValueError(f"暂不支持的文件类型：{suffix}")
+    raise ValueError(f"Unsupported file type: {suffix}")
 
 
 def read_text_source(source: Path) -> str:
@@ -175,7 +175,7 @@ def extract_file(source: Path, out_dir: Path) -> dict[str, Any]:
         )
     notes = []
     if source.suffix.lower() in {".pdf", ".docx"}:
-        notes.append("输入来自文档抽取，合并单元格、脚注和复杂版式可能需要人工复核。")
+        notes.append("Input was extracted from a document; merged cells, footnotes, and complex layouts may require manual review.")
     return {
         "source": str(source),
         "tool_id": "pcr_extract",

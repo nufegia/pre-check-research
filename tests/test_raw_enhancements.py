@@ -30,8 +30,8 @@ def test_raw_rules_detect_column_relationships_and_confidence_scores(tmp_path: P
     findings = result.findings
     checks = {finding.check for finding in findings}
 
-    assert "列间线性变换" in checks
-    assert "列间过高相关性" in checks
+    assert "Inter-column linear transform" in checks
+    assert "Inter-column high correlation" in checks
     assert all(0.0 <= finding.confidence_score <= 1.0 for finding in findings)
 
     save_path = tmp_path / "raw.json"
@@ -52,8 +52,8 @@ def test_raw_rules_detect_similarity_rows_and_columns() -> None:
 
     checks = _checks(df)
 
-    assert "高度重复行" in checks
-    assert "高度重复列" in checks
+    assert "Highly similar rows" in checks
+    assert "Highly similar columns" in checks
 
 
 def test_raw_rules_detect_numeric_column_similarity_with_tolerance() -> None:
@@ -67,7 +67,7 @@ def test_raw_rules_detect_numeric_column_similarity_with_tolerance() -> None:
     )
 
     result = analyze_raw_data_rules("numeric_similarity", df)
-    findings = [finding for finding in result.findings if finding.check == "高度重复列"]
+    findings = [finding for finding in result.findings if finding.check == "Highly similar columns"]
 
     assert findings
     assert findings[0].confidence_basis
@@ -78,7 +78,7 @@ def test_raw_rules_assign_confidence_basis_to_basic_checks() -> None:
     df = pd.DataFrame({"terminal_pattern": values})
 
     findings = analyze_raw_data_rules("basic_confidence", df).findings
-    terminal_digit = [finding for finding in findings if finding.check == "尾数分布"]
+    terminal_digit = [finding for finding in findings if finding.check == "Terminal digit distribution"]
 
     assert terminal_digit
     assert terminal_digit[0].confidence_basis
@@ -95,5 +95,5 @@ def test_raw_rules_detect_non_continuous_variable_anomalies() -> None:
 
     checks = _checks(df)
 
-    assert "低频类别" in checks
-    assert "有序变量极端集中" in checks
+    assert "Low-frequency category" in checks
+    assert "Ordinal variable extreme concentration" in checks

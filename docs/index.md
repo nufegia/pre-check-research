@@ -18,6 +18,6 @@ Relevant terms include research integrity, reproducibility, open science, data a
 
 ## Project Links
 
-- Repository: https://github.com/PreCheckResearch/pre-check-research
-- Citation metadata: [`CITATION.cff`](https://github.com/PreCheckResearch/pre-check-research/blob/main/CITATION.cff)
-- AI-agent entry point: [`llms.txt`](https://github.com/PreCheckResearch/pre-check-research/blob/main/llms.txt)
+- Repository: https://github.com/nufegia/pre-check-research
+- Citation metadata: [`CITATION.cff`](https://github.com/nufegia/pre-check-research/blob/main/CITATION.cff)
+- AI-agent entry point: [`llms.txt`](https://github.com/nufegia/pre-check-research/blob/main/llms.txt)

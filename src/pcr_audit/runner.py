@@ -19,8 +19,8 @@ def _append_non_ready_route_infos(source: Path, payloads: list[dict[str, Any]], 
             info_payload(
                 source,
                 tool_id,
-                f"{decision.get('tool_name') or tool_id} 未运行：{decision.get('status')}",
-                str(decision.get("skip_reason") or "当前路由规则判定该工具不可运行。"),
+                f"{decision.get('tool_name') or tool_id} not run: {decision.get('status')}",
+                str(decision.get("skip_reason") or "Current routing rules determined this tool is not runnable."),
                 str(decision.get("dependency_status") or decision.get("status") or "not_applicable"),
                 str(decision.get("matched_input_type") or "unknown"),
             )
@@ -48,7 +48,7 @@ def _append_runtime_error(payloads: list[dict[str, Any]], source: Path, tool_id:
         info_payload(
             source,
             tool_id,
-            f"{tool_id} 运行异常，已记录为运行提示并继续生成报告。",
+            f"{tool_id} runtime error, recorded as info and report generation continues.",
             _exception_evidence(exc),
             "runtime_error",
             input_type,
@@ -83,7 +83,7 @@ def _append_result_safely(
     try:
         value = fn()
     except Exception as exc:
-        payload = info_payload(source, tool_id, f"{tool_id} 运行异常，已跳过该模块。", _exception_evidence(exc), "runtime_error", input_type)
+        payload = info_payload(source, tool_id, f"{tool_id} runtime error, module skipped.", _exception_evidence(exc), "runtime_error", input_type)
         results.extend(_payload_to_results(payload))
         return
     if isinstance(value, list):
@@ -108,7 +108,7 @@ def _deliver_payloads(source: Path, payloads: list[dict[str, Any]], out: Path, j
         merge_reports(part_paths, out, json_out)
     except Exception as exc:
         fallback = workdir / f"{prefix}-delivery-error.json"
-        write_json(fallback, info_payload(source, "pcr_audit_delivery", "结果合并失败，已生成交付失败诊断。", _exception_evidence(exc), "runtime_error"))
+        write_json(fallback, info_payload(source, "pcr_audit_delivery", "Result merge failed; delivery failure diagnosis generated.", _exception_evidence(exc), "runtime_error"))
         merge_reports([str(fallback)], out, json_out)
 
 
@@ -140,20 +140,20 @@ def run_audit(
             continue
         adapter = adapter_for(tool_id)
         if adapter is None:
-            payloads.append(info_payload(source, tool_id, "工具 adapter 未注册，已跳过。", tool_id, "adapter_missing"))
+            payloads.append(info_payload(source, tool_id, "Tool adapter not registered; skipped.", tool_id, "adapter_missing"))
             continue
         _run_adapter_safely(context, tool_id, selected, adapter)
     if context.product_results:
         try:
             payloads.append(_run_product_result_payload(source, workdir / "product-detectors.json", context.product_results))
         except Exception as exc:
-            payloads.append(info_payload(source, "product_detectors", "产品级检测结果序列化失败，已记录为运行提示。", _exception_evidence(exc), "runtime_error"))
+            payloads.append(info_payload(source, "product_detectors", "Product-level detection result serialization failed; recorded as info.", _exception_evidence(exc), "runtime_error"))
     for tool_id in R_ADAPTER_ORDER:
         if tool_id not in ready_tools:
             continue
         adapter = adapter_for(tool_id)
         if adapter is None:
-            payloads.append(info_payload(source, tool_id, "工具 adapter 未注册，已跳过。", tool_id, "adapter_missing"))
+            payloads.append(info_payload(source, tool_id, "Tool adapter not registered; skipped.", tool_id, "adapter_missing"))
             continue
         _run_adapter_safely(context, tool_id, selected, adapter)
 
@@ -163,8 +163,8 @@ def run_audit(
             info_payload(
                 source,
                 "pcr_audit_route",
-                "确定性路由未找到适用工具。",
-                "当前输入未匹配任何自动工具选择规则。",
+                "Deterministic routing found no applicable tools.",
+                "Current input did not match any automatic tool selection rules.",
                 "not_applicable",
             )
         )
@@ -221,7 +221,7 @@ def run_project_audit(
                 info_payload(
                     source,
                     "project_audit",
-                    "项目材料解析失败，已生成诊断报告。",
+                    "Project material parsing failed; diagnostic report generated.",
                     _exception_evidence(exc),
                     "runtime_error",
                     "project_manifest",
@@ -272,7 +272,7 @@ def run_project_audit(
                 info_payload(
                     data_source,
                     "pcr_audit_run",
-                    "数据材料子审计运行异常，已记录为运行提示并继续项目审计。",
+                    "Data material sub-audit runtime error, recorded as info; project audit continues.",
                     _exception_evidence(exc),
                     "runtime_error",
                     "raw_data",
@@ -285,12 +285,12 @@ def run_project_audit(
     try:
         provenance = analyze_provenance_paths(source, sources["all"]) if sources["all"] else analyze_provenance(source)
     except Exception as exc:
-        provenance = _payload_to_results(info_payload(source, "provenance_hash", "材料哈希计算异常，已跳过该模块。", _exception_evidence(exc), "runtime_error", "project_manifest"))[0]
+        provenance = _payload_to_results(info_payload(source, "provenance_hash", "Material hash computation error, module skipped.", _exception_evidence(exc), "runtime_error", "project_manifest"))[0]
     sandbox_source = source.parent if source.is_file() else source
     try:
         code_result, derived_outputs = run_code_sandbox(sandbox_source, sources["code"], workdir, code_timeout, rerun_code)
     except Exception as exc:
-        code_result = _payload_to_results(info_payload(source, "code_rerun_execute", "分析脚本沙箱复跑异常，已跳过复跑。", _exception_evidence(exc), "runtime_error", "analysis_code"))[0]
+        code_result = _payload_to_results(info_payload(source, "code_rerun_execute", "Analysis script sandbox rerun error, rerun skipped.", _exception_evidence(exc), "runtime_error", "analysis_code"))[0]
         derived_outputs = []
     project_results.append(provenance)
     _append_result_safely(project_results, source, "provenance_chain_verify", lambda: provenance_payload_to_result(source, provenance_verify(source)))
@@ -316,8 +316,8 @@ def run_project_audit(
                     info_finding(
                         str(source),
                         "project_audit",
-                        "项目级审计未发现文档、图像或代码材料。",
-                        "仍会对数据文件运行可用检测并计算哈希。",
+                        "Project-level audit found no document, image, or code materials.",
+                        "Available checks will still be run on data files and hashes computed.",
                         "insufficient_material",
                         "project_manifest",
                     )
@@ -329,7 +329,7 @@ def run_project_audit(
         save_json(project_json, source, project_results)
         payloads.append(read_json(project_json))
     except Exception as exc:
-        payloads.append(info_payload(source, "project_detectors", "项目级检测结果序列化失败，已记录为运行提示。", _exception_evidence(exc), "runtime_error", "project_manifest"))
+        payloads.append(info_payload(source, "project_detectors", "Project-level detection result serialization failed; recorded as info.", _exception_evidence(exc), "runtime_error", "project_manifest"))
 
     if not payloads:
         return 1

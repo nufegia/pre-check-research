@@ -112,7 +112,7 @@ def test_ci_validity_flagged_inverted():
     _check_ci_validity(row, 4, "test", findings, TOL)
     assert len(findings) == 1
     assert findings[0].level == "high"
-    assert "下限大于上限" in findings[0].summary
+    assert "lower bound greater than upper" in findings[0].summary
 
 
 def test_ci_validity_flagged_mean_outside():
@@ -120,7 +120,7 @@ def test_ci_validity_flagged_mean_outside():
     findings: list = []
     _check_ci_validity(row, 1, "test", findings, TOL)
     assert len(findings) == 1
-    assert "均值" in findings[0].summary
+    assert "Mean" in findings[0].summary
 
 
 def test_ci_validity_passes():
