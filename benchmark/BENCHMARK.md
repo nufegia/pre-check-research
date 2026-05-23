@@ -1,6 +1,6 @@
-# PCR mvp2 Benchmark System
+# PCR Benchmark System
 
-This directory is the benchmark home for PCR mvp2. It contains synthetic fixtures, expected coverage, a runner, and generated reports.
+This directory is the benchmark home for PCR. It contains synthetic fixtures, expected coverage, a runner, and generated reports.
 
 ## Layout
 
@@ -17,19 +17,19 @@ This directory is the benchmark home for PCR mvp2. It contains synthetic fixture
 From the repo root:
 
 ```bash
-python3 /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/run_benchmark.py
+python3 benchmark/run_benchmark.py
 ```
 
 To skip external Crossref/OpenAlex/NCBI calls:
 
 ```bash
-python3 /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/run_benchmark.py --no-network
+python3 benchmark/run_benchmark.py --no-network
 ```
 
 To regenerate fixtures before running:
 
 ```bash
-python3 /Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/run_benchmark.py --regenerate
+python3 benchmark/run_benchmark.py --regenerate
 ```
 
 ## Coverage

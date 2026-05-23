@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Local MVP for detecting suspicious traces in tabular research data.
+"""Local detector for suspicious traces in tabular research data.
 
 The tool intentionally avoids making misconduct conclusions. It extracts or
 loads tables, runs simple statistical and pattern checks, and writes a Markdown

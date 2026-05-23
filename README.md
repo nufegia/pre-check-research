@@ -1,32 +1,32 @@
-# PCR mvp2
+# pre-check-research (pcr)
 
-Agent-oriented CLI toolkit for research data risk auditing.
+Pre-check research data risk audit toolkit. The project name is `pre-check-research`; `pcr` is the abbreviation used for CLI commands, output stems, schemas, and agent workflows.
 
-输出定位：把论文材料交给合适的 CLI 工具，输出可合并、可解释、可复核的风险信号。所有报告措辞保持在"异常信号、证据、可能正常原因、复核建议"层面，**不输出学术不端定性结论**。
+pcr routes research materials to deterministic CLI tools and emits mergeable, explainable, reviewable risk signals. Reports must stay at the level of "anomalous signal, evidence, possible normal explanations, review steps" and must not make misconduct determinations.
 
-## 架构
+## Architecture
 
-```
-输入层
-  论文材料 / 原始 CSV-XLSX / 摘要统计表 / 正文统计文本 / 图像
-    ↓
-抽取层（pcr-extract）
-  异构文件 → CSV/TXT/JSON 中间产物
-    ↓
-确定性路由层
+```text
+Input materials
+  Manuscripts / raw CSV-XLSX / summary-stat tables / statistical text / images
+    |
+Extraction layer (pcr-extract)
+  Heterogeneous files -> CSV/TXT/JSON intermediates
+    |
+Deterministic routing layer
   tool_system.py / router.py / pcr-audit route
-    ↓
-薄执行器
-  runner.py 只执行 route-ready 工具
-    ↓
-检测层（Python CLI / R CLI）
+    |
+Thin runner
+  runner.py executes route-ready tools only
+    |
+Detector layer (Python CLI / R CLI)
   detectors/raw.py / crosscheck.py / tools/r/*
-    ↓
-统一结果层
+    |
+Unified result layer
   models.py / reporting.py / finding JSON
-    ↓
-Agent 编排层
-  阅读 route 和报告，补充人工复核叙述
+    |
+Agent orchestration layer
+  Reads route decisions and reports, then adds human-review narrative when needed
 ```
 
 ## Install
@@ -35,7 +35,7 @@ Agent 编排层
 python3 -m pip install -e ".[dev]"  # use python if your environment exposes it
 ```
 
-R CLIs are executable `Rscript` files under `tools/r/`. Add them to `PATH`:
+The GitHub source checkout includes both the Python CLIs and the standalone R CLIs under `tools/r/`. Python packaging currently installs the Python entry points only; add the R CLI directories to `PATH` when using the R-backed tools:
 
 ```bash
 export PATH="$PWD/tools/r/pcr_statcheck:$PWD/tools/r/pcr_scrutiny:$PWD/tools/r/pcr_sprite:$PATH"
@@ -53,9 +53,11 @@ Optional local image forensics dependencies:
 python3 -m pip install -e ".[image]"
 ```
 
-## 使用方式
+Local audit outputs can be written to `output/` or any explicit `--out` path. Generated reports, extracted images, external lookup caches, and private research materials should not be committed.
 
-推荐先使用确定性路由层判断输入适合哪些检测工具，再运行审计。这样可以把“工具是否适用”和“工具是否缺依赖”记录进 JSON，避免由 agent 或人工临时猜测。
+## Usage
+
+Prefer the deterministic route layer before running an audit. This records tool applicability and missing dependencies in JSON instead of leaving those decisions to an agent or an ad hoc operator.
 
 ```bash
 mkdir -p build
@@ -63,18 +65,18 @@ pcr-audit route examples/summary_stat_sample.csv --json build/route.json
 pcr-audit run examples/summary_stat_sample.csv --scenario auto --out build/audit.md --json build/audit.json
 ```
 
-`pcr-audit run` 会自动分类输入、执行 route-ready 工具，并把各工具输出合并为 Markdown 报告和统一 JSON。默认 `--scenario auto` 会按数据形态选择工具：
+`pcr-audit run` classifies the input, executes route-ready tools, and merges outputs into Markdown and unified JSON. The default `--scenario auto` behavior depends on the input shape:
 
-| 输入形态 | auto 场景默认动作 |
-|----------|-------------------|
-| 原始观测表、图表源数据 | 运行 Python 基础表格规则 `raw_data_rules`，覆盖数字分布、行列高度重复、列间关系、非连续变量异常等检查 |
-| 摘要统计表 | 运行行级数学交叉校验 `crosscheck`，并在 R 依赖可用时运行 `scrutiny` |
-| Likert/整数评分摘要 | 运行 `crosscheck`、`scrutiny`，并在 R 依赖可用时运行 `rsprite2` |
-| 纯 p 值集合 | 运行 `p_value_distribution`，检查 p 值定义域和边缘显著聚集弱信号 |
-| APA/NHST 正文统计文本 | 在 R 依赖可用时运行 `statcheck` |
-| 分析代码文件 | 运行轻量只读代码扫描；Python/R 会在临时副本中复跑，Stata/SPSS/SAS 记录为 `info` 并提示人工复跑 |
+| Input shape | Auto scenario behavior |
+|-------------|------------------------|
+| Raw observation tables and figure source data | Runs Python table rules through `raw_data_rules`, including digit distribution, repeated or highly similar rows and columns, column relationships, and discrete-variable shape checks. |
+| Summary-stat tables | Runs row-level mathematical cross-checks through `crosscheck`, and runs `scrutiny` when R dependencies are available. |
+| Likert or integer-score summaries | Runs `crosscheck`, `scrutiny`, and `rsprite2` when R dependencies are available. |
+| p-value collections | Runs `p_value_distribution` to check p-value domain validity and weak signals around just-significant clustering. |
+| APA/NHST statistical text | Runs `statcheck` when R dependencies are available. |
+| Analysis code files | Runs a lightweight read-only code scan; Python and R scripts can be rerun in a temporary copy, while Stata/SPSS/SAS scripts are recorded as `info` for controlled manual rerun. |
 
-也可以显式指定场景：
+Explicit scenarios are also available:
 
 ```bash
 pcr-audit run data.csv --scenario raw --out build/raw.md --json build/raw.json
@@ -83,50 +85,50 @@ pcr-audit run stats.txt --scenario text --out build/text.md --json build/text.js
 pcr-audit run likert_summary.csv --scenario r-advanced --out build/sprite.md --json build/sprite.json
 ```
 
-如果只想查看路由结果、不运行检测器：
+Use `--dry-run` to inspect route decisions without running detectors:
 
 ```bash
 pcr-audit run examples/summary_stat_sample.csv --out build/dry.md --json build/dry-route.json --dry-run
 ```
 
-对 DOCX/PDF/XLSX 等材料，可先抽取中间产物，再对抽出的 CSV/TXT 运行对应工具：
+For DOCX/PDF/XLSX materials, extract intermediate files first and then run the relevant CSV/TXT tools:
 
 ```bash
 pcr-extract examples/suspicious_sample.xlsx --out build/extracted --json build/extracted.json
 pcr-raw-audit build/extracted/01_Sheet1.csv --out build/raw.md --json build/raw.json
 ```
 
-抽取后的文件名以 `build/extracted.json` 里的 `outputs[].path` 为准；如果抽出的是摘要统计表，可将该 CSV 交给 `pcr-crosscheck` 或让 `pcr-audit run` 自动路由。
+Use the paths in `build/extracted.json` under `outputs[].path` as the source of truth for extracted filenames. If an extracted CSV is a summary-stat table, pass it to `pcr-crosscheck` or let `pcr-audit run` route it automatically.
 
-需要手动组合多个工具结果时，使用 `pcr-report merge`：
+Use `pcr-report merge` to combine multiple finding JSON files manually:
 
 ```bash
 pcr-report merge build/raw.json build/crosscheck.json --out build/merged.md --json build/merged.json
 ```
 
-结果解释边界：
+Interpretation boundaries:
 
-- `level: info` 通常表示工具运行记录、缺少依赖、材料不足或跳过原因，不应当当作风险发现。
-- `medium` / `high` 表示需要人工复核的风险信号，不是学术不端、造假或舞弊结论。
-- PDF/DOCX 抽取可能引入表格识别错误；重要发现应优先回到原始 CSV/XLSX、统计脚本或原始数据复测。
-- 图像检测是弱信号初筛；PDF 图像抽取为 best-effort，复杂版式建议提供原始图片或 DOCX。
+- `level: info` usually means run notes, missing dependencies, insufficient material, or skip reasons; it is not a risk finding.
+- `medium` and `high` indicate risk signals requiring human review; they are not findings of misconduct, fabrication, fraud, or data manipulation.
+- PDF/DOCX extraction can introduce table-recognition errors; important findings should be rerun against source CSV/XLSX files, statistical scripts, or raw data when possible.
+- Image checks are weak-signal triage; PDF image extraction is best-effort, and complex layouts should be reviewed with original images or DOCX sources.
 
 ## Commands
 
 | CLI | Runtime | Input | Purpose |
 |-----|---------|-------|---------|
-| `pcr-extract` | Python | XLSX/DOCX/PDF | Extract tables → CSV |
-| `pcr-raw-audit` | Python | CSV | Raw-data digit distribution scan |
-| `pcr-crosscheck` | Python | CSV/XLSX/DOCX/PDF | Row-level summary-stat math cross-checks |
-| `pcr-statcheck` | R | TXT | APA/NHST reporting consistency |
-| `pcr-scrutiny` | R | CSV | GRIM/GRIMMER/DEBIT feasibility |
-| `pcr-sprite` | R | CSV | SPRITE discrete reconstruction |
-| `pcr-report merge` | Python | JSON | Merge findings → Markdown |
-| `pcr-audit route` | Python | Mixed | Explain deterministic tool routing |
-| `pcr-audit run` | Python | Mixed | Optional one-command pipeline |
-| `pcr-audit project` | Python | Folder/manifest | Multi-material pre-submission audit |
-| `pcr-audit provenance` | Python | Folder/manifest | Append-only SHA-256 JSONL ledger |
-| `pcr-audit corpus` | Python | Folder/manifest | Local corpus index and cross-manuscript screening |
+| `pcr-extract` | Python | XLSX/DOCX/PDF | Extract tables to CSV. |
+| `pcr-raw-audit` | Python | CSV | Scan raw-data digit distribution and table-shape signals. |
+| `pcr-crosscheck` | Python | CSV/XLSX/DOCX/PDF | Run row-level summary-stat math cross-checks. |
+| `pcr-statcheck` | R | TXT | Check APA/NHST reporting consistency. |
+| `pcr-scrutiny` | R | CSV | Run GRIM/GRIMMER/DEBIT feasibility checks. |
+| `pcr-sprite` | R | CSV | Run SPRITE discrete reconstruction. |
+| `pcr-report merge` | Python | JSON | Merge finding JSON into Markdown. |
+| `pcr-audit route` | Python | Mixed | Explain deterministic tool routing. |
+| `pcr-audit run` | Python | Mixed | Run the single-input pipeline. |
+| `pcr-audit project` | Python | Folder/manifest | Run a multi-material pre-submission audit. |
+| `pcr-audit provenance` | Python | Folder/manifest | Maintain an append-only SHA-256 JSONL ledger. |
+| `pcr-audit corpus` | Python | Folder/manifest | Build and screen a local cross-manuscript corpus. |
 
 ```bash
 pcr-audit route examples/summary_stat_sample.csv --json build/route.json
@@ -147,53 +149,53 @@ pcr-scrutiny examples/summary_stat_sample.csv --scale-min 1 --scale-max 5 --json
 pcr-report merge build/raw.json build/scrutiny.json --out build/merged.md --json build/merged.json
 ```
 
-确定性情景优先使用 `pcr-audit route` / `pcr-audit run --scenario auto`。Agent 不直接猜测工具适用性，只读取路由结果并执行 `ready` 工具；只有多材料整理、报告叙述和人工复核建议交给 agent 编排。
+For deterministic operation, prefer `pcr-audit route` and `pcr-audit run --scenario auto`. Agents should not guess tool applicability; they should read the route output and execute tools marked ready. Agents are only expected to help with multi-material orchestration, narrative reporting, and human-review suggestions.
 
-## Python 模块
+## Python Modules
 
-- `models.py`：finding/result 数据模型和解释字段补全。
-- `io.py`：输入解析、表格读取、文本抽取和 extraction manifest。
-- `tool_system.py`：工具注册表、数据分类、依赖状态和路由判定。
-- `router.py`：构建稳定 route JSON。
-- `runner.py`：执行 route-ready 工具并合并结果。
-- `reporting.py`：Markdown/JSON 报告渲染与合并。
-- `detectors/` 与 `crosscheck.py`：具体检测器实现。
-- `product_detectors.py`：最终产品版增量能力，包括参考文献核验、引用主张抽取、论文工厂轻量信号、图像内部重复初筛、哈希存证和轻量代码复跑准备检查。
-- `data_trace.py`：跨材料摘要统计对账与 Python/R 脚本临时沙箱复跑。
+- `models.py`: Finding/result data models and explanation enrichment.
+- `io.py`: Input parsing, table reading, text extraction, and extraction manifests.
+- `tool_system.py`: Tool registry, data classification, dependency status, and routing decisions.
+- `router.py`: Stable route JSON construction.
+- `runner.py`: Execution of route-ready tools and result merging.
+- `reporting.py`: Markdown/JSON report rendering and merge utilities.
+- `detectors/` and `crosscheck.py`: Detector implementations.
+- `product_detectors.py`: Project-level incremental checks, including reference audit, citation-claim extraction, lightweight paper-mill signals, internal image-duplicate triage, hash provenance, and lightweight code-rerun readiness checks.
+- `data_trace.py`: Cross-material summary-stat reconciliation and temporary Python/R script reruns.
 
-## 最终产品版增量能力
+## Project Audits
 
-`pcr-audit project <folder-or-manifest>` 会对一个项目包执行多材料审计：
+`pcr-audit project <folder-or-manifest>` audits a multi-material project package:
 
-- 数据文件：继续使用确定性路由运行原始数据规则、数字分布弱信号、p 值集合弱信号、交叉验证和可用 R 工具。
-- 文档/参考文献：解析 DOI/PMID、默认查询 Crossref/OpenAlex/NCBI 元数据、抽取带引用主张、扫描轻量论文工厂短语信号；可用 `--no-external-lookups` 关闭联网。
-- 跨材料对账：从稿件/补充材料表格、原始数据自动汇总和脚本输出表中对比 N、mean、SD、SE、count、percent 等可确定统计量。
-- 图像：从图片文件、DOCX、PDF 或图片目录发现/抽取图片，使用 Pillow/numpy/scipy 的 aHash/dHash/pHash 和可选 OpenCV ORB 做同稿件内部重复、旋转/翻转相似、局部 copy-move 初筛，并生成 blot/gel 复核清单。PDF 图片抽取为 best-effort，复杂版式建议提供原始图片或 DOCX。
-- 代码：轻量只读扫描 R/Python/Stata/SPSS/SAS 脚本中的路径、输入、缺失剔除和显著性筛选线索；默认在临时项目副本中复跑 Python/R 脚本，捕获输出并纳入跨材料对账，可用 `--no-rerun-code` 关闭。Stata/SPSS/SAS 不自动执行，只记录 `info` 并提示在受控环境人工复跑。
-- 溯源：对项目内文件计算 SHA-256、文件大小和修改时间；可用 `pcr-audit provenance` 写入追加式 JSONL 版本链并验证 matched/changed/missing/new。
-- 论文工厂本地信号：可用 `pcr-audit corpus build/screen` 对本地项目语料建立索引，筛查文本模板、引用重叠、作者/邮箱域重叠和跨稿件图像指纹相似。
+- Data files: Continue through deterministic routing for raw-data rules, digit-distribution weak signals, p-value collection signals, cross-checks, and available R tools.
+- Documents and references: Parse DOI/PMID identifiers, query Crossref/OpenAlex/NCBI metadata by default, extract cited claims, and scan lightweight paper-mill phrase signals; use `--no-external-lookups` to disable network calls.
+- Cross-material reconciliation: Compare determinable N, mean, SD, SE, count, and percent values across manuscript/supplement tables, raw-data summaries, and script output tables.
+- Images: Discover or extract image files from images, DOCX, PDF, or image directories; use Pillow/numpy/scipy aHash/dHash/pHash and optional OpenCV ORB for internal duplicates, rotated/flipped similarity, local copy-move triage, and blot/gel review checklists. PDF image extraction is best-effort; complex layouts should use original images or DOCX sources.
+- Code: Run lightweight read-only scans of R/Python/Stata/SPSS/SAS scripts for paths, inputs, missing-data exclusion, and significance-filtering clues. Python/R scripts are rerun by default in a temporary project copy, with captured outputs included in cross-material reconciliation; use `--no-rerun-code` to disable this. Stata/SPSS/SAS scripts are not executed automatically and are recorded as `info` for controlled manual rerun.
+- Provenance: Compute SHA-256 hashes, file sizes, and modification times; `pcr-audit provenance` can append records to a JSONL ledger and verify matched/changed/missing/new status.
+- Local corpus signals: Use `pcr-audit corpus build/screen` to index local project corpora and screen for text-template similarity, reference overlap, author/email-domain overlap, and cross-manuscript image-fingerprint similarity.
 
-v1.1.0 包含当前基础表格规则、置信度评分、项目预检、样例库和内部扩展结构：
+v1.1.0 includes the current table rules, confidence scoring, project preflight checks, example projects, and internal extension structure:
 
 ```bash
 pcr-audit project examples/project_questionnaire --inspect --json build/questionnaire.inspect.json
 pcr-audit project path/to/new_project --init-manifest
 ```
 
-内置样例覆盖三类常见服务场景：
+Built-in examples cover three common service scenarios:
 
-- `examples/project_minimal`：最小项目包。
-- `examples/project_questionnaire`：问卷/社科摘要统计和原始数据。
-- `examples/project_biomed`：生物医学数据、图像材料清单和文献核验。
+- `examples/project_minimal`: Minimal project package.
+- `examples/project_questionnaire`: Questionnaire/social-science summary statistics and raw responses.
+- `examples/project_biomed`: Biomedical data, image-material checklist, and reference checks.
 
-项目审计默认会对 DOI/PMID 查询 Crossref/OpenAlex/NCBI，并在 workdir 中记录缓存和合规元数据。离线/私有化运行可显式关闭：
+Project audits query Crossref/OpenAlex/NCBI for DOI/PMID metadata by default and record lookup cache/compliance metadata in the workdir. Offline or private runs can disable this explicitly:
 
 ```bash
 pcr-audit project examples/project_minimal --out build/project.md --json build/project.json --contact-email you@example.org
 pcr-audit project examples/project_minimal --out build/project-offline.md --json build/project-offline.json --no-external-lookups
 ```
 
-项目 manifest 使用 `pcr-project.json`：
+Project manifests use `pcr-project.json`:
 
 ```json
 {
@@ -213,19 +215,19 @@ pcr-audit project examples/project_minimal --out build/project-offline.md --json
 }
 ```
 
-可选 GROBID REST 服务通过 manifest、`PCR_GROBID_URL` 或 CLI 参数启用：
+Optional GROBID REST support can be enabled through the manifest, `PCR_GROBID_URL`, or CLI parameters:
 
 ```bash
 pcr-audit project examples/project_minimal --out build/project.md --json build/project.json --grobid-url http://localhost:8070
 ```
 
-商业/私有化部署默认不引入 PyMuPDF、grobid-client、imagehash、unstructured、tabula-py；PDF 图片抽取为 pdfplumber/Pillow best-effort，GROBID 以独立 REST 服务接入，外部查询会在 workdir 中记录缓存和合规元数据，不缓存完整稿件正文。脚本复跑使用临时项目副本、最小环境变量和超时限制，不会写回原项目；这不是强安全容器，未知代码仍建议在受控机器上运行。项目审计运行全部适用模块；缺依赖、材料不足、外部查询关闭和不支持的脚本语言均记录为 `info`，不计入风险发现。
+Commercial or private deployments do not include PyMuPDF, grobid-client, imagehash, unstructured, or tabula-py by default. PDF image extraction uses pdfplumber/Pillow best-effort behavior, GROBID is integrated as an independent REST service, and external lookups record cache/compliance metadata without caching full manuscript text. Script reruns use temporary project copies, minimal environment variables, and timeouts; this is not a strong security sandbox, so unknown code should still run on controlled machines. Project audits run all applicable modules; missing dependencies, insufficient material, disabled external lookups, and unsupported script languages are recorded as `info`, not as risk findings.
 
-## 扩展原则
+## Extension Principles
 
-- 能做成语言原生 CLI 的工具优先做成原生 CLI，不强行经 Python 中转。
-- 每个工具必须声明适用输入、依赖状态、方法限制和误报风险。
-- 可确定的数据形态识别和工具适用性判断必须进入 `tool_system.py`，不写死在 agent prompt/skill 中。
-- 每个工具必须输出统一 finding JSON，便于 agent 合并。
-- 第三方商用工具以独立 CLI/connector 形式接入，记录数据上传合规边界。
-- 工具缺失、依赖缺失和检测跳过记录为 `info`，不计入数据风险。
+- Prefer native CLI tools in their implementation language over forced Python wrappers.
+- Every tool must declare applicable input, dependency status, method limits, and false-positive risk.
+- Data-shape recognition and tool-applicability decisions must live in `tool_system.py`, not in agent prompts or skills.
+- Every tool must emit unified finding JSON for downstream merging.
+- Third-party commercial tools should be integrated as independent CLIs/connectors with clear data-upload compliance boundaries.
+- Missing tools, missing dependencies, and skipped checks must be recorded as `info`, not as data-risk findings.

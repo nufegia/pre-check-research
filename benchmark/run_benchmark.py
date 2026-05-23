@@ -13,7 +13,7 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parent
-REPO = Path(__file__).resolve().parents[2] / "mvp2"
+REPO = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "benchmark_manifest.json"
 REPORTS = ROOT / "reports"
 RISK_LEVELS = {"low", "medium", "high"}
@@ -37,6 +37,20 @@ class CaseResult:
     notes: list[str]
 
 
+def repo_path(path: Path | str) -> str:
+    raw = Path(path)
+    try:
+        return raw.resolve().relative_to(REPO).as_posix()
+    except ValueError:
+        return raw.as_posix()
+
+
+def public_text(text: str) -> str:
+    text = text.replace(str(REPO) + os.sep, "")
+    text = text.replace(str(REPO), ".")
+    return text
+
+
 def load_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -44,6 +58,25 @@ def load_json(path: Path) -> dict[str, Any]:
 def write_json(path: Path, payload: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def sanitize_text_file(path: Path) -> None:
+    if path.suffix.lower() not in {".json", ".md", ".txt", ".csv"}:
+        return
+    try:
+        text = path.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        return
+    sanitized = public_text(text)
+    if sanitized != text:
+        path.write_text(sanitized, encoding="utf-8")
+
+
+def sanitize_reports() -> None:
+    for path in REPORTS.rglob("*"):
+        if path.is_file():
+            sanitize_text_file(path)
+    sanitize_text_file(ROOT / "BENCHMARK_REPORT.md")
 
 
 def env() -> dict[str, str]:
@@ -123,8 +156,8 @@ def summarize(case: dict[str, Any], rc: int, seconds: float, json_path: Path, md
         ok=ok,
         returncode=rc,
         seconds=round(seconds, 3),
-        json_path=str(json_path),
-        markdown_path=str(md_path) if md_path else "",
+        json_path=repo_path(json_path),
+        markdown_path=repo_path(md_path) if md_path else "",
         risk_findings=risk,
         info_findings=info,
         tools_seen=tools_seen,
@@ -156,8 +189,8 @@ def run_single(case: dict[str, Any], include_network: bool) -> CaseResult:
                 ok=True,
                 returncode=0,
                 seconds=0.0,
-                json_path=str(json_path),
-                markdown_path=str(md_path),
+                json_path=repo_path(json_path),
+                markdown_path=repo_path(md_path),
                 risk_findings=0,
                 info_findings=0,
                 tools_seen=[],
@@ -179,9 +212,9 @@ def run_single(case: dict[str, Any], include_network: bool) -> CaseResult:
         raise ValueError(f"unsupported single case kind: {case['kind']}")
     rc, seconds, stdout, stderr = run_cmd(cmd, extra_env=extra_env)
     if stdout.strip():
-        notes.append(stdout.strip().splitlines()[-1])
+        notes.append(public_text(stdout.strip().splitlines()[-1]))
     if stderr.strip():
-        notes.append(stderr.strip()[:500])
+        notes.append(public_text(stderr.strip()[:500]))
     return summarize(case, rc, seconds, json_path, md_path, notes)
 
 
@@ -206,13 +239,13 @@ def run_corpus(case: dict[str, Any]) -> CaseResult:
     ])
     for text in (out1, err1, out2, err2):
         if text.strip():
-            notes.append(text.strip().splitlines()[-1][:500])
+            notes.append(public_text(text.strip().splitlines()[-1][:500]))
     return summarize(case, rc1 or rc2, t1 + t2, json_path, md_path, notes)
 
 
 def run_provenance_change(case: dict[str, Any]) -> CaseResult:
     case_id = case["id"]
-    work = ROOT / "inputs" / "project_provenance_benchmark"
+    work = REPORTS / "pcr.provenance_change.work"
     if work.exists():
         shutil.rmtree(work)
     shutil.copytree(ROOT / case["input"], work)
@@ -225,7 +258,7 @@ def run_provenance_change(case: dict[str, Any]) -> CaseResult:
     rc2, t2, out2, err2 = run_cmd(["pcr-audit", "provenance", "verify", str(work), "--json", str(json_path)])
     for text in (out1, err1, out2, err2):
         if text.strip():
-            notes.append(text.strip().splitlines()[-1][:500])
+            notes.append(public_text(text.strip().splitlines()[-1][:500]))
     return summarize(case, rc1 or rc2, t1 + t2, json_path, Path(""), notes)
 
 
@@ -250,7 +283,7 @@ def render_markdown(results: list[CaseResult], include_network: bool) -> str:
         f"本轮 benchmark 共运行 {len(results)} 个测评用例，PASS {passed} 个，FAIL {failed} 个。"
         + ("整体通过。" if failed == 0 else "存在未通过用例，需优先查看下方缺口。"),
         "",
-        f"- Benchmark 根目录：`{ROOT}`",
+        f"- Benchmark 根目录：`{repo_path(ROOT)}`",
         f"- 联网测评：{network_text}",
         f"- 风险信号总数：{total_risk}",
         f"- 运行/覆盖提示总数：{total_info}",
@@ -354,7 +387,7 @@ def main() -> int:
         print(f"{'PASS' if result.ok else 'FAIL'} {result.case_id} risk={result.risk_findings} info={result.info_findings} seconds={result.seconds}")
 
     payload = {
-        "benchmark_root": str(ROOT),
+        "benchmark_root": repo_path(ROOT),
         "network_enabled": include_network,
         "cases": [item.__dict__ for item in results],
         "passed": sum(1 for item in results if item.ok),
@@ -367,9 +400,10 @@ def main() -> int:
     write_json(summary_json, payload)
     summary_md.write_text(report_text, encoding="utf-8")
     top_level_report.write_text(report_text, encoding="utf-8")
-    print(f"summary_json={summary_json}")
-    print(f"summary_md={summary_md}")
-    print(f"top_level_report={top_level_report}")
+    sanitize_reports()
+    print(f"summary_json={repo_path(summary_json)}")
+    print(f"summary_md={repo_path(summary_md)}")
+    print(f"top_level_report={repo_path(top_level_report)}")
     return 0 if payload["failed"] == 0 else 1
 
 

@@ -4,10 +4,10 @@
 
 本轮 benchmark 共运行 13 个测评用例，PASS 13 个，FAIL 0 个。整体通过。
 
-- Benchmark 根目录：`/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark`
-- 联网测评：已执行。有效 DOI/PMID 的 Crossref/OpenAlex/NCBI 查询返回 status=ok；故意构造的错误 DOI 返回 404，并被检测为“外部元数据不可核验”。
-- 风险信号总数：70
-- 运行/覆盖提示总数：59
+- Benchmark 根目录：`benchmark`
+- 联网测评：未执行（本次使用 --no-network）。
+- 风险信号总数：66
+- 运行/覆盖提示总数：47
 
 结论：当前工程的核心检测链路可以被自动化 benchmark 稳定覆盖。确定性数学类、哈希溯源类和项目级对账类检查可作为较可靠的工程回归指标；图像、raw 表格中的数字分布/列间关系弱信号、论文工厂/跨稿件相似等能力适合衡量“是否能提出复核线索”，不能作为强结论指标。
 
@@ -30,73 +30,65 @@
 
 ## 联网模块测试结论
 
-已执行。有效 DOI/PMID 的 Crossref/OpenAlex/NCBI 查询返回 status=ok；故意构造的错误 DOI 返回 404，并被检测为“外部元数据不可核验”。
-
-- 参考文献标识符解析：DOI/PMID；DOI=2，PMID=1，候选参考文献行=2
-- DOI题名不匹配：10.1038/495426a；overlap=0.00; reported_line=Van Noorden R. A randomized oncology survival trial with unrelated endpoints. Nature. 2013. doi:10.1038/495426a. PMID:23538808; crossref_title=Open access: The true cost of science publishing
-- DOI元数据核验：10.1038/495426a；crossref cache_miss status=ok summary=Open access: The true cost of science publishing; Crossref status=ok, title=Open access: The true cost of science publishing; openalex cache_miss status=ok summary=id=https://openalex.org/W2441943932; retracted=False; OpenAlex id=https://openalex.org/W2441943932, retracted=False
-- DOI外部元数据不可核验：10.9999/pcr-benchmark-missing-doi；crossref cache_miss status=error summary=HTTP Error 404: Not Found; openalex cache_miss status=error summary=HTTP Error 404: Not Found
-- DOI元数据核验：10.9999/pcr-benchmark-missing-doi；crossref cache_miss status=error summary=HTTP Error 404: Not Found; openalex cache_miss status=error summary=HTTP Error 404: Not Found
-- PMID题名不匹配：23538808；overlap=0.00; reported_line=Van Noorden R. A randomized oncology survival trial with unrelated endpoints. Nature. 2013. doi:10.1038/495426a. PMID:23538808; ncbi_title=Open access: The true cost of science publishing.
-- PMID元数据核验：23538808；ncbi cache_miss status=ok summary=Open access: The true cost of science publishing.
+未执行（本次使用 --no-network）。
 
 ## 用例矩阵
 
 | 用例 | 类型 | 通过 | 秒 | 风险信号 | 提示 | 缺失工具 | 缺失检查 |
 |---|---:|---:|---:|---:|---:|---|---|
-| raw_suspicious | single_run | 是 | 1.164 | 16 | 0 |  |  |
-| raw_clean_control | single_run | 是 | 1.06 | 0 | 0 |  |  |
-| summary_suspicious | single_run | 是 | 2.008 | 17 | 2 |  |  |
-| p_values_suspicious | single_run | 是 | 0.965 | 2 | 0 |  |  |
-| apa_stats_suspicious | single_run | 是 | 1.98 | 2 | 0 |  |  |
-| paper_refs_and_claims_offline | single_run | 是 | 0.974 | 0 | 4 |  |  |
-| analysis_suspicious | single_run | 是 | 1.326 | 1 | 1 |  |  |
-| analysis_manual_unsupported | single_run | 是 | 0.992 | 0 | 3 |  |  |
-| figures_project | project | 是 | 1.125 | 11 | 13 |  |  |
-| project_full | project | 是 | 2.217 | 12 | 19 |  |  |
-| corpus_screen | corpus | 是 | 1.863 | 4 | 0 |  |  |
-| provenance_change | provenance_change | 是 | 1.916 | 1 | 5 |  |  |
-| external_refs_online | project_network | 是 | 5.482 | 4 | 12 |  |  |
+| raw_suspicious | single_run | 是 | 3.71 | 16 | 0 |  |  |
+| raw_clean_control | single_run | 是 | 1.175 | 0 | 0 |  |  |
+| summary_suspicious | single_run | 是 | 2.499 | 17 | 2 |  |  |
+| p_values_suspicious | single_run | 是 | 1.063 | 2 | 0 |  |  |
+| apa_stats_suspicious | single_run | 是 | 2.228 | 2 | 0 |  |  |
+| paper_refs_and_claims_offline | single_run | 是 | 1.095 | 0 | 4 |  |  |
+| analysis_suspicious | single_run | 是 | 1.488 | 1 | 1 |  |  |
+| analysis_manual_unsupported | single_run | 是 | 1.058 | 0 | 3 |  |  |
+| figures_project | project | 是 | 2.909 | 11 | 13 |  |  |
+| project_full | project | 是 | 2.694 | 12 | 19 |  |  |
+| corpus_screen | corpus | 是 | 2.12 | 4 | 0 |  |  |
+| provenance_change | provenance_change | 是 | 2.111 | 1 | 5 |  |  |
+| external_refs_online | project_network | 是 | 0.0 | 0 | 0 |  |  |
 
 ## 工具覆盖
 
-- `citation_claim_check`：3 个用例
-- `code_rerun_audit`：5 个用例
-- `code_rerun_execute`：5 个用例
+- `citation_claim_check`：2 个用例
+- `code_rerun_audit`：4 个用例
+- `code_rerun_execute`：4 个用例
 - `crosscheck`：2 个用例
-- `data_trace_crosscheck`：3 个用例
+- `data_trace_crosscheck`：2 个用例
 - `image_copy_move_internal`：2 个用例
 - `image_duplicate_internal`：2 个用例
-- `image_extract`：3 个用例
+- `image_extract`：2 个用例
 - `image_metadata_audit`：2 个用例
 - `p_value_distribution`：1 个用例
-- `papermill_light_signals`：3 个用例
-- `papermill_network_signals`：4 个用例
+- `papermill_light_signals`：2 个用例
+- `papermill_network_signals`：3 个用例
 - `project_audit`：1 个用例
-- `provenance_chain_verify`：4 个用例
-- `provenance_hash`：3 个用例
+- `provenance_chain_verify`：3 个用例
+- `provenance_hash`：2 个用例
 - `r_rsprite2`：1 个用例
 - `r_scrutiny`：2 个用例
 - `r_statcheck`：1 个用例
 - `raw_data_rules`：1 个用例
-- `reference_audit`：3 个用例
+- `reference_audit`：2 个用例
 - `western_blot_review_list`：2 个用例
 
 ## 运行记录
 
-- `raw_suspicious`: 合并报告已生成：/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.raw_suspicious.md
-- `raw_clean_control`: 合并报告已生成：/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.raw_clean_control.md
-- `summary_suspicious`: 合并报告已生成：/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.summary_suspicious.md
-- `p_values_suspicious`: 合并报告已生成：/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.p_values_suspicious.md
-- `apa_stats_suspicious`: 合并报告已生成：/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.apa_stats_suspicious.md
-- `paper_refs_and_claims_offline`: 合并报告已生成：/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.paper_refs_and_claims_offline.md
-- `analysis_suspicious`: 合并报告已生成：/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.analysis_suspicious.md
-- `analysis_manual_unsupported`: 合并报告已生成：/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.analysis_manual_unsupported.md
-- `figures_project`: 项目审计报告已生成：/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.figures_project.md
-- `project_full`: 项目审计报告已生成：/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.project_full.md
-- `corpus_screen`: 本地语料索引已生成：/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.corpus_index.json | 本地语料筛查报告已生成：/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.corpus_screen.md
+- `raw_suspicious`: 合并报告已生成：benchmark/reports/pcr.raw_suspicious.md
+- `raw_clean_control`: 合并报告已生成：benchmark/reports/pcr.raw_clean_control.md
+- `summary_suspicious`: 合并报告已生成：benchmark/reports/pcr.summary_suspicious.md
+- `p_values_suspicious`: 合并报告已生成：benchmark/reports/pcr.p_values_suspicious.md
+- `apa_stats_suspicious`: 合并报告已生成：benchmark/reports/pcr.apa_stats_suspicious.md
+- `paper_refs_and_claims_offline`: 合并报告已生成：benchmark/reports/pcr.paper_refs_and_claims_offline.md
+- `analysis_suspicious`: 合并报告已生成：benchmark/reports/pcr.analysis_suspicious.md
+- `analysis_manual_unsupported`: 合并报告已生成：benchmark/reports/pcr.analysis_manual_unsupported.md
+- `figures_project`: 项目审计报告已生成：benchmark/reports/pcr.figures_project.md
+- `project_full`: 项目审计报告已生成：benchmark/reports/pcr.project_full.md
+- `corpus_screen`: 本地语料索引已生成：benchmark/reports/pcr.corpus_index.json | 本地语料筛查报告已生成：benchmark/reports/pcr.corpus_screen.md
 - `provenance_change`: } | }
-- `external_refs_online`: 项目审计报告已生成：/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark/reports/pcr.external_refs_online.md
+- `external_refs_online`: network case skipped by --no-network
 
 ## 判读边界
 

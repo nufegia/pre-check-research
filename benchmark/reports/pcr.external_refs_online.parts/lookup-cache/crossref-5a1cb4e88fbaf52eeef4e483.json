@@ -1,9 +1,0 @@
-{
-  "service": "crossref",
-  "identifier": "10.9999/pcr-benchmark-missing-doi",
-  "url": "https://api.crossref.org/works/10.9999%2Fpcr-benchmark-missing-doi",
-  "timestamp": "2026-05-23T10:47:37+00:00",
-  "status": "error",
-  "summary": "HTTP Error 404: Not Found",
-  "error": "HTTP Error 404: Not Found"
-}

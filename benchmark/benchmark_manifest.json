@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "name": "PCR mvp2 benchmark suite",
-  "root": "/Users/daotuanwang/归档/项目/PreCheckResearch/mvp2/benchmark",
+  "name": "PCR benchmark suite",
+  "root": "benchmark",
   "principles": [
     "Findings are risk signals, not misconduct verdicts.",
     "info records are operational status, skip reasons, or coverage notes.",
