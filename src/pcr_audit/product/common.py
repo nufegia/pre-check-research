@@ -38,10 +38,10 @@ TORTURED_PHRASES = {
     "man-made brainpower": "artificial intelligence",
 }
 
-TEXT_TOKEN_RE = re.compile(r"[A-Za-z0-9\u4e00-\u9fff]{2,}")
+TEXT_TOKEN_RE = re.compile(r"[A-Za-z0-9]{2,}")
 EMAIL_RE = re.compile(r"\b[A-Z0-9._%+-]+@([A-Z0-9.-]+\.[A-Z]{2,})\b", re.I)
-AUTHOR_LINE_RE = re.compile(r"^\s*(?:authors?|作者)\s*[:：]\s*(?P<value>.+)$", re.I | re.M)
-INSTITUTION_LINE_RE = re.compile(r"^\s*(?:affiliations?|institutions?|单位|机构)\s*[:：]\s*(?P<value>.+)$", re.I | re.M)
+AUTHOR_LINE_RE = re.compile(r"^\s*(?:authors?)\s*[:：]\s*(?P<value>.+)$", re.I | re.M)
+INSTITUTION_LINE_RE = re.compile(r"^\s*(?:affiliations?|institutions?)\s*[:：]\s*(?P<value>.+)$", re.I | re.M)
 
 
 @dataclass

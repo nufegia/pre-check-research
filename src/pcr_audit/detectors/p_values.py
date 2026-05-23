@@ -40,7 +40,7 @@ def _p_columns(df: pd.DataFrame) -> list[str]:
     for col in df.columns:
         normalized = _normalize_name(col)
         raw = str(col).lower()
-        if re.search(r"^p$", normalized) or re.search(r"pvalue", normalized) or re.search(r"p[_ ]?value", raw) or re.search(r"^pval", normalized) or re.search(r"p值", raw):
+        if re.search(r"^p$", normalized) or re.search(r"pvalue", normalized) or re.search(r"p[_ ]?value", raw) or re.search(r"^pval", normalized):
             columns.append(str(col))
     return columns
 

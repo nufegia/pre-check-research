@@ -25,54 +25,10 @@ import pandas as pd
 from scipy import stats
 
 from pcr_audit.config import DEFAULT_CONFIG
+from pcr_audit.models import Finding, LEVEL_LABEL, LEVEL_SCORE, TableResult, enrich_finding_explanation
 
 
 CONFIG = DEFAULT_CONFIG
-
-
-@dataclass
-class Finding:
-    table: str
-    level: str
-    check: str
-    target: str
-    summary: str
-    evidence: str
-    detail: str
-    suggestion: str
-    tool_id: str = "raw_data_rules"
-    tool_name: str = "Basic Table Rules"
-    module: str = "raw_observation_checks"
-    input_type: str = "unknown"
-    routing_reason: str = "Basic Table Rules detection process."
-    method_limitations: str = "This result comes from rule-based screening; it only flags risk signals requiring review and does not constitute a data integrity verdict."
-    raw_output_ref: str = ""
-    detector_runtime: str = "python"
-    dependency_status: str = "ready"
-    meaning: str = ""
-    normal_explanations: str = ""
-    review_steps: str = ""
-    confidence: str = "medium"
-    confidence_score: float = 0.6
-    false_positive_risk: str = "medium"
-    evidence_id: str = ""
-    location: str = ""
-    calculation_trace: str = ""
-    external_records: str = ""
-    review_actions: str = ""
-    confidence_basis: str = ""
-
-
-@dataclass
-class TableResult:
-    name: str
-    rows: int
-    columns: int
-    findings: list[Finding]
-
-
-LEVEL_SCORE = {"high": 3, "medium": 2, "low": 1, "info": 0}
-LEVEL_LABEL = {"high": "High", "medium": "Medium", "low": "Low", "info": "Info"}
 
 
 def clean_cell(value: Any) -> Any:
@@ -221,15 +177,6 @@ STRUCTURAL_INDEX_PATTERNS = [
     r"^q[_ ]?no$",
     r"^seq$",
     r"^serial$",
-    r"序号",
-    r"编号",
-    r"题号",
-    r"原题号",
-    r"问卷题",
-    r"条目号",
-    r"项目号",
-    r"行号",
-    r"排序",
 ]
 
 
@@ -298,49 +245,6 @@ def tag_findings(
         finding.evidence_id = ""
         enrich_finding_explanation(finding)
     return findings
-
-
-def enrich_finding_explanation(finding: Finding) -> None:
-    """Populate user-facing interpretation fields when a detector did not."""
-    if not finding.meaning:
-        finding.meaning = finding.summary or "This item indicates the detector found a pattern requiring human review."
-    if not finding.normal_explanations:
-        finding.normal_explanations = (
-            "Possible benign causes include study design, instrument thresholds, batch formatting, table extraction errors, or legitimate data cleaning."
-        )
-    if not finding.review_steps:
-        finding.review_steps = finding.suggestion or "Review original records, statistical scripts, and data processing logs to confirm whether this signal has a legitimate source."
-    if finding.confidence_score is None or (
-        finding.confidence_score == 0.6 and finding.confidence == "medium" and finding.level != "medium"
-    ):
-        finding.confidence_score = {"high": 0.85, "medium": 0.6, "low": 0.3, "info": 0.1}.get(finding.level, 0.6)
-    finding.confidence_score = max(0.0, min(1.0, float(finding.confidence_score)))
-    if finding.confidence_score >= 0.75:
-        finding.confidence = "high"
-    elif finding.confidence_score >= 0.40:
-        finding.confidence = "medium"
-    else:
-        finding.confidence = "low"
-    if not finding.false_positive_risk:
-        finding.false_positive_risk = "low" if finding.level == "high" else "medium"
-    if not finding.evidence_id:
-        finding.evidence_id = f"{finding.tool_id}:{finding.check}:{finding.target}".replace(" ", "_")
-    if not finding.location:
-        finding.location = finding.table
-    if not finding.review_actions:
-        finding.review_actions = finding.review_steps or finding.suggestion
-    if not finding.confidence_basis:
-        finding.confidence_basis = (
-            "Generated from deterministic rules or reproducible formulas; still requires human judgment considering study design, original records, and material extraction quality."
-        )
-
-
-def confidence_label(score: float) -> str:
-    if score >= 0.75:
-        return "high"
-    if score >= 0.40:
-        return "medium"
-    return "low"
 
 
 def cap_small_sample(score: float, n: int, basis: str) -> tuple[float, str]:
@@ -418,7 +322,7 @@ def compact_records(df: pd.DataFrame, limit: int = 3) -> str:
         cells = ", ".join(f"{col}={compact_value(value)}" for col, value in row.items())
         row_label = int(idx) + 1 if isinstance(idx, (int, np.integer)) else idx
         pieces.append(f"row {row_label}: {cells}")
-    return "；".join(pieces)
+    return "; ".join(pieces)
 
 
 def markdown_cell(value: str) -> str:
@@ -693,7 +597,7 @@ def check_high_similarity_rows(table_name: str, df: pd.DataFrame, findings: list
         "Highly similar rows",
         "Entire table",
         "Found non-identical but highly similar row pairs.",
-        "；".join(sample_lines),
+        "; ".join(sample_lines),
         "Check each pair whether differing fields have experimental logic support; if many fields are identical with only a few differing, review original records.",
         f"Performed candidate bucket comparison across table rows; total pair space {all_pair_count} pairs, max {max_pairs} pairs checked; this run checked {checked} pairs, {len(hits)} pairs hit.",
         confidence_score=score,
@@ -760,7 +664,7 @@ def check_high_similarity_cols(table_name: str, df: pd.DataFrame, findings: list
         "Highly similar columns",
         "Entire table",
         "Found non-identical but highly similar column pairs.",
-        "；".join(sample_lines),
+        "; ".join(sample_lines),
         "Review original records for differing rows; confirm whether the two columns are independent measurements, legitimate derivations, or copy-with-partial-edit.",
         f"Compared {len(columns)} columns pairwise; {len(hits)} pairs hit with similarity >=90%.",
         confidence_score=score,
@@ -1258,7 +1162,7 @@ def check_rare_categories(table_name: str, df: pd.DataFrame, findings: list[Find
         if rare.empty:
             continue
         level = "high" if len(rare) >= 2 or (int(rare.iloc[0]) == 1 and rare.iloc[0] / len(series) < 0.01) else "medium"
-        rare_text = "；".join(f"{category}: {count}/{len(series)}({count/len(series):.1%})" for category, count in rare.items())
+        rare_text = "; ".join(f"{category}: {count}/{len(series)}({count/len(series):.1%})" for category, count in rare.items())
         score, basis = weighted_confidence(
             [
                 ("Sample size adequacy", sample_size_score(len(series)), 0.30),
@@ -1323,7 +1227,7 @@ def check_ordinal_extreme_concentration(table_name: str, df: pd.DataFrame, findi
                 ("Middle gap", 1.0 if missing_middle else 0.5, 0.30),
             ]
         )
-        distribution = "；".join(f"{value:g}: {int(count)}({count/len(values):.1%})" for value, count in counts.items())
+        distribution = "; ".join(f"{value:g}: {int(count)}({count/len(values):.1%})" for value, count in counts.items())
         gap_text = f", missing middle values={missing_middle}" if missing_middle else ""
         add_finding(
             findings,
@@ -1393,20 +1297,20 @@ def check_summary_stat_table(
         return
 
     n_col = first_existing(
-        columns_matching(df, [r"^n$", r"^sample[_ ]?size$", r"^cases?$", r"^number$", r"samplesize", r"样本量", r"例数", r"人数"])
+        columns_matching(df, [r"^n$", r"^sample[_ ]?size$", r"^cases?$", r"^number$", r"samplesize"])
     )
-    mean_col = first_existing(columns_matching(df, [r"^mean$", r"^means$", r"^average$", r"均值", r"平均值", r"平均数"]))
-    sd_col = first_existing(columns_matching(df, [r"^sd$", r"^std$", r"^stdev$", r"标准差", r"stdev"]))
-    se_col = first_existing(columns_matching(df, [r"^se$", r"^sem$", r"^standard[_ ]?error$", r"标准误", r"standarderror"]))
-    ci_low_col = first_existing(columns_matching(df, [r"cilow", r"cilower", r"lowerci", r"lcl", r"^lower$", r"下限", r"95%ci下"]))
-    ci_high_col = first_existing(columns_matching(df, [r"cihigh", r"ciupper", r"upperci", r"ucl", r"^upper$", r"上限", r"95%ci上"]))
-    p_cols = columns_matching(df, [r"^p$", r"p[_ ]?value", r"pvalue", r"^pval", r"p值"])
-    t_col = first_existing(columns_matching(df, [r"^t$", r"t[_ ]?value", r"tvalue", r"t统计", r"tstat"]))
-    f_col = first_existing(columns_matching(df, [r"^f$", r"f[_ ]?value", r"fvalue", r"f统计", r"fstat"]))
-    chi_col = first_existing(columns_matching(df, [r"chi", r"χ", r"^chisq$", r"x2", r"chisquare", r"卡方"]))
-    df_col = first_existing(columns_matching(df, [r"^df$", r"^dof$", r"自由度", r"degreeoffreedom"]))
-    df1_col = first_existing(columns_matching(df, [r"df1", r"^df[_ ]?1$", r"分子自由度"]))
-    df2_col = first_existing(columns_matching(df, [r"df2", r"^df[_ ]?2$", r"分母自由度"]))
+    mean_col = first_existing(columns_matching(df, [r"^mean$", r"^means$", r"^average$"]))
+    sd_col = first_existing(columns_matching(df, [r"^sd$", r"^std$", r"^stdev$"]))
+    se_col = first_existing(columns_matching(df, [r"^se$", r"^sem$", r"^standard[_ ]?error$"]))
+    ci_low_col = first_existing(columns_matching(df, [r"cilow", r"cilower", r"lowerci", r"lcl", r"^lower$"]))
+    ci_high_col = first_existing(columns_matching(df, [r"cihigh", r"ciupper", r"upperci", r"ucl", r"^upper$"]))
+    p_cols = columns_matching(df, [r"^p$", r"p[_ ]?value", r"pvalue", r"^pval"])
+    t_col = first_existing(columns_matching(df, [r"^t$", r"t[_ ]?value", r"tvalue"]))
+    f_col = first_existing(columns_matching(df, [r"^f$", r"f[_ ]?value", r"fvalue"]))
+    chi_col = first_existing(columns_matching(df, [r"chi", r"χ", r"^chisq$", r"x2", r"chisquare"]))
+    df_col = first_existing(columns_matching(df, [r"^df$", r"^dof$", r"degreeoffreedom"]))
+    df1_col = first_existing(columns_matching(df, [r"df1", r"^df[_ ]?1$"]))
+    df2_col = first_existing(columns_matching(df, [r"df2", r"^df[_ ]?2$"]))
 
     check_basic_summary_values(table_name, df, num_cols, findings, n_col, sd_col, se_col, p_cols)
     if n_col and sd_col and se_col:
@@ -1847,10 +1751,10 @@ def analyze_grim_grimmer_rules(
     df = prepare_table(df)
     findings: list[Finding] = []
     n_col = first_existing(
-        columns_matching(df, [r"^n$", r"^sample[_ ]?size$", r"^cases?$", r"^number$", r"samplesize", r"样本量", r"例数", r"人数"])
+        columns_matching(df, [r"^n$", r"^sample[_ ]?size$", r"^cases?$", r"^number$", r"samplesize"])
     )
-    mean_col = first_existing(columns_matching(df, [r"^mean$", r"均值", r"平均值", r"平均数", r"score", r"评分", r"量表"]))
-    sd_col = first_existing(columns_matching(df, [r"^sd$", r"^std$", r"^stdev$", r"标准差", r"stdev"]))
+    mean_col = first_existing(columns_matching(df, [r"^mean$", r"score"]))
+    sd_col = first_existing(columns_matching(df, [r"^sd$", r"^std$", r"^stdev$"]))
     if not n_col or not mean_col:
         return TableResult(name=name, rows=int(df.shape[0]), columns=int(df.shape[1]), findings=findings)
 
@@ -2049,25 +1953,25 @@ def render_markdown(source: Path, results: list[TableResult], extraction_notes: 
         "## Checks Run",
         "",
         "- Fully duplicate rows, fully duplicate columns",
-        "- 高度重复行、高度重复列",
-        "- 缺失比例与缺失模式",
-        "- 高频默认值/复制填充值",
-        "- 末位数字分布异常",
-        "- 列间线性变换、列间过高相关性、相关矩阵结构异常",
-        "- 低频类别、有序变量极端集中",
-        "- 小数位数过度整齐",
-        "- 等差数列、固定步长、连续重复值",
-        "- 稳健离群值（MAD）",
-        "- Benford 首位数字分布（仅在数据规模和数量级满足时启用）",
-        "- 缺失值集中于分组",
-        "- 统计汇总表内部一致性：N、SD、SE、CI、百分比、p 值",
-        "- t/F/卡方统计量与报告 p 值反算一致性（检测到对应列时启用）",
+        "- Highly similar rows, highly similar columns",
+        "- Missing value ratio and missing patterns",
+        "- High-frequency default/fill values",
+        "- Terminal digit distribution anomalies",
+        "- Inter-column linear transforms, high inter-column correlations, correlation matrix structural anomalies",
+        "- Low-frequency categories, ordinal variable extreme concentration",
+        "- Excessive decimal place uniformity",
+        "- Arithmetic sequences, fixed steps, consecutive repeated values",
+        "- Robust outliers (MAD)",
+        "- Benford first-digit distribution (enabled only when data scale and magnitude span are sufficient)",
+        "- Missing values concentrated by group",
+        "- Summary table internal consistency: N, SD, SE, CI, percent, p-value",
+        "- t/F/chi-square statistic vs reported p-value back-calculation consistency (enabled when corresponding columns detected)",
         "",
-        "## 下一步复核动作",
+        "## Next Review Steps",
         "",
-        "1. 优先打开高风险项涉及的原始数据行、实验日志和统计脚本。",
-        "2. 对中风险项确认是否来自实验设计、仪器阈值、批量格式化或表格抽取误差。",
-        "3. 若输入来自 PDF/DOCX，建议补充原始 CSV/XLSX 后重新检测。",
+        "1. Prioritize opening original data rows, lab notebooks, and statistical scripts involved in high-risk items.",
+        "2. For medium-risk items, confirm whether they originate from study design, instrument thresholds, batch formatting, or table extraction errors.",
+        "3. If input comes from PDF/DOCX, supplement with original CSV/XLSX and re-run the check.",
     ]
     return "\n".join(lines) + "\n"
 
@@ -2090,46 +1994,46 @@ def save_json(path: Path, source: Path, results: list[TableResult]) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="从 CSV/XLSX/DOCX/PDF 中提取表格并检查数据人工痕迹。"
+        description="Extract tables from CSV/XLSX/DOCX/PDF and check for data artifacts."
     )
-    parser.add_argument("input", help="输入文件：CSV/XLSX/DOCX/PDF")
+    parser.add_argument("input", help="Input file: CSV/XLSX/DOCX/PDF")
     parser.add_argument(
         "-o",
         "--out",
-        help="Markdown 报告输出路径。默认：<输入文件名>.data-trace-report.md",
+        help="Markdown report output path. Default: <input>.data-trace-report.md",
     )
-    parser.add_argument("--json", help="可选：同时输出 JSON 明细。")
+    parser.add_argument("--json", help="Optional: also output JSON details.")
     parser.add_argument(
         "--scenario",
         choices=["raw", "summary", "text", "image", "r-advanced"],
         default="raw",
-        help="检测场景。CLI 当前支持表格类场景：raw、summary、r-advanced。",
+        help="Detection scenario. CLI currently supports table scenarios: raw, summary, r-advanced.",
     )
-    parser.add_argument("--enable-r", action="store_true", help="启用 R 桥接检测模块。")
-    parser.add_argument("--scale-min", type=int, default=1, help="R 离散量表最小值，默认 1。")
-    parser.add_argument("--scale-max", type=int, default=5, help="R 离散量表最大值，默认 5。")
-    parser.add_argument("--rounding-digits", type=int, default=2, help="报告均值/SD 默认四舍五入位数。")
+    parser.add_argument("--enable-r", action="store_true", help="Enable R bridge detection modules.")
+    parser.add_argument("--scale-min", type=int, default=1, help="R discrete scale minimum, default 1.")
+    parser.add_argument("--scale-max", type=int, default=5, help="R discrete scale maximum, default 5.")
+    parser.add_argument("--rounding-digits", type=int, default=2, help="Report mean/SD default rounding digits.")
     args = parser.parse_args(argv)
 
     source = Path(args.input).expanduser().resolve()
     if not source.exists():
-        print(f"输入文件不存在：{source}", file=sys.stderr)
+        print(f"Input file not found: {source}", file=sys.stderr)
         return 2
 
     extraction_notes: list[str] = []
     try:
         tables = load_tables(source)
     except Exception as exc:
-        print(f"读取失败：{exc}", file=sys.stderr)
+        print(f"Read failed: {exc}", file=sys.stderr)
         return 1
 
     if not tables:
-        print("没有抽取到可检测表格。建议改用原始 CSV/XLSX。", file=sys.stderr)
+        print("No extractable tables found. Try using original CSV/XLSX instead.", file=sys.stderr)
         return 1
 
     if source.suffix.lower() in {".pdf", ".docx"}:
         extraction_notes.append(
-            "当前输入来自文档抽取，表头、合并单元格和脚注可能影响解析；重要结论建议用原始 CSV/XLSX 复测。"
+            "Current input was extracted from a document; headers, merged cells, and footnotes may affect parsing. Important conclusions should be verified with original CSV/XLSX."
         )
 
     results: list[TableResult] = []
@@ -2160,12 +2064,12 @@ def main(argv: list[str] | None = None) -> int:
                 finding = Finding(
                     table=name,
                     level="info",
-                    check="R桥接运行记录",
-                    target="R 运行时",
-                    summary=f"R 桥接未能完成：{exc}",
+                    check="R bridge run record",
+                    target="R runtime",
+                    summary=f"R bridge did not complete: {exc}",
                     evidence=f"dependency_status={dep_status}",
-                    detail="CLI 已保留 Python 基础表格检测结果；请检查 R、rpy2/Rscript 和 CRAN 包安装。",
-                    suggestion="安装 R 包 scrutiny/rsprite2 后重试，或关闭 --enable-r。",
+                    detail="CLI has retained Python basic table detection results; check R, rpy2/Rscript, and CRAN package installation.",
+                    suggestion="Install R packages scrutiny/rsprite2 and retry, or disable --enable-r.",
                     detector_runtime="r",
                     dependency_status=dep_status,
                     confidence="low",
@@ -2179,12 +2083,12 @@ def main(argv: list[str] | None = None) -> int:
             finding = Finding(
                 table=name,
                 level="info",
-                check="场景未运行",
+                check="Scenario not run",
                 target=args.scenario,
-                summary="该 CLI 场景需要 Web 上传或 R 参数配合，本次未运行检测。",
+                summary="This CLI scenario requires web upload or R parameters; detection was not run this time.",
                 evidence=f"scenario={args.scenario}",
-                detail="image 场景请使用 Web 上传图片；r-advanced 请同时传入 --enable-r。",
-                suggestion="选择 raw，或启用 --enable-r 后重试。",
+                detail="For image scenario use web upload; for r-advanced also pass --enable-r.",
+                suggestion="Select raw, or enable --enable-r and retry.",
             )
             enrich_finding_explanation(finding)
             results.append(TableResult(name=name, rows=int(df.shape[0]), columns=int(df.shape[1]), findings=[finding]))
@@ -2196,7 +2100,7 @@ def main(argv: list[str] | None = None) -> int:
     out_path.write_text(render_markdown(source, results, extraction_notes), encoding="utf-8")
     if args.json:
         save_json(Path(args.json).expanduser().resolve(), source, results)
-    print(f"报告已生成：{out_path}")
+    print(f"Report generated: {out_path}")
     return 0
 
 

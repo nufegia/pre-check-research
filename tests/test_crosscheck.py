@@ -44,21 +44,6 @@ def test_detect_columns_english():
     assert "p" in detected["p"]  # type: ignore[operator]
 
 
-def test_detect_columns_chinese():
-    df = pd.DataFrame(columns=["样本量", "均值", "标准差", "标准误", "置信区间下限", "置信区间上限", "频数", "百分比", "t统计", "自由度", "p值"])
-    detected = _detect_columns(df)
-    assert detected["N"] == "样本量"
-    assert detected["Mean"] == "均值"
-    assert detected["SD"] == "标准差"
-    assert detected["SE"] == "标准误"
-    assert detected["CI_low"] == "置信区间下限"
-    assert detected["CI_high"] == "置信区间上限"
-    assert detected["count"] == "频数"
-    assert detected["percent"] == "百分比"
-    assert detected["t"] == "t统计"
-    assert detected["df"] == "自由度"
-    assert "p值" in detected["p"]  # type: ignore[operator]
-
 
 def test_detect_columns_none():
     df = pd.DataFrame(columns=["foo", "bar", "baz"])
@@ -139,7 +124,7 @@ def test_ci_centering_flags_off_center():
 
 
 def test_ci_span_flags_wrong_se():
-    # C 行：CI=(7.8,8.1), SE=0.1, df=N-1=17
+    # Row C: CI=(7.8,8.1), SE=0.1, df=N-1=17
     row = {"CI_low": 7.8, "CI_high": 8.1, "SE": 0.1, "df": 17}
     findings: list = []
     _check_ci_span_vs_se(row, 3, "test", findings, TOL)
@@ -163,7 +148,7 @@ def test_p_validity_passes_no_pval_col():
 
 
 def test_p_vs_t_flags_mismatch():
-    # B 行：t=3.0, df=19, p=0.2 → computed_p=0.00736
+    # Row B: t=3.0, df=19, p=0.2 -> computed_p=0.00736
     row = {"t": 3.0, "df": 19, "_p_raw": {"p": "0.2"}}
     findings: list = []
     _check_p_vs_t(row, 2, "test", findings, TOL)
@@ -172,7 +157,7 @@ def test_p_vs_t_flags_mismatch():
 
 
 def test_p_vs_t_passes_match():
-    # A 行：t=2.50, df=24, p=0.0198 → computed_p≈0.0198
+    # Row A: t=2.50, df=24, p=0.0198 -> computed_p≈0.0198
     row = {"t": 2.50, "df": 24, "_p_raw": {"p": "0.0198"}}
     findings: list = []
     _check_p_vs_t(row, 1, "test", findings, TOL)

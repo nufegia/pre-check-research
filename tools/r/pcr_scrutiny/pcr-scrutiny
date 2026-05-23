@@ -41,7 +41,7 @@ finding_json <- function(level, check, target, summary, evidence, detail, sugges
     "\"detail\":", jstr(detail), ",",
     "\"suggestion\":", jstr(suggestion), ",",
     "\"meaning\":", jstr(summary), ",",
-    "\"normal_explanations\":", jstr("可能的正常原因包括变量不是离散/整数评分、量表范围设定错误、四舍五入规则不同或表格抽取错误。"), ",",
+    "\"normal_explanations\":", jstr("Possible benign causes include the variable not being discrete/integer scored, incorrect scale range setting, different rounding rules, or table extraction errors."), ",",
     "\"review_steps\":", jstr(suggestion), ",",
     "\"confidence\":", jstr(confidence), ",",
     "\"confidence_score\":", sprintf("%.2f", confidence_score(confidence, level)), ",",
@@ -50,7 +50,7 @@ finding_json <- function(level, check, target, summary, evidence, detail, sugges
     "\"tool_name\":\"R scrutiny\",",
     "\"detector_runtime\":\"r\",",
     "\"dependency_status\":", jstr(dependency_status), ",",
-    "\"confidence_basis\":", jstr("基于 R scrutiny 可行性检验、样本量/量表字段可解析性和依赖状态生成；需确认量表范围、四舍五入规则和变量类型。"),
+    "\"confidence_basis\":", jstr("Generated from R scrutiny feasibility tests, sample size/scale field parseability, and dependency status; requires confirmation of scale range, rounding rules, and variable type."),
   "}")
 }
 write_payload <- function(source, dependency_status, findings, json_path) {
@@ -79,7 +79,7 @@ if (!file.exists(input)) {
   quit(status = 2)
 }
 if (!requireNamespace("scrutiny", quietly = TRUE)) {
-  f <- finding_json("info", "R scrutiny run record", "R 包", "Missing R package scrutiny; summary statistic feasibility check skipped.",
+  f <- finding_json("info", "R scrutiny run record", "R package", "Missing R package scrutiny; summary statistic feasibility check skipped.",
     "dependency_status=missing_r_package", "Install with install.packages('scrutiny').",
     "Install scrutiny and retry; missing tool does not count as data risk.", "missing_r_package", "low", "low")
   write_payload(normalizePath(input), "missing_r_package", c(f), json_path)
@@ -91,14 +91,14 @@ norm <- function(x) tolower(gsub("[ _-]", "", x))
 as_num <- function(x) suppressWarnings(as.numeric(gsub(",", "", gsub("%", "", x))))
 is_inconsistent <- function(x) length(x) == 1 && !is.na(x) && !as.logical(x)
 cols <- names(d)
-ncol <- cols[match(TRUE, norm(cols) %in% c("n", "samplesize", "cases", "样本量", "例数", "人数"))]
-mcol <- cols[match(TRUE, norm(cols) %in% c("mean", "means", "均值", "均数", "平均值", "平均数"))]
-sdcol <- cols[match(TRUE, norm(cols) %in% c("sd", "std", "标准差", "stdev"))]
-propcol <- cols[match(TRUE, norm(cols) %in% c("proportion", "prop", "rate", "ratio", "percent", "percentage", "百分比", "比例", "率"))]
+ncol <- cols[match(TRUE, norm(cols) %in% c("n", "samplesize", "cases"))]
+mcol <- cols[match(TRUE, norm(cols) %in% c("mean", "means"))]
+sdcol <- cols[match(TRUE, norm(cols) %in% c("sd", "std"))]
+propcol <- cols[match(TRUE, norm(cols) %in% c("proportion", "prop", "rate", "ratio", "percent", "percentage"))]
 findings <- c()
 add <- function(level, check, row, summary, evidence, status = "ready", confidence = "medium", fp = "medium") {
   findings <<- c(findings, finding_json(level, paste0("R scrutiny ", check), paste0("row ", row), summary, evidence,
-    paste0("scale=", scale_min, "-", scale_max), "确认量表范围、四舍五入精度和变量类型；回看原始计数或统计脚本。",
+    paste0("scale=", scale_min, "-", scale_max), "Verify scale range, rounding precision, and variable type; review original counts or statistical scripts.",
     status, confidence, fp))
 }
 
@@ -109,9 +109,9 @@ if (!is.na(ncol) && !is.na(mcol)) {
     if (is.na(n) || is.na(as_num(m_raw))) next
     ok <- tryCatch(suppressWarnings(scrutiny::grim(x = m_raw, n = as.integer(n), items = 1)), error = function(e) NA)
     if (is_inconsistent(ok)) {
-      add("high", "GRIM", i, "GRIM 检查发现均值与样本量在整数评分条件下不可同时成立。", paste0("N=", n, ", mean=", m_raw), "ready", "high", "medium")
+      add("high", "GRIM", i, "GRIM check found mean and sample size are mathematically inconsistent under integer scoring.", paste0("N=", n, ", mean=", m_raw), "ready", "high", "medium")
     } else if (length(ok) != 1 || is.na(ok)) {
-      add("info", "GRIM", i, "GRIM 未能判断该行。", paste0("N=", n, ", mean=", m_raw), "ready", "low", "low")
+      add("info", "GRIM", i, "GRIM could not evaluate this row.", paste0("N=", n, ", mean=", m_raw), "ready", "low", "low")
     }
   }
 }
@@ -129,13 +129,13 @@ if (!is.na(ncol) && !is.na(mcol) && !is.na(sdcol)) {
     grimmer_cases <- grimmer_cases + 1
     ok_g <- tryCatch(suppressWarnings(scrutiny::grimmer(x = m_raw, sd = sd_raw, n = as.integer(n), items = 1)), error = function(e) NA)
     if (is_inconsistent(ok_g)) {
-      add("high", "GRIMMER", i, "GRIMMER 检查发现均值、SD 与样本量在离散评分条件下不可同时成立。", paste0("N=", n, ", mean=", m_raw, ", SD=", sd_raw), "ready", "high", "medium")
+      add("high", "GRIMMER", i, "GRIMMER check found mean, SD, and sample size are mathematically inconsistent under discrete scoring.", paste0("N=", n, ", mean=", m_raw, ", SD=", sd_raw), "ready", "high", "medium")
     }
     if (m >= 0 && m <= 1 && sd >= 0 && sd <= 0.5) {
       debit_cases <- debit_cases + 1
       ok_d <- tryCatch(suppressWarnings(scrutiny::debit(x = m_raw, sd = sd_raw, n = as.integer(n))), error = function(e) NA)
       if (is_inconsistent(ok_d)) {
-        add("high", "DEBIT", i, "DEBIT 检查发现二元均值、SD 与样本量不可同时成立。", paste0("N=", n, ", binary mean=", m_raw, ", SD=", sd_raw), "ready", "high", "medium")
+        add("high", "DEBIT", i, "DEBIT check found binary mean, SD, and sample size are mathematically inconsistent.", paste0("N=", n, ", binary mean=", m_raw, ", SD=", sd_raw), "ready", "high", "medium")
       }
     }
   }
@@ -154,13 +154,13 @@ if (!is.na(ncol) && !is.na(sdcol) && !is.na(propcol) && is.na(mcol)) {
       debit_cases <- debit_cases + 1
       ok_d <- tryCatch(suppressWarnings(scrutiny::debit(x = x_raw, sd = sd_raw, n = as.integer(n))), error = function(e) NA)
       if (is_inconsistent(ok_d)) {
-        add("high", "DEBIT", i, "DEBIT 检查发现二元比例、SD 与样本量不可同时成立。", paste0("N=", n, ", proportion=", x_raw, ", SD=", sd_raw), "ready", "high", "medium")
+        add("high", "DEBIT", i, "DEBIT check found binary proportion, SD, and sample size are mathematically inconsistent.", paste0("N=", n, ", proportion=", x_raw, ", SD=", sd_raw), "ready", "high", "medium")
       }
     }
   }
 }
 
-findings <- c(findings, finding_json("info", "R scrutiny run record", "摘要统计表", "R scrutiny 已运行。",
-  paste0("GRIMMER候选行=", grimmer_cases, "；DEBIT候选行=", debit_cases), "",
-  "若未发现高风险项，仍需结合变量类型和原始数据人工复核。", "ready", "low", "low"))
+findings <- c(findings, finding_json("info", "R scrutiny run record", "summary statistics table", "R scrutiny ran.",
+  paste0("GRIMMER candidate rows=", grimmer_cases, "; DEBIT candidate rows=", debit_cases), "",
+  "If no high-risk items were found, manual review against variable types and original data is still recommended.", "ready", "low", "low"))
 write_payload(normalizePath(input), "ready", findings, json_path)

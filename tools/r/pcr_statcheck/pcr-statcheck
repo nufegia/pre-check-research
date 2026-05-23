@@ -111,7 +111,7 @@ if (!file.exists(input)) {
 
 if (!requireNamespace("statcheck", quietly = TRUE)) {
   f <- finding_json(
-    "info", "R statcheck run record", "R 包",
+    "info", "R statcheck run record", "R package",
     "Missing R package statcheck; in-text statistical consistency check skipped.",
     "dependency_status=missing_r_package",
     "Install with install.packages('statcheck').",
@@ -171,7 +171,7 @@ if (nrow(res) > 0) {
 
 if (length(findings) == 0) {
   findings <- c(finding_json(
-    "info", "R statcheck run record", "APA/NHST 文本",
+    "info", "R statcheck run record", "APA/NHST text",
     "R statcheck ran; no reportable inconsistencies found.",
     paste0("Text length=", nchar(txt)),
     "",

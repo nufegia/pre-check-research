@@ -23,18 +23,18 @@ from pcr_audit.models import Finding, TableResult, enrich_finding_explanation
 # ---------------------------------------------------------------------------
 
 COLUMN_PATTERNS: dict[str, list[str]] = {
-    "N":        [r"^n$", r"^sample[_ ]?size$", r"^cases?$", r"^number$", r"samplesize", r"样本量", r"例数", r"人数"],
-    "Mean":     [r"^mean$", r"^means$", r"^average$", r"均值", r"均数", r"平均值", r"平均数"],
-    "SD":       [r"^sd$", r"^std$", r"^stdev$", r"标准差", r"stdev"],
-    "SE":       [r"^se$", r"^sem$", r"^standard[_ ]?error$", r"标准误", r"sterr"],
-    "CI_low":   [r"cilow", r"cilower", r"ci[_\- ]?l", r"lcl", r"^lower$", r"置信区间下限", r"下限", r"^low$"],
-    "CI_high":  [r"cihigh", r"ciupper", r"ci[_\- ]?u", r"ucl", r"^upper$", r"置信区间上限", r"上限", r"^high$"],
-    "count":    [r"^count$", r"n[_\- ]?pos", r"^freq$", r"频数", r"计数"],
-    "percent":  [r"percent", r"percentage", r"^prop$", r"^rate$", r"百分比", r"比例", r"率"],
-    "effect":   [r"^or$", r"oddsratio", r"^rr$", r"riskratio", r"^hr$", r"hazardratio", r"效应量", r"比值比", r"风险比"],
-    "t":        [r"^t$", r"t[_\- ]?value", r"t[_\- ]?stat", r"t统计"],
-    "df":       [r"^df$", r"^dof$", r"自由度", r"degreeoffreedom"],
-    "p":        [r"^p$", r"p[_\- ]?value", r"^pval$", r"p值"],
+    "N":        [r"^n$", r"^sample[_ ]?size$", r"^cases?$", r"^number$", r"samplesize"],
+    "Mean":     [r"^mean$", r"^means$", r"^average$"],
+    "SD":       [r"^sd$", r"^std$", r"^stdev$"],
+    "SE":       [r"^se$", r"^sem$", r"^standard[_ ]?error$", r"sterr"],
+    "CI_low":   [r"cilow", r"cilower", r"ci[_\- ]?l", r"lcl", r"^lower$", r"^low$"],
+    "CI_high":  [r"cihigh", r"ciupper", r"ci[_\- ]?u", r"ucl", r"^upper$", r"^high$"],
+    "count":    [r"^count$", r"n[_\- ]?pos", r"^freq$"],
+    "percent":  [r"percent", r"percentage", r"^prop$", r"^rate$"],
+    "effect":   [r"^or$", r"oddsratio", r"^rr$", r"riskratio", r"^hr$", r"hazardratio"],
+    "t":        [r"^t$", r"t[_\- ]?value", r"t[_\- ]?stat"],
+    "df":       [r"^df$", r"^dof$", r"degreeoffreedom"],
+    "p":        [r"^p$", r"p[_\- ]?value", r"^pval$"],
 }
 
 

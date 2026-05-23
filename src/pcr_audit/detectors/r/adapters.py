@@ -155,10 +155,10 @@ write.csv(res, stdout(), row.names=FALSE, na="")
         Path(txt_path).unlink(missing_ok=True)
     spec = TOOL_REGISTRY["r_statcheck"]
     if proc.returncode != 0:
-        return [_info_finding(source_name, "r_statcheck", "r_statcheck_runtime", "R statcheck 运行失败。", proc.stderr.strip(), input_type)]
+        return [_info_finding(source_name, "r_statcheck", "r_statcheck_runtime", "R statcheck run failed.", proc.stderr.strip(), input_type)]
     rows = _rows_from_csv_stdout(proc.stdout)
     if rows and "error" in rows[0]:
-        return [_info_finding(source_name, "r_statcheck", "r_statcheck_api", "R statcheck API 调用失败。", rows[0].get("error", ""), input_type)]
+        return [_info_finding(source_name, "r_statcheck", "r_statcheck_api", "R statcheck API call failed.", rows[0].get("error", ""), input_type)]
     findings: list[Finding] = []
     for row in rows:
         error = str(row.get("Error", row.get("error", ""))).lower() in {"true", "1"}
@@ -177,17 +177,17 @@ write.csv(res, stdout(), row.names=FALSE, na="")
         finding = Finding(
             table=source_name,
             level=level,
-            check="R statcheck正文统计一致性",
-            target=raw[:120] or "APA统计表达式",
-            summary="R statcheck 发现正文统计量与报告 p 值不一致。",
-            evidence=f"报告p={row.get('Reported_P_Value', row.get('reported_p', ''))}，反算p={row.get('Computed_P_Value', row.get('computed_p', ''))}",
-            detail=f"原始 R 输出字段：{row}",
-            suggestion="优先核对统计量、自由度、单双侧检验和 p 值是否来自同一次分析。",
+            check="R statcheck in-text statistical consistency",
+            target=raw[:120] or "APA statistical expression",
+            summary="R statcheck found inconsistency between in-text statistics and reported p-value.",
+            evidence=f"reported p={row.get('Reported_P_Value', row.get('reported_p', ''))}, computed p={row.get('Computed_P_Value', row.get('computed_p', ''))}",
+            detail=f"Raw R output fields: {row}",
+            suggestion="Prioritize checking whether statistic, df, one/two-tailed test, and p-value are from the same analysis.",
             tool_id="r_statcheck",
             tool_name=spec.display_name,
             module="r_statcheck_text",
             input_type=input_type,
-            routing_reason="用户已勾选 R statcheck，且文档正文识别到 APA/NHST 统计表达式。",
+            routing_reason="User selected R statcheck, and the document body was recognized as containing APA/NHST statistical expressions.",
             method_limitations=spec.method_limitations,
             detector_runtime="r",
             dependency_status="ready",
@@ -199,7 +199,7 @@ write.csv(res, stdout(), row.names=FALSE, na="")
         enrich_finding_explanation(finding)
         findings.append(finding)
     if not findings:
-        findings.append(_info_finding(source_name, "r_statcheck", "r_statcheck_text", "R statcheck 已运行，未发现可报告的不一致。", f"文本长度={len(text or '')}", input_type, "ready"))
+        findings.append(_info_finding(source_name, "r_statcheck", "r_statcheck_text", "R statcheck ran; no reportable inconsistencies found.", f"text length={len(text or '')}", input_type, "ready"))
     return findings
 
 
@@ -216,10 +216,10 @@ norm <- function(x) tolower(gsub("[ _-]", "", x))
 as_num <- function(x) suppressWarnings(as.numeric(gsub(",", "", gsub("%", "", x))))
 is_inconsistent <- function(x) length(x) == 1 && !is.na(x) && !as.logical(x)
 cols <- names(d)
-ncol <- cols[match(TRUE, norm(cols) %in% c("n", "samplesize", "cases", "样本量", "例数", "人数"))]
-mcol <- cols[match(TRUE, norm(cols) %in% c("mean", "means", "均值", "均数", "平均值", "平均数"))]
-sdcol <- cols[match(TRUE, norm(cols) %in% c("sd", "std", "标准差", "stdev"))]
-propcol <- cols[match(TRUE, norm(cols) %in% c("proportion", "prop", "rate", "ratio", "percent", "percentage", "百分比", "比例", "率"))]
+ncol <- cols[match(TRUE, norm(cols) %in% c("n", "samplesize", "cases", "n", "samplesize", "cases"))]
+mcol <- cols[match(TRUE, norm(cols) %in% c("mean", "means", "mean", "means", "average"))]
+sdcol <- cols[match(TRUE, norm(cols) %in% c("sd", "std", "sd", "std"))]
+propcol <- cols[match(TRUE, norm(cols) %in% c("proportion", "prop", "rate", "ratio", "percent", "percentage", "proportion", "prop", "rate"))]
 out <- data.frame(check=character(), row=integer(), status=character(), detail=character(), stringsAsFactors=FALSE)
 add <- function(check, row, status, detail) {
   out <<- rbind(out, data.frame(check=check, row=row, status=status, detail=detail, stringsAsFactors=FALSE))
@@ -234,7 +234,7 @@ if (!is.na(ncol) && !is.na(mcol)) {
       if (is_inconsistent(ok)) {
         add("GRIM", i, "inconsistent", paste0("N=", n, ", mean=", m_raw))
       } else if (length(ok) != 1 || is.na(ok)) {
-        add("GRIM", i, "error", paste0("N=", n, ", mean=", m_raw, "；R scrutiny::grim 无法判断该行"))
+        add("GRIM", i, "error", paste0("N=", n, ", mean=", m_raw, "; R scrutiny::grim could not evaluate this row"))
       }
     }
   }
@@ -254,7 +254,7 @@ if (!is.na(ncol) && !is.na(mcol) && !is.na(sdcol)) {
     if (is_inconsistent(ok_g)) {
       add("GRIMMER", i, "inconsistent", paste0("N=", n, ", mean=", m_raw, ", SD=", sd_raw, ", scale=", scale_min, "-", scale_max))
     } else if (length(ok_g) != 1 || is.na(ok_g)) {
-      add("GRIMMER", i, "error", paste0("N=", n, ", mean=", m_raw, ", SD=", sd_raw, "；R scrutiny::grimmer 无法判断该行"))
+      add("GRIMMER", i, "error", paste0("N=", n, ", mean=", m_raw, ", SD=", sd_raw, "; R scrutiny::grimmer could not evaluate this row"))
     }
     if (m >= 0 && m <= 1 && sd >= 0 && sd <= 0.5) {
       debit_cases <- debit_cases + 1
@@ -262,12 +262,12 @@ if (!is.na(ncol) && !is.na(mcol) && !is.na(sdcol)) {
       if (is_inconsistent(ok_d)) {
         add("DEBIT", i, "inconsistent", paste0("N=", n, ", binary mean=", m_raw, ", SD=", sd_raw))
       } else if (length(ok_d) != 1 || is.na(ok_d)) {
-        add("DEBIT", i, "error", paste0("N=", n, ", binary mean=", m_raw, ", SD=", sd_raw, "；R scrutiny::debit 无法判断该行"))
+        add("DEBIT", i, "error", paste0("N=", n, ", binary mean=", m_raw, ", SD=", sd_raw, "; R scrutiny::debit could not evaluate this row"))
       }
     }
   }
-  add("GRIMMER", 0, "ran", paste0("已自动检查 ", grimmer_cases, " 行 N/mean/SD 摘要。"))
-  add("DEBIT", 0, "ran", paste0("已自动检查 ", debit_cases, " 行二元 mean/SD/N 摘要候选；非 0-1 均值或 SD>0.5 的行已跳过。"))
+  add("GRIMMER", 0, "ran", paste0("Automatically checked ", grimmer_cases, " N/mean/SD summary rows."))
+  add("DEBIT", 0, "ran", paste0("Automatically checked ", debit_cases, " binary mean/SD/N summary candidate rows; rows with non-0-1 mean or SD>0.5 were skipped."))
 } else if (!is.na(ncol) && !is.na(sdcol) && !is.na(propcol)) {
   debit_cases <- 0
   for (i in seq_len(nrow(d))) {
@@ -287,11 +287,11 @@ if (!is.na(ncol) && !is.na(mcol) && !is.na(sdcol)) {
       if (is_inconsistent(ok_d)) {
         add("DEBIT", i, "inconsistent", paste0("N=", n, ", binary proportion=", x_raw, ", SD=", sd_raw))
       } else if (length(ok_d) != 1 || is.na(ok_d)) {
-        add("DEBIT", i, "error", paste0("N=", n, ", binary proportion=", x_raw, ", SD=", sd_raw, "；R scrutiny::debit 无法判断该行"))
+        add("DEBIT", i, "error", paste0("N=", n, ", binary proportion=", x_raw, ", SD=", sd_raw, "; R scrutiny::debit could not evaluate this row"))
       }
     }
   }
-  add("DEBIT", 0, "ran", paste0("已自动检查 ", debit_cases, " 行二元比例/SD/N 摘要候选。"))
+  add("DEBIT", 0, "ran", paste0("Automatically checked ", debit_cases, " binary proportion/SD/N summary candidate rows."))
 }
 write.csv(out, stdout(), row.names=FALSE, na="")
 '''
@@ -301,7 +301,7 @@ write.csv(out, stdout(), row.names=FALSE, na="")
         Path(csv_path).unlink(missing_ok=True)
     spec = TOOL_REGISTRY["r_scrutiny"]
     if proc.returncode != 0:
-        finding = _info_finding(name, "r_scrutiny", "r_scrutiny_runtime", "R scrutiny 运行失败。", proc.stderr.strip(), input_type)
+        finding = _info_finding(name, "r_scrutiny", "r_scrutiny_runtime", "R scrutiny run failed.", proc.stderr.strip(), input_type)
         return TableResult(name=name, rows=int(df.shape[0]), columns=int(df.shape[1]), findings=[finding])
     rows = _rows_from_csv_stdout(proc.stdout)
     findings: list[Finding] = []
@@ -310,15 +310,15 @@ write.csv(out, stdout(), row.names=FALSE, na="")
         status = row.get("status", "")
         if status == "inconsistent":
             level = "high"
-            summary = f"R scrutiny 的 {check} 检查发现摘要统计在数学上不可行。"
+            summary = f"R scrutiny {check} check found summary statistics are mathematically infeasible."
             confidence_status = "inconsistent"
         elif status == "error":
             level = "info"
-            summary = f"R scrutiny 的 {check} 检查未能判断该行。"
+            summary = f"R scrutiny {check} check could not evaluate this row."
             confidence_status = "error"
         else:
             level = "info"
-            summary = f"R scrutiny 记录：{check} 已自动运行。"
+            summary = f"R scrutiny record: {check} ran automatically."
             confidence_status = "ran"
         row_count = int(df.shape[0])
         score, basis = _r_confidence(
@@ -332,16 +332,16 @@ write.csv(out, stdout(), row.names=FALSE, na="")
             table=name,
             level=level,
             check=f"R scrutiny {check}",
-            target=f"行{row.get('row', '')}",
+            target=f"row {row.get('row', '')}",
             summary=summary,
             evidence=row.get("detail", ""),
-            detail=f"R scrutiny 输出：{row}",
-            suggestion="确认量表范围、四舍五入精度和变量类型；若是二元/离散摘要，回看原始计数或统计脚本。",
+            detail=f"R scrutiny output: {row}",
+            suggestion="Verify scale range, rounding precision, and variable type; if binary/discrete summary, review original counts or statistical scripts.",
             tool_id="r_scrutiny",
             tool_name=spec.display_name,
             module="r_scrutiny_summary",
             input_type=input_type,
-            routing_reason="用户已勾选 R scrutiny，且系统识别到摘要统计表结构。",
+            routing_reason="User selected R scrutiny, and the system recognized a summary statistics table structure.",
             method_limitations=spec.method_limitations,
             detector_runtime="r",
             dependency_status="ready",
@@ -353,7 +353,7 @@ write.csv(out, stdout(), row.names=FALSE, na="")
         enrich_finding_explanation(finding)
         findings.append(finding)
     if not findings:
-        findings.append(_info_finding(name, "r_scrutiny", "r_scrutiny_summary", "R scrutiny 已运行，未发现可报告的不一致。", f"行数={df.shape[0]}，列数={df.shape[1]}", input_type, "ready"))
+        findings.append(_info_finding(name, "r_scrutiny", "r_scrutiny_summary", "R scrutiny ran; no reportable inconsistencies found.", f"rows={df.shape[0]}，columns={df.shape[1]}", input_type, "ready"))
     return TableResult(name=name, rows=int(df.shape[0]), columns=int(df.shape[1]), findings=findings)
 
 
@@ -375,15 +375,15 @@ decimal_places <- function(x) {
   nchar(sub("^[^.]*\\.", "", x))
 }
 cols <- names(d)
-ncol <- cols[match(TRUE, norm(cols) %in% c("n", "samplesize", "cases", "样本量", "例数", "人数"))]
-mcol <- cols[match(TRUE, norm(cols) %in% c("mean", "means", "均值", "均数", "平均值", "平均数"))]
-sdcol <- cols[match(TRUE, norm(cols) %in% c("sd", "std", "标准差", "stdev"))]
+ncol <- cols[match(TRUE, norm(cols) %in% c("n", "samplesize", "cases", "n", "samplesize", "cases"))]
+mcol <- cols[match(TRUE, norm(cols) %in% c("mean", "means", "mean", "means", "average"))]
+sdcol <- cols[match(TRUE, norm(cols) %in% c("sd", "std", "sd", "std"))]
 out <- data.frame(check=character(), row=integer(), status=character(), detail=character(), stringsAsFactors=FALSE)
 add <- function(check, row, status, detail) {
   out <<- rbind(out, data.frame(check=check, row=row, status=status, detail=detail, stringsAsFactors=FALSE))
 }
 if (is.na(ncol) || is.na(mcol) || is.na(sdcol)) {
-  add("SPRITE", 0, "skipped", "缺少 N、mean 或 SD 列，无法调用 rsprite2::set_parameters 与 find_possible_distribution。")
+  add("SPRITE", 0, "skipped", "Missing N, mean, or SD columns; cannot call rsprite2::set_parameters and find_possible_distribution.")
 } else {
   cases <- 0
   for (i in seq_len(nrow(d))) {
@@ -416,15 +416,15 @@ if (is.na(ncol) || is.na(mcol) || is.na(sdcol)) {
         )
       } else {
         status <- "not_found"
-        detail <- paste0("N=", n, ", mean=", m_raw, ", SD=", sd_raw, ", scale=", scale_min, "-", scale_max, "；未返回可行分布。")
+        detail <- paste0("N=", n, ", mean=", m_raw, ", SD=", sd_raw, ", scale=", scale_min, "-", scale_max, "; no feasible distribution found.")
       }
       list(status=status, detail=detail)
     }, error=function(e) {
-      list(status="impossible", detail=paste0("N=", n, ", mean=", m_raw, ", SD=", sd_raw, ", scale=", scale_min, "-", scale_max, "；", conditionMessage(e)))
+      list(status="impossible", detail=paste0("N=", n, ", mean=", m_raw, ", SD=", sd_raw, ", scale=", scale_min, "-", scale_max, "; ", conditionMessage(e)))
     })
     add("SPRITE", i, res$status, res$detail)
   }
-  add("SPRITE", 0, "ran", paste0("已尝试对 ", cases, " 行 N/mean/SD 摘要调用 rsprite2 SPRITE 分布反推。"))
+  add("SPRITE", 0, "ran", paste0("Attempted rsprite2 SPRITE distribution reconstruction on ", cases, " N/mean/SD summary rows."))
 }
 write.csv(out, stdout(), row.names=FALSE, na="")
 '''
@@ -433,7 +433,7 @@ write.csv(out, stdout(), row.names=FALSE, na="")
     finally:
         Path(csv_path).unlink(missing_ok=True)
     if proc.returncode != 0:
-        finding = _info_finding(name, "r_rsprite2", "r_rsprite2_runtime", "R rsprite2 运行失败。", proc.stderr.strip(), input_type)
+        finding = _info_finding(name, "r_rsprite2", "r_rsprite2_runtime", "R rsprite2 run failed.", proc.stderr.strip(), input_type)
         return TableResult(name=name, rows=int(df.shape[0]), columns=int(df.shape[1]), findings=[finding])
     rows = _rows_from_csv_stdout(proc.stdout)
     findings: list[Finding] = []
@@ -441,12 +441,12 @@ write.csv(out, stdout(), row.names=FALSE, na="")
         status = row.get("status", "")
         if status in {"impossible", "not_found"}:
             level = "high"
-            summary = "R rsprite2 SPRITE 未能找到匹配报告摘要统计的离散分布。"
+            summary = "R rsprite2 SPRITE could not find a discrete distribution matching the reported summary statistics."
             confidence = "medium"
             false_positive_risk = "high"
         else:
             level = "info"
-            summary = "R rsprite2 SPRITE 已实际运行。"
+            summary = "R rsprite2 SPRITE ran successfully."
             confidence = "low"
             false_positive_risk = "medium"
         score, basis = _r_confidence(
@@ -460,16 +460,16 @@ write.csv(out, stdout(), row.names=FALSE, na="")
             table=name,
             level=level,
             check="R rsprite2 SPRITE",
-            target=f"行{row.get('row', '')}",
+            target=f"row {row.get('row', '')}",
             summary=summary,
             evidence=row.get("detail", ""),
-            detail=f"R rsprite2 输出：{row}",
-            suggestion="确认量表范围、均值/SD 小数精度、样本量和是否为离散评分摘要；SPRITE 高风险结果应由人工复核原始频数。",
+            detail=f"R rsprite2 output: {row}",
+            suggestion="Verify scale range, mean/SD decimal precision, sample size, and whether this is a discrete score summary; SPRITE high-risk results should be manually reviewed against original frequencies.",
             tool_id="r_rsprite2",
             tool_name=spec.display_name,
             module="r_rsprite2_sprite",
             input_type=input_type,
-            routing_reason="用户选择高级 R 复核场景，且数据被识别为离散评分摘要。",
+            routing_reason="User selected advanced R review scenario, and the data was recognized as a discrete score summary.",
             method_limitations=spec.method_limitations,
             detector_runtime="r",
             dependency_status="ready",
@@ -481,5 +481,5 @@ write.csv(out, stdout(), row.names=FALSE, na="")
         enrich_finding_explanation(finding)
         findings.append(finding)
     if not findings:
-        findings.append(_info_finding(name, "r_rsprite2", "r_rsprite2_sprite", "R rsprite2 已运行，但未返回可解析结果。", f"行数={df.shape[0]}，列数={df.shape[1]}", input_type, "ready"))
+        findings.append(_info_finding(name, "r_rsprite2", "r_rsprite2_sprite", "R rsprite2 ran but returned no parseable results.", f"rows={df.shape[0]}，columns={df.shape[1]}", input_type, "ready"))
     return TableResult(name=name, rows=int(df.shape[0]), columns=int(df.shape[1]), findings=findings)

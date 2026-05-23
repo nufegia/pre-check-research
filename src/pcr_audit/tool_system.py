@@ -331,14 +331,14 @@ def classify_table(df: pd.DataFrame, source_suffix: str = "") -> dict[str, Any]:
     if suffix in {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".webp"}:
         return {"primary_type": "scientific_image", "input_types": ["scientific_image"], "signals": {}}
 
-    n_cols = columns_matching(df, [r"^n$", r"^sample[_ ]?size$", r"^cases?$", r"^number$", r"samplesize", r"样本量", r"例数", r"人数"])
-    mean_cols = columns_matching(df, [r"^mean$", r"^means$", r"^average$", r"均值", r"均数", r"平均值", r"平均数"])
-    sd_cols = columns_matching(df, [r"^sd$", r"^std$", r"^stdev$", r"标准差", r"stdev"])
-    se_cols = columns_matching(df, [r"^se$", r"^sem$", r"^standard[_ ]?error$", r"标准误", r"standarderror"])
-    ci_cols = columns_matching(df, [r"(^|[^a-z])ci([^a-z]|$)", r"95%ci", r"^lcl$", r"^ucl$", r"^lower$", r"^upper$", r"置信区间", r"下限", r"上限", r"lcl", r"ucl"])
-    p_cols = columns_matching(df, [r"^p$", r"^p[_ ]?value$", r"pvalue", r"^pval", r"p值"])
-    stat_cols = columns_matching(df, [r"^t$", r"^f$", r"^chi", r"χ", r"^df$", r"^dof$", r"卡方", r"自由度"])
-    score_cols = columns_matching(df, [r"score", r"likert", r"scale", r"rating", r"评分", r"量表", r"总分"])
+    n_cols = columns_matching(df, [r"^n$", r"^sample[_ ]?size$", r"^cases?$", r"^number$", r"samplesize"])
+    mean_cols = columns_matching(df, [r"^mean$", r"^means$", r"^average$"])
+    sd_cols = columns_matching(df, [r"^sd$", r"^std$", r"^stdev$"])
+    se_cols = columns_matching(df, [r"^se$", r"^sem$", r"^standard[_ ]?error$"])
+    ci_cols = columns_matching(df, [r"(^|[^a-z])ci([^a-z]|$)", r"95%ci", r"^lcl$", r"^ucl$", r"^lower$", r"^upper$"])
+    p_cols = columns_matching(df, [r"^p$", r"^p[_ ]?value$", r"pvalue", r"^pval"])
+    stat_cols = columns_matching(df, [r"^t$", r"^f$", r"^chi", r"χ", r"^df$", r"^dof$"])
+    score_cols = columns_matching(df, [r"score", r"likert", r"scale", r"rating"])
 
     summary_score = bool(n_cols and mean_cols and score_cols)
     summary_stats = bool(n_cols and (mean_cols or sd_cols or se_cols or ci_cols or p_cols or stat_cols))
@@ -385,7 +385,7 @@ PMID_RE = re.compile(r"\bPMID\s*:?\s*\d{5,10}\b", re.I)
 
 def classify_text(text: str) -> dict[str, Any]:
     has_apa = bool(APA_STAT_RE.search(text or ""))
-    has_reference = bool(DOI_RE.search(text or "") or PMID_RE.search(text or "") or re.search(r"^\s*(references|bibliography|参考文献|参考|引用)\s*$", text or "", re.I | re.M))
+    has_reference = bool(DOI_RE.search(text or "") or PMID_RE.search(text or "") or re.search(r"^\s*(references|bibliography)\s*$", text or "", re.I | re.M))
     primary = "apa_statistical_text" if has_apa else ("reference_list" if has_reference else "plain_text")
     input_types = []
     if has_apa:

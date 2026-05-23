@@ -98,7 +98,7 @@ def enrich_finding_explanation(finding: Finding) -> None:
     if not finding.location:
         finding.location = finding.table
     if not finding.review_actions:
-        finding.review_actions = finding.review_steps
+        finding.review_actions = finding.review_steps or finding.suggestion
     if not finding.confidence_basis:
         finding.confidence_basis = (
             "Generated from deterministic rules or reproducible formulas; still requires human judgment considering study design, original records, and material extraction quality."

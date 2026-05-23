@@ -510,7 +510,7 @@ def analyze_images(source: Path, workdir: Path | None = None) -> list[TableResul
 
     findings_meta = _image_metadata_findings(source, images)
 
-    blot_candidates = [path for path in images if re.search(r"blot|western|gel|wb|lane|膜|凝胶", path.name, re.I)]
+    blot_candidates = [path for path in images if re.search(r"blot|western|gel|wb|lane", path.name, re.I)]
     if blot_candidates:
         findings_blot.append(
             finding(

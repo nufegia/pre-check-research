@@ -18,12 +18,12 @@ from pcr_audit.models import Finding, TableResult, enrich_finding_explanation
 
 
 STAT_NAMES = {
-    "n": ("n", "sample_size", "cases", "samplesize", "number", "样本量", "例数", "人数"),
-    "mean": ("mean", "means", "average", "均值", "均数", "平均值", "平均数"),
-    "sd": ("sd", "std", "stdev", "标准差"),
-    "se": ("se", "sem", "standard_error", "标准误", "sterr"),
-    "count": ("count", "freq", "frequency", "n_pos", "频数", "计数"),
-    "percent": ("percent", "percentage", "prop", "rate", "百分比", "比例", "率"),
+    "n": ("n", "sample_size", "cases", "samplesize", "number"),
+    "mean": ("mean", "means", "average"),
+    "sd": ("sd", "std", "stdev"),
+    "se": ("se", "sem", "standard_error", "sterr"),
+    "count": ("count", "freq", "frequency", "n_pos"),
+    "percent": ("percent", "percentage", "prop", "rate"),
 }
 
 

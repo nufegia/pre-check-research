@@ -61,9 +61,6 @@ class OrdinalConfig:
         "stage",
         "likert",
         "rating",
-        "评分",
-        "等级",
-        "分级",
     )
 
 
