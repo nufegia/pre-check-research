@@ -1,5 +1,7 @@
 # pre-check-research (pcr)
 
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://github.com/PreCheckResearch/pre-check-research) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Pre-check research data risk audit toolkit. The project name is `pre-check-research`; `pcr` is the abbreviation used for CLI commands, output stems, schemas, and agent workflows.
 
 pcr routes research materials to deterministic CLI tools and emits mergeable, explainable, reviewable risk signals. Reports must stay at the level of "anomalous signal, evidence, possible normal explanations, review steps" and must not make misconduct determinations.

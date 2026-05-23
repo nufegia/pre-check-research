@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://pcr.local/schemas/finding.schema.json",
+  "$id": "https://raw.githubusercontent.com/PreCheckResearch/pre-check-research/main/tools/common/schemas/finding.schema.json",
   "title": "PCR Finding Payload",
   "type": "object",
   "required": [

@@ -36,18 +36,18 @@
 
 | 用例 | 类型 | 通过 | 秒 | 风险信号 | 提示 | 缺失工具 | 缺失检查 |
 |---|---:|---:|---:|---:|---:|---|---|
-| raw_suspicious | single_run | 是 | 3.71 | 16 | 0 |  |  |
-| raw_clean_control | single_run | 是 | 1.175 | 0 | 0 |  |  |
-| summary_suspicious | single_run | 是 | 2.499 | 17 | 2 |  |  |
-| p_values_suspicious | single_run | 是 | 1.063 | 2 | 0 |  |  |
-| apa_stats_suspicious | single_run | 是 | 2.228 | 2 | 0 |  |  |
-| paper_refs_and_claims_offline | single_run | 是 | 1.095 | 0 | 4 |  |  |
-| analysis_suspicious | single_run | 是 | 1.488 | 1 | 1 |  |  |
-| analysis_manual_unsupported | single_run | 是 | 1.058 | 0 | 3 |  |  |
-| figures_project | project | 是 | 2.909 | 11 | 13 |  |  |
-| project_full | project | 是 | 2.694 | 12 | 19 |  |  |
-| corpus_screen | corpus | 是 | 2.12 | 4 | 0 |  |  |
-| provenance_change | provenance_change | 是 | 2.111 | 1 | 5 |  |  |
+| raw_suspicious | single_run | 是 | 1.754 | 16 | 0 |  |  |
+| raw_clean_control | single_run | 是 | 1.148 | 0 | 0 |  |  |
+| summary_suspicious | single_run | 是 | 2.293 | 17 | 2 |  |  |
+| p_values_suspicious | single_run | 是 | 1.029 | 2 | 0 |  |  |
+| apa_stats_suspicious | single_run | 是 | 2.147 | 2 | 0 |  |  |
+| paper_refs_and_claims_offline | single_run | 是 | 1.071 | 0 | 4 |  |  |
+| analysis_suspicious | single_run | 是 | 1.447 | 1 | 1 |  |  |
+| analysis_manual_unsupported | single_run | 是 | 1.028 | 0 | 3 |  |  |
+| figures_project | project | 是 | 1.286 | 11 | 13 |  |  |
+| project_full | project | 是 | 2.512 | 12 | 19 |  |  |
+| corpus_screen | corpus | 是 | 2.114 | 4 | 0 |  |  |
+| provenance_change | provenance_change | 是 | 2.089 | 1 | 5 |  |  |
 | external_refs_online | project_network | 是 | 0.0 | 0 | 0 |  |  |
 
 ## 工具覆盖
