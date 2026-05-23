@@ -122,7 +122,7 @@ Before handing off the HTML, verify:
 
 ## When Not To Use This Skill
 
-- The user only wants raw detector output merged: use `data-risk-audit` or the
+- The user only wants raw detector output merged: use `pcr-data-risk-audit` or the
   `pcr-report` CLI.
 - The user wants the narrative delivery report written or revised: use
   `pcr-delivery-report`.

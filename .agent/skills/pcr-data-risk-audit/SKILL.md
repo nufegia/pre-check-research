@@ -1,5 +1,5 @@
 ---
-name: data-risk-audit
+name: pcr-data-risk-audit
 description: Route-first PCR mvp2 workflow for research data, manuscript, image, code, and project risk auditing.
 ---
 

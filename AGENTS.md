@@ -43,4 +43,4 @@ Schema: `tools/common/schemas/finding.schema.json`
 
 ## Skills
 
-See `.agent/skills/data-risk-audit/SKILL.md` for full workflow and tool selection rules.
+See `.agent/skills/pcr-data-risk-audit/SKILL.md` for full workflow and tool selection rules.

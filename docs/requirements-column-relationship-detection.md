@@ -286,7 +286,7 @@ def analyze_raw_data_rules(...):
 | `src/pcr_audit/detectors/raw.py` | 若有对 `digit_distribution` 的独立包装调用，同步移除 |
 | `src/pcr_audit/router.py` | 从路由映射中移除 `digit_distribution` |
 | `src/pcr_audit/tool_system.py` | 若 `TOOL_REGISTRY` 中有独立注册，移除 `digit_distribution` 条目 |
-| `.agent/skills/data-risk-audit/SKILL.md` | 更新检测项清单 |
+| `.agent/skills/pcr-data-risk-audit/SKILL.md` | 更新检测项清单 |
 | 合约测试 | 更新 golden JSON（工具 ID 从 `digit_distribution` 变为 `raw_data_rules`） |
 
 ### 3.5 向后兼容
@@ -447,7 +447,7 @@ def analyze_raw_data_rules(...):
 |------|------|
 | `src/pcr_audit/detectors/raw_legacy.py` | `check_table_level` 中扩展重复行/列检测逻辑，新增 `check_high_similarity_rows` 和 `check_high_similarity_cols` 函数 |
 | `src/pcr_audit/detectors/raw.py` | `_append_near_duplicate_rows` 函数及其调用点**移除**（检测能力已吸收到 `raw_legacy.py` 的统一框架中） |
-| `.agent/skills/data-risk-audit/SKILL.md` | 从检测项清单中移除"近似重复行"，更新"重复行"→"重复行/高度重复行"、"重复列"→"重复列/高度重复列" |
+| `.agent/skills/pcr-data-risk-audit/SKILL.md` | 从检测项清单中移除"近似重复行"，更新"重复行"→"重复行/高度重复行"、"重复列"→"重复列/高度重复列" |
 | `src/pcr_audit/tool_system.py` | 同上，更新工具注册表中的检测项名称 |
 | 合约测试 | 更新 golden JSON（新增 finding 类型） |
 
@@ -505,7 +505,7 @@ def analyze_raw_data_rules(...):
 | `src/pcr_audit/detectors/raw_legacy.py` | 删除 `check_group_similarity` 函数（第 688-732 行）；从 `analyze_raw_data_rules` 中移除对该函数的调用（第 1289 行） |
 | `src/pcr_audit/detectors/raw.py` | 删除 `_append_group_balance` 函数（第 116-157 行）；从 `analyze_raw_data_rules` 中移除对该函数的调用（第 168 行） |
 | `src/pcr_audit/tool_system.py` | 更新 `raw_data_rules` 工具的检测项清单，移除这两个条目 |
-| `.agent/skills/data-risk-audit/SKILL.md` | 从检测项清单中移除"分组过度相似"和"多变量分组异常均衡" |
+| `.agent/skills/pcr-data-risk-audit/SKILL.md` | 从检测项清单中移除"分组过度相似"和"多变量分组异常均衡" |
 | 合约测试 | 更新 golden JSON（不再包含这两个检测项的 finding） |
 
 ### 5.4 向后兼容
@@ -813,7 +813,7 @@ def analyze_raw_data_rules(...):
 |------|------|
 | `src/pcr_audit/detectors/raw_legacy.py` | 新增 `check_rare_categories` 和 `check_ordinal_extreme_concentration` 函数；在 `analyze_raw_data_rules` 中追加调用 |
 | `src/pcr_audit/tool_system.py` | 更新 `raw_data_rules` 工具的检测项清单 |
-| `.agent/skills/data-risk-audit/SKILL.md` | 在检测项清单中添加"低频类别"和"有序变量极端集中"两项 |
+| `.agent/skills/pcr-data-risk-audit/SKILL.md` | 在检测项清单中添加"低频类别"和"有序变量极端集中"两项 |
 | 合约测试 | 新增测试用例和 golden JSON |
 
 ### 8.6 配置项
@@ -879,7 +879,7 @@ def analyze_raw_data_rules(...):
 | 路由调用 | `analyze_raw_data_rules()` 内追加调用 | 在现有列级遍历后、`check_group_similarity` 之前插入 |
 | 工具注册 | `src/pcr_audit/tool_system.py` | 作为 `raw_data_rules` 工具的新增子检查项，或独立注册为 `column_relationship` 工具 |
 | 路由配置 | `src/pcr_audit/router.py` | 在表格型输入的路由规则中添加适用条件 |
-| 技能文件 | `.agent/skills/data-risk-audit/SKILL.md` | 在检测项清单中添加两个新项的说明 |
+| 技能文件 | `.agent/skills/pcr-data-risk-audit/SKILL.md` | 在检测项清单中添加两个新项的说明 |
 
 ### 10.2 与路由系统的关系
 

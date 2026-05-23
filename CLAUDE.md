@@ -25,15 +25,15 @@ Optional R packages: `install.packages(c("statcheck", "scrutiny", "rsprite2"))`
 
 All skills are defined under `.agent/skills/<skill-name>/SKILL.md`. Invoke by calling `Skill` with the skill name, or by using the `/` slash command if registered.
 
-### data-risk-audit
+### pcr-data-risk-audit
 
 Primary audit skill. Handles the full workflow (route → detect → report) for single files and project folders.
 
 - **When to use**: User asks to audit, inspect, check, or review research data, manuscripts, images, code, or mixed project materials. **Use this first** rather than running CLI commands directly.
-- **Single file audit**: `Skill("data-risk-audit", args="审计：<input> 输出到：<output>")`
+- **Single file audit**: `Skill("pcr-data-risk-audit", args="审计：<input> 输出到：<output>")`
   - Internally runs `pcr-audit route` then `pcr-audit run --scenario auto`.
   - Input paths: single CSV, XLSX, DOCX, PDF, TXT, MD, image, or analysis code file.
-- **Project folder audit**: Follow the SOP in `.agent/skills/data-risk-audit/SKILL.md`.
+- **Project folder audit**: Follow the SOP in `.agent/skills/pcr-data-risk-audit/SKILL.md`.
 - **Output naming**: All files use `pcr` prefix (e.g., `pcr.audit.md`, `pcr.audit.route.json`). Never derive filenames from the input name.
 
 ### pcr-delivery-report
