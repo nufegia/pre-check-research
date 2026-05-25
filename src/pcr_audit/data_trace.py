@@ -9,7 +9,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-import numpy as np
 import pandas as pd
 
 from pcr_audit.crosscheck import coerce_numeric
@@ -147,7 +146,7 @@ def _summary_values(paths: list[Path]) -> list[SummaryValue]:
             if not stat_cols:
                 continue
             label_cols = [str(col) for col in df.columns if str(col) not in stat_cols]
-            for idx, row in df.iterrows():
+            for row_number, (_idx, row) in enumerate(df.iterrows(), start=1):
                 label = ""
                 for col in label_cols:
                     raw = row.get(col)
@@ -158,7 +157,7 @@ def _summary_values(paths: list[Path]) -> list[SummaryValue]:
                 for col, role in stat_cols.items():
                     series_value = coerce_numeric(pd.Series([row.get(col)])).iloc[0]
                     if pd.notna(series_value):
-                        values.append(SummaryValue(path, table, int(idx) + 1, label, role, float(series_value)))
+                        values.append(SummaryValue(path, table, row_number, label, role, float(series_value)))
     return values
 
 
@@ -343,7 +342,9 @@ def run_code_sandbox(project_source: Path, code_paths: list[Path], workdir: Path
         except subprocess.TimeoutExpired as exc:
             level = "info"
             summary = "Analysis script sandbox rerun timed out; skipped."
-            evidence = f"timeout={timeout}s; stdout={(exc.stdout or '')[-300:]}; stderr={(exc.stderr or '')[-300:]}"
+            stdout = (exc.stdout or b"").decode(errors="replace") if isinstance(exc.stdout, bytes) else str(exc.stdout or "")
+            stderr = (exc.stderr or b"").decode(errors="replace") if isinstance(exc.stderr, bytes) else str(exc.stderr or "")
+            evidence = f"timeout={timeout}s; stdout={stdout[-300:]}; stderr={stderr[-300:]}"
         findings.append(
             _code_finding(
                 level,

@@ -16,7 +16,7 @@ Conclusion: The core detection pipeline is stably covered by automated benchmark
 - Raw data: Covers duplicate/highly similar rows and columns, fixed steps, high-frequency values, missing-concentrated-by-group, terminal digit distribution, inter-column relationships, and non-continuous variable anomalies; clean controls maintain 0 risk signals.
 - Summary statistics: Covers SE/SD/N, CI, percent/count, p/t/df, p-value domain, and R scrutiny/SPRITE feasibility checks.
 - In-text statistics: Covers R statcheck p-value consistency checks on APA/NHST expressions.
-- Literature & network: Covers DOI/PMID parsing, Crossref/OpenAlex/NCBI metadata queries, and citation claim extraction.
+- Literature & network: Covers DOI/PMID parsing, Crossref/OpenAlex/PubPeer/NCBI metadata queries, and citation claim extraction.
 - Images: Covers image discovery, internal duplicates, local copy-move, metadata quality, and Western blot/gel review checklist.
 - Code & project: Covers Python/R script reruns, Stata/SPSS/SAS read-only prompts, cross-material data reconciliation, project manifest, provenance version chain, and local corpus screening.
 
@@ -36,18 +36,18 @@ Not executed (--no-network used).
 
 | Case | Type | Pass | Seconds | Risk Signals | Info | Missing Tools | Missing Checks |
 |---|---:|---:|---:|---:|---|---|
-| raw_suspicious | single_run | Yes | 1.16 | 16 | 0 |  |  |
-| raw_clean_control | single_run | Yes | 1.046 | 0 | 0 |  |  |
-| summary_suspicious | single_run | Yes | 2.083 | 17 | 2 |  |  |
-| p_values_suspicious | single_run | Yes | 1.012 | 2 | 0 |  |  |
-| apa_stats_suspicious | single_run | Yes | 2.193 | 2 | 0 |  |  |
-| paper_refs_and_claims_offline | single_run | Yes | 1.011 | 0 | 4 |  |  |
-| analysis_suspicious | single_run | Yes | 1.378 | 1 | 1 |  |  |
-| analysis_manual_unsupported | single_run | Yes | 1.012 | 0 | 3 |  |  |
-| figures_project | project | Yes | 1.205 | 11 | 13 |  |  |
-| project_full | project | Yes | 2.555 | 12 | 19 |  |  |
-| corpus_screen | corpus | Yes | 2.355 | 4 | 0 |  |  |
-| provenance_change | provenance_change | Yes | 2.067 | 1 | 5 |  |  |
+| raw_suspicious | single_run | Yes | 1.284 | 16 | 0 |  |  |
+| raw_clean_control | single_run | Yes | 1.147 | 0 | 0 |  |  |
+| summary_suspicious | single_run | Yes | 2.279 | 17 | 2 |  |  |
+| p_values_suspicious | single_run | Yes | 1.039 | 2 | 0 |  |  |
+| apa_stats_suspicious | single_run | Yes | 2.156 | 2 | 0 |  |  |
+| paper_refs_and_claims_offline | single_run | Yes | 1.072 | 0 | 4 |  |  |
+| analysis_suspicious | single_run | Yes | 1.42 | 1 | 1 |  |  |
+| analysis_manual_unsupported | single_run | Yes | 1.054 | 0 | 3 |  |  |
+| figures_project | project | Yes | 1.201 | 11 | 13 |  |  |
+| project_full | project | Yes | 2.471 | 12 | 19 |  |  |
+| corpus_screen | corpus | Yes | 2.104 | 4 | 0 |  |  |
+| provenance_change | provenance_change | Yes | 2.072 | 1 | 5 |  |  |
 | external_refs_online | project_network | Yes | 0.0 | 0 | 0 |  |  |
 
 ## Tool Coverage
@@ -93,5 +93,5 @@ Not executed (--no-network used).
 ## Interpretation Boundaries
 
 The high/medium/low levels in this report are benchmark risk signals, not conclusions of academic misconduct, fabrication, or fraud. `info` records are run statuses, dependency states, skip reasons, or coverage notes; they do not count toward risk conclusions.
-Network test cases depend on real-time availability, certificate chains, and rate limiting of Crossref, OpenAlex, and NCBI. If network cases fail, first check HTTP/SSL/rate-limit information in evidence before concluding it is a detector regression.
+Network test cases depend on real-time availability, certificate chains, credentials, and rate limiting of Crossref, OpenAlex, PubPeer, and NCBI. If network cases fail, first check HTTP/SSL/rate-limit information in evidence before concluding it is a detector regression.
 All weak-signal tools are only for surfacing human review directions. Final review should return to original data, scripts, image source files, literature metadata, and audit logs.

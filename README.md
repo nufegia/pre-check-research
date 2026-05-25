@@ -75,7 +75,7 @@ The report is designed to support a defensible review process. It does not repla
 | **P-values** | `p_value_collection` | Domain validity (p outside [0,1]), just-significant clustering |
 | **Statistical text** | `statcheck` | APA/NHST in-text statistic vs reported p-value consistency |
 | **Images** | `image_audit` | Internal duplicates (aHash/dHash/pHash), rotated/flipped copies, copy-move triage, western blot/gel review |
-| **References** | `reference_audit` | DOI/PMID parsing, Crossref/OpenAlex/NCBI metadata queries, citation claim extraction |
+| **References** | `reference_audit` | DOI/PMID parsing, Crossref/OpenAlex/PubPeer/NCBI metadata queries, citation claim extraction |
 | **Code** | `code_audit`, sandbox | Pattern scanning (hardcoded paths, exclusion clues), Python/R script rerun with output capture |
 | **Corpus** | `corpus_signals` | Cross-manuscript text similarity (simhash, Jaccard), reference overlap, papermill phrase signals |
 | **Provenance** | `provenance` | SHA-256 file hashing, append-only JSONL ledger, verify/diff change detection |
@@ -283,7 +283,7 @@ Built-in example projects for testing and demonstration:
 ## Privacy and Security
 
 - **All computation is local.** No data is uploaded to external services.
-- External lookups (Crossref, OpenAlex, NCBI) only query public identifiers (DOI, PMID) and can be disabled with `--no-external-lookups`.
+- External lookups (Crossref, OpenAlex, PubPeer, NCBI) only query public identifiers (DOI, PMID) and can be disabled with `--no-external-lookups`.
 - Code reruns execute in temporary project copies with timeouts and minimal environment variables. This is not a strong security sandbox — treat unknown code accordingly.
 - SHA-256 provenance ledgers are append-only and never transmit file contents.
 

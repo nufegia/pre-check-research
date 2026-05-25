@@ -21,6 +21,7 @@ from pcr_audit.product.common import (
     finding,
     is_audit_material_path,
     iter_audit_files,
+    normalize_doi,
 )
 from pcr_audit.product.image_audit import _hamming, image_fingerprints
 from pcr_audit.product.project_manifest import parse_project_spec
@@ -66,7 +67,7 @@ def _extract_metadata_from_text(text: str) -> dict[str, Any]:
         "authors": sorted(authors),
         "institutions": sorted(institutions),
         "email_domains": sorted({match.group(1).lower() for match in EMAIL_RE.finditer(text)}),
-        "dois": sorted({doi.rstrip(".,);]").lower() for doi in DOI_RE.findall(text)}),
+        "dois": sorted({normalized.lower() for doi in DOI_RE.findall(text) if (normalized := normalize_doi(doi))}),
         "pmids": sorted(PMID_RE.findall(text)),
     }
 

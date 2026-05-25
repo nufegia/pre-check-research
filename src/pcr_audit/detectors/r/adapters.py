@@ -11,8 +11,6 @@ import csv
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Any
-
 import pandas as pd
 
 from pcr_audit.models import Finding, TableResult, enrich_finding_explanation

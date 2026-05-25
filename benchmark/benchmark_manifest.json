@@ -110,8 +110,8 @@
       "kind": "project_network",
       "input": "inputs/project_external",
       "expected_tools": ["reference_audit", "citation_claim_check", "provenance_hash"],
-      "expected_checks": ["DOI title mismatch", "PMID title mismatch", "DOI external metadata unverifiable", "PMID metadata verification"],
-      "expected_external_services": ["crossref", "openalex", "ncbi"],
+      "expected_checks": ["DOI title mismatch", "PMID title mismatch", "DOI external metadata absent", "PMID metadata verification"],
+      "expected_external_services": ["crossref", "openalex", "pubpeer", "ncbi"],
       "min_risk_findings": 3
     }
   ]

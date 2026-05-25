@@ -14,7 +14,7 @@ from pcr_audit.product_detectors import (
     provenance_record,
     provenance_verify,
 )
-from pcr_audit.product.image_audit import _is_page_sized_pdf_image
+from pcr_audit.product.image_audit import _is_page_sized_pdf_image, _is_pdf_layout_artifact_image_size
 from pcr_audit.router import build_route_payload
 
 
@@ -69,6 +69,21 @@ def test_pdf_image_extraction_flows_into_image_audit(tmp_path: Path, monkeypatch
     assert any(finding.tool_id == "image_metadata_audit" for finding in findings)
 
 
+def test_pdf_tiny_layout_images_do_not_flow_into_image_audit(tmp_path: Path, monkeypatch) -> None:
+    Image = pytest.importorskip("PIL.Image")
+    pdf = tmp_path / "paper.pdf"
+    pdf.write_bytes(b"%PDF-1.4 fake")
+    icon = tmp_path / "paper_p1_img1.png"
+    Image.new("RGB", (18, 24), "white").save(icon)
+
+    monkeypatch.setattr("pcr_audit.product_detectors.extract_pdf_images", lambda _source, _workdir: ([icon], ""))
+    results = analyze_images(pdf, tmp_path / "work")
+    findings = [finding for result in results for finding in result.findings]
+
+    assert any(finding.tool_id == "image_extract" and "skipped_tiny_layout_image" in finding.evidence for finding in findings)
+    assert not any(finding.tool_id == "image_metadata_audit" and finding.target == icon.name for finding in findings)
+
+
 def test_pdf_page_sized_images_are_not_valid_audit_units() -> None:
     class Page:
         width = 600
@@ -77,6 +92,12 @@ def test_pdf_page_sized_images_are_not_valid_audit_units() -> None:
     assert _is_page_sized_pdf_image(Page(), (0, 0, 600, 800))
     assert _is_page_sized_pdf_image(Page(), (10, 12, 592, 784))
     assert not _is_page_sized_pdf_image(Page(), (100, 120, 420, 460))
+
+
+def test_pdf_tiny_images_are_not_valid_audit_units() -> None:
+    assert _is_pdf_layout_artifact_image_size(18, 24)
+    assert _is_pdf_layout_artifact_image_size(200, 40)
+    assert not _is_pdf_layout_artifact_image_size(180, 120)
 
 
 def test_provenance_jsonl_record_verify_and_diff(tmp_path: Path) -> None:

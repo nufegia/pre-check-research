@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pre-check-research"
-version = "1.1.0"
+version = "1.2.0"
 description = "Pre-submission research data audit toolkit for reproducibility checks, statistical consistency screening, and research integrity workflows."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -53,7 +53,12 @@ image = [
   "opencv-python-headless>=4.8",
   "scikit-image>=0.22",
 ]
-dev = ["pytest>=8.0"]
+dev = [
+  "mypy>=1.8",
+  "pandas-stubs",
+  "pytest>=8.0",
+  "ruff>=0.4",
+]
 
 [project.scripts]
 pcr-extract = "pcr_audit.cli:extract_main"
@@ -73,3 +78,12 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/pcr_audit/product_detectors.py" = ["F401"]
+
+[tool.mypy]
+
+[[tool.mypy.overrides]]
+module = ["scipy", "scipy.*"]
+ignore_missing_imports = true

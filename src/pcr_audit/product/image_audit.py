@@ -17,6 +17,8 @@ from pcr_audit.product.common import IMAGE_SUFFIXES, finding, iter_audit_files
 
 PDF_PAGE_IMAGE_MAX_COVERAGE = 0.72
 PDF_PAGE_IMAGE_MIN_MARGIN = 18.0
+PDF_LAYOUT_ARTIFACT_MIN_SIDE = 80
+PDF_LAYOUT_ARTIFACT_MIN_AREA = 10_000
 
 def iter_image_files(source: Path) -> list[Path]:
     if source.is_dir():
@@ -80,6 +82,34 @@ def _is_page_sized_pdf_image(page: Any, bbox: tuple[float, float, float, float])
     return _pdf_image_coverage(page, bbox) >= PDF_PAGE_IMAGE_MAX_COVERAGE or near_edges
 
 
+def _is_pdf_layout_artifact_image_size(width: int, height: int) -> bool:
+    return min(width, height) < PDF_LAYOUT_ARTIFACT_MIN_SIDE or width * height < PDF_LAYOUT_ARTIFACT_MIN_AREA
+
+
+def _pdf_layout_artifact_note(page_no: int, image_no: int, width: int, height: int) -> str:
+    return f"p{page_no}/img{image_no}:skipped_tiny_layout_image size={width}x{height}"
+
+
+def _filter_pdf_layout_artifacts(images: list[Path]) -> tuple[list[Path], list[str]]:
+    Image = _pil_image_module()
+    if Image is None:
+        return images, []
+    kept: list[Path] = []
+    notes: list[str] = []
+    for path in images:
+        try:
+            with Image.open(path) as img:
+                width, height = img.size
+        except Exception:
+            kept.append(path)
+            continue
+        if _is_pdf_layout_artifact_image_size(width, height):
+            notes.append(f"{path.name}:skipped_tiny_layout_image size={width}x{height}")
+            continue
+        kept.append(path)
+    return kept, notes
+
+
 def extract_pdf_images(source: Path, out_dir: Path) -> tuple[list[Path], str]:
     images: list[Path] = []
     if source.suffix.lower() != ".pdf":
@@ -113,6 +143,10 @@ def extract_pdf_images(source: Path, out_dir: Path) -> tuple[list[Path], str]:
                         try:
                             data = stream.get_data()
                             with Image.open(BytesIO(data)) as img:
+                                width, height = img.size
+                                if _is_pdf_layout_artifact_image_size(width, height):
+                                    notes.append(_pdf_layout_artifact_note(page_no, image_no, width, height))
+                                    continue
                                 img.save(out)
                             saved = True
                         except Exception:
@@ -120,6 +154,10 @@ def extract_pdf_images(source: Path, out_dir: Path) -> tuple[list[Path], str]:
                     if not saved:
                         try:
                             rendered = page.crop(bbox).to_image(resolution=150).original
+                            width, height = rendered.size
+                            if _is_pdf_layout_artifact_image_size(width, height):
+                                notes.append(_pdf_layout_artifact_note(page_no, image_no, width, height))
+                                continue
                             rendered.save(out)
                             saved = True
                         except Exception as exc:
@@ -262,7 +300,10 @@ def _orb_similarity(left: Path, right: Path) -> dict[str, Any] | None:
     right_img = cv2.imread(str(right), cv2.IMREAD_GRAYSCALE)
     if left_img is None or right_img is None:
         return None
-    orb = cv2.ORB_create(nfeatures=800)
+    orb_create = getattr(cv2, "ORB_create", None)
+    if orb_create is None:
+        return None
+    orb = orb_create(nfeatures=800)
     kp1, des1 = orb.detectAndCompute(left_img, None)
     kp2, des2 = orb.detectAndCompute(right_img, None)
     if des1 is None or des2 is None or not kp1 or not kp2:
@@ -286,13 +327,16 @@ def _copy_move_matches(path: Path) -> dict[str, Any] | None:
     img = cv2.imread(str(path), cv2.IMREAD_GRAYSCALE)
     if img is None:
         return None
-    orb = cv2.ORB_create(nfeatures=1200)
+    orb_create = getattr(cv2, "ORB_create", None)
+    if orb_create is None:
+        return None
+    orb = orb_create(nfeatures=1200)
     keypoints, descriptors = orb.detectAndCompute(img, None)
     if descriptors is None or len(keypoints) < 12:
         return {"matches": 0, "keypoints": len(keypoints or []), "samples": []}
     matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=False)
     raw_matches = matcher.knnMatch(descriptors, descriptors, k=3)
-    samples = []
+    samples: list[dict[str, Any]] = []
     vectors: list[tuple[int, int]] = []
     for matches in raw_matches:
         for match in matches:
@@ -386,6 +430,9 @@ def analyze_images(source: Path, workdir: Path | None = None) -> list[TableResul
     pdf_note = ""
     if source.suffix.lower() == ".pdf":
         images, pdf_note = _compat_extract_pdf_images(source, workdir)
+        images, artifact_notes = _filter_pdf_layout_artifacts(images)
+        if artifact_notes:
+            pdf_note = "; ".join(part for part in [pdf_note, "; ".join(artifact_notes[:5])] if part)
     findings_extract: list[Finding] = []
     findings_dup: list[Finding] = []
     findings_copy: list[Finding] = []

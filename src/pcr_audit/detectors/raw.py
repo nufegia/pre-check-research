@@ -15,7 +15,7 @@ import re
 import sys
 import zipfile
 from collections import Counter
-from dataclasses import asdict, dataclass
+from dataclasses import asdict
 from pathlib import Path
 from typing import Any, Iterable
 from xml.etree import ElementTree as ET
@@ -307,6 +307,10 @@ def data_rows(indexes: Iterable[Any], limit: int = 10) -> str:
     return ", ".join(rows)
 
 
+def row_label(index: Any) -> str:
+    return str(int(index) + 1) if isinstance(index, (int, np.integer)) else str(index)
+
+
 def compact_value(value: Any) -> str:
     if pd.isna(value):
         return "NA"
@@ -502,7 +506,7 @@ def comparable_similarity(left: pd.Series, right: pd.Series) -> tuple[int, int, 
     comparable = 0
     diffs: list[str] = []
     for col, left_value in left.items():
-        right_value = right[col]
+        right_value = right.get(col)
         left_text = normalized_cell(left_value)
         right_text = normalized_cell(right_value)
         if not left_text or not right_text:
@@ -739,8 +743,11 @@ def check_decimal_precision(
     mask = values.notna()
     if mask.sum() < 20:
         return
-    places = [decimal_places(x) for x in raw[mask]]
-    places = [p for p in places if p is not None]
+    places: list[int] = []
+    for value in raw[mask]:
+        place = decimal_places(value)
+        if place is not None:
+            places.append(place)
     if len(places) < 20:
         return
     counts = Counter(places)
@@ -895,12 +902,12 @@ def check_outliers(table_name: str, col: str, values: pd.Series, findings: list[
     mad = float(stats.median_abs_deviation(clean, scale="normal"))
     if mad == 0:
         return
-    robust_z = np.abs((clean - median) / mad)
+    robust_z = ((clean - median) / mad).abs()
     outliers = int((robust_z > 3.5).sum())
     if outliers >= 2 and outliers / len(clean) >= 0.05:
         sample = robust_z[robust_z > 3.5].sort_values(ascending=False).head(5)
         sample_text = "; ".join(
-            f"row {int(idx) + 1}: value={clean.loc[idx]:.6g}, robust_z={z:.2f}" for idx, z in sample.items()
+            f"row {row_label(idx)}: value={clean.get(idx):.6g}, robust_z={z:.2f}" for idx, z in sample.items()
         )
         outlier_ratio = outliers / len(clean)
         max_z = float(sample.iloc[0]) if len(sample) else 0.0
@@ -1357,7 +1364,7 @@ def check_basic_summary_values(
                 "Sample size column contains non-positive or non-integer values.",
                 f"Abnormal cells={len(bad)}",
                 "Sample size should usually be a positive integer; check for column identification errors, unit errors, or table entry errors.",
-                f"Examples: {'; '.join(f'row {int(i)+1}: {v:g}' for i, v in bad.head(8).items())}",
+                f"Examples: {'; '.join(f'row {row_label(i)}: {v:g}' for i, v in bad.head(8).items())}",
             )
 
     for label, col in [("SD", sd_col), ("SE", se_col)]:
@@ -1375,7 +1382,7 @@ def check_basic_summary_values(
                 f"{label} column contains negative values.",
                 f"Abnormal cells={len(bad)}",
                 f"{label} should not be negative; check summary table generation formula or data entry.",
-                f"Examples: {'; '.join(f'row {int(i)+1}: {v:g}' for i, v in bad.head(8).items())}",
+                f"Examples: {'; '.join(f'row {row_label(i)}: {v:g}' for i, v in bad.head(8).items())}",
             )
 
     for p_col in p_cols:
@@ -1401,7 +1408,7 @@ def check_basic_summary_values(
                 f"Abnormal cells={len(bad_indexes)}",
                 "P-values must mathematically be between 0 and 1; check statistical software output or data entry.",
                 "Examples: "
-                + "; ".join(f"row {int(i)+1}: {op}{v:g}" for i, op, v in bad_indexes[:8]),
+                + "; ".join(f"row {row_label(i)}: {op}{v:g}" for i, op, v in bad_indexes[:8]),
             )
         if exact_extreme:
             add_finding(
@@ -1413,7 +1420,7 @@ def check_basic_summary_values(
                 "P-values contain exact 0 or 1.",
                 f"Exact extremes={len(exact_extreme)}",
                 "Many statistical packages output very small p-values as 0.000, but publication tables should usually report p<0.001.",
-                "Examples: " + "; ".join(f"row {int(i)+1}: p={v:g}" for i, v in exact_extreme[:8]),
+                "Examples: " + "; ".join(f"row {row_label(i)}: p={v:g}" for i, v in exact_extreme[:8]),
             )
 
 
@@ -1492,7 +1499,7 @@ def check_ci_mean_se(
             "Check whether CI lower/upper column order is reversed, or column misalignment occurred during table extraction.",
             "Examples: "
             + "; ".join(
-                f"row {int(i)+1}: low={r['low']:.6g}, high={r['high']:.6g}"
+                f"row {row_label(i)}: low={r['low']:.6g}, high={r['high']:.6g}"
                 for i, r in inverted.head(8).iterrows()
             ),
         )
@@ -1516,7 +1523,7 @@ def check_ci_mean_se(
             "Symmetric mean CI should normally be centered on the mean; if using asymmetric intervals, back-transformed values, or ratio measures, this must be explained in methods.",
             "Examples: "
             + "; ".join(
-                f"row {int(i)+1}: mean={r['mean']:.6g}, CI center={(r['low']+r['high'])/2:.6g}"
+                f"row {row_label(i)}: mean={r['mean']:.6g}, CI center={(r['low']+r['high'])/2:.6g}"
                 for i, r in not_centered.head(8).iterrows()
             ),
         )
@@ -1578,7 +1585,7 @@ def check_percent_count_consistency(
             if len(rows) < 3:
                 continue
             expected = rows["count"] / rows["n"] * 100
-            diff = np.abs(rows["pct"] - expected)
+            diff = (rows["pct"] - expected).abs()
             median_diff = float(diff.median())
             if best is None or median_diff < float(best[2].median()):
                 best = (count_col, rows, diff)
@@ -1598,7 +1605,7 @@ def check_percent_count_consistency(
                 "If the percentage column corresponds to this count column, check rounding, denominator selection, or table entry; if not corresponding, this item can be ignored.",
                 "Examples: "
                 + "; ".join(
-                    f"row {int(i)+1}: count={r['count']:.6g}, N={r['n']:.6g}, table %={r['pct']:.6g}, expected≈{r['count']/r['n']*100:.2f}%"
+                    f"row {row_label(i)}: count={r['count']:.6g}, N={r['n']:.6g}, table %={r['pct']:.6g}, expected≈{r['count']/r['n']*100:.2f}%"
                     for i, r in bad.head(8).iterrows()
                 ),
             )
@@ -2041,21 +2048,21 @@ def main(argv: list[str] | None = None) -> int:
         if args.enable_r and args.scenario in {"summary", "r-advanced"}:
             try:
                 if args.scenario == "summary":
-                    from tool_system import TOOL_REGISTRY, dependency_status
+                    from pcr_audit.tool_system import TOOL_REGISTRY, dependency_status
 
                     dep_status, dep_reason = dependency_status(TOOL_REGISTRY["r_scrutiny"])
                     if dep_status != "ready":
                         raise RuntimeError(f"{dep_status}: {dep_reason}")
-                    from detectors.r.adapters import run_r_scrutiny
+                    from pcr_audit.detectors.r.adapters import run_r_scrutiny
 
                     results.append(run_r_scrutiny(name, df, "summary_statistics_table", args.scale_min, args.scale_max))
                 else:
-                    from tool_system import TOOL_REGISTRY, dependency_status
+                    from pcr_audit.tool_system import TOOL_REGISTRY, dependency_status
 
                     dep_status, dep_reason = dependency_status(TOOL_REGISTRY["r_rsprite2"])
                     if dep_status != "ready":
                         raise RuntimeError(f"{dep_status}: {dep_reason}")
-                    from detectors.r.adapters import run_r_rsprite2
+                    from pcr_audit.detectors.r.adapters import run_r_rsprite2
 
                     results.append(run_r_rsprite2(name, df, "likert_or_integer_scale_summary", args.scale_min, args.scale_max))
             except Exception as exc:

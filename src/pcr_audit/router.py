@@ -62,6 +62,10 @@ def routing_decisions_payload(decisions: dict[str, Any]) -> dict[str, Any]:
     return {tool_id: asdict(decision) for tool_id, decision in decisions.items()}
 
 
+def _classification_input_types(classification: dict[str, Any]) -> list[str]:
+    return list(classification.get("input_types") or [])
+
+
 def build_route_payload(source: Path, scenario: str = "auto") -> dict[str, Any]:
     payload: dict[str, Any] = {
         "source": str(source),
@@ -73,9 +77,10 @@ def build_route_payload(source: Path, scenario: str = "auto") -> dict[str, Any]:
 
     if source.is_dir():
         classification = {"primary_type": "project_manifest", "input_types": ["project_manifest", "raw_file_bundle"], "signals": {}}
-        selected = selected_tools_for_scenario(scenario, classification["input_types"])
+        input_types = _classification_input_types(classification)
+        selected = selected_tools_for_scenario(scenario, input_types)
         selected.update(PROJECT_LEVEL_TOOLS)
-        decisions = route_all_tools(selected, classification["input_types"], 0, [])
+        decisions = route_all_tools(selected, input_types, 0, [])
         payload["project"] = {
             "classification": classification,
             "delegated_material_tools": project_delegated_material_tools(),
@@ -95,9 +100,10 @@ def build_route_payload(source: Path, scenario: str = "auto") -> dict[str, Any]:
             "input_types": ["project_manifest", "raw_file_bundle"] if not is_corpus else ["project_manifest", "raw_file_bundle", "corpus_manifest"],
             "signals": {"corpus_manifest": is_corpus},
         }
-        selected = selected_tools_for_scenario(scenario, classification["input_types"])
+        input_types = _classification_input_types(classification)
+        selected = selected_tools_for_scenario(scenario, input_types)
         selected.update(PROJECT_LEVEL_TOOLS)
-        decisions = route_all_tools(selected, classification["input_types"], 0, [])
+        decisions = route_all_tools(selected, input_types, 0, [])
         payload["project"] = {
             "classification": classification,
             "delegated_material_tools": project_delegated_material_tools(),
@@ -120,8 +126,9 @@ def build_route_payload(source: Path, scenario: str = "auto") -> dict[str, Any]:
 
     if source.suffix in {".py", ".r", ".R", ".do", ".sps", ".sas"}:
         classification = {"primary_type": "analysis_code", "input_types": ["analysis_code"], "signals": {"code_file": True}}
-        selected = selected_tools_for_scenario(scenario, classification["input_types"])
-        decisions = route_all_tools(selected, classification["input_types"], 1, [])
+        input_types = _classification_input_types(classification)
+        selected = selected_tools_for_scenario(scenario, input_types)
+        decisions = route_all_tools(selected, input_types, 1, [])
         payload["code"] = {
             "classification": classification,
             "routing_decisions": routing_decisions_payload(decisions),
@@ -131,8 +138,9 @@ def build_route_payload(source: Path, scenario: str = "auto") -> dict[str, Any]:
     if source.suffix.lower() in {".txt", ".md", ".bib", ".ris"}:
         text = read_text_source(source)
         classification = classify_text(text)
-        selected = selected_tools_for_scenario(scenario, classification["input_types"])
-        decisions = route_all_tools(selected, classification["input_types"], 0, [])
+        input_types = _classification_input_types(classification)
+        selected = selected_tools_for_scenario(scenario, input_types)
+        decisions = route_all_tools(selected, input_types, 0, [])
         payload["text"] = {
             "length": len(text),
             "classification": classification,
@@ -147,10 +155,12 @@ def build_route_payload(source: Path, scenario: str = "auto") -> dict[str, Any]:
             text = ""
         if text:
             classification = classify_text(text)
-            if "paper_document" not in classification["input_types"]:
-                classification["input_types"].append("paper_document")
-            selected = selected_tools_for_scenario(scenario, classification["input_types"])
-            decisions = route_all_tools(selected, classification["input_types"], 0, [])
+            input_types = _classification_input_types(classification)
+            if "paper_document" not in input_types:
+                input_types.append("paper_document")
+                classification["input_types"] = input_types
+            selected = selected_tools_for_scenario(scenario, input_types)
+            decisions = route_all_tools(selected, input_types, 0, [])
             payload["text"] = {
                 "length": len(text),
                 "classification": classification,
@@ -165,8 +175,9 @@ def build_route_payload(source: Path, scenario: str = "auto") -> dict[str, Any]:
 
     for name, df in tables:
         classification = classify_table(df, source.suffix)
-        selected = selected_tools_for_scenario(scenario, classification["input_types"])
-        decisions = route_all_tools(selected, classification["input_types"], int(df.shape[0]), list(map(str, df.columns)))
+        input_types = _classification_input_types(classification)
+        selected = selected_tools_for_scenario(scenario, input_types)
+        decisions = route_all_tools(selected, input_types, int(df.shape[0]), list(map(str, df.columns)))
         payload["tables"].append(
             {
                 "name": name,

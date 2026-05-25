@@ -269,7 +269,7 @@ def render_markdown(results: list[CaseResult], include_network: bool) -> str:
     total_info = sum(item.info_findings for item in results)
     network_result = next((item for item in results if item.case_id == "external_refs_online"), None)
     network_text = (
-        "Executed. Valid DOI/PMID Crossref/OpenAlex/NCBI queries returned status=ok; intentionally malformed DOI returned 404 and was detected as 'external metadata unverifiable'."
+        "Executed. Valid DOI/PMID Crossref/OpenAlex/PubPeer/NCBI queries returned status=ok or service-specific status records; intentionally malformed DOI returned not-found and was detected as 'DOI external metadata absent'."
         if include_network and network_result and network_result.ok
         else ("Not executed (--no-network used)." if not include_network else "Executed, but failures or evidence gaps exist.")
     )
@@ -295,7 +295,7 @@ def render_markdown(results: list[CaseResult], include_network: bool) -> str:
         "- Raw data: Covers duplicate/highly similar rows and columns, fixed steps, high-frequency values, missing-concentrated-by-group, terminal digit distribution, inter-column relationships, and non-continuous variable anomalies; clean controls maintain 0 risk signals.",
         "- Summary statistics: Covers SE/SD/N, CI, percent/count, p/t/df, p-value domain, and R scrutiny/SPRITE feasibility checks.",
         "- In-text statistics: Covers R statcheck p-value consistency checks on APA/NHST expressions.",
-        "- Literature & network: Covers DOI/PMID parsing, Crossref/OpenAlex/NCBI metadata queries, and citation claim extraction.",
+        "- Literature & network: Covers DOI/PMID parsing, Crossref/OpenAlex/PubPeer/NCBI metadata queries, and citation claim extraction.",
         "- Images: Covers image discovery, internal duplicates, local copy-move, metadata quality, and Western blot/gel review checklist.",
         "- Code & project: Covers Python/R script reruns, Stata/SPSS/SAS read-only prompts, cross-material data reconciliation, project manifest, provenance version chain, and local corpus screening.",
         "",
@@ -352,7 +352,7 @@ def render_markdown(results: list[CaseResult], include_network: bool) -> str:
             "## Interpretation Boundaries",
             "",
             "The high/medium/low levels in this report are benchmark risk signals, not conclusions of academic misconduct, fabrication, or fraud. `info` records are run statuses, dependency states, skip reasons, or coverage notes; they do not count toward risk conclusions.",
-            "Network test cases depend on real-time availability, certificate chains, and rate limiting of Crossref, OpenAlex, and NCBI. If network cases fail, first check HTTP/SSL/rate-limit information in evidence before concluding it is a detector regression.",
+            "Network test cases depend on real-time availability, certificate chains, credentials, and rate limiting of Crossref, OpenAlex, PubPeer, and NCBI. If network cases fail, first check HTTP/SSL/rate-limit information in evidence before concluding it is a detector regression.",
             "All weak-signal tools are only for surfacing human review directions. Final review should return to original data, scripts, image source files, literature metadata, and audit logs.",
         ]
     )
@@ -361,7 +361,7 @@ def render_markdown(results: list[CaseResult], include_network: bool) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run the PCR benchmark suite.")
-    parser.add_argument("--no-network", action="store_true", help="Skip external Crossref/OpenAlex/NCBI benchmark case.")
+    parser.add_argument("--no-network", action="store_true", help="Skip external Crossref/OpenAlex/PubPeer/NCBI benchmark case.")
     parser.add_argument("--regenerate", action="store_true", help="Regenerate synthetic fixtures before running.")
     args = parser.parse_args()
 

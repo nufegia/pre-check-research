@@ -132,7 +132,7 @@ def test_missing_adapter_is_reported_as_info(tmp_path: Path, monkeypatch) -> Non
     assert {finding["level"] for finding in adapter_findings} == {"info"}
 
 
-def test_adapter_runtime_error_is_reported_without_blocking_delivery(tmp_path: Path, monkeypatch) -> None:
+def test_adapter_runtime_error_is_reported_without_blocking_report(tmp_path: Path, monkeypatch) -> None:
     source = ROOT / "examples" / "summary_stat_sample.csv"
     out = tmp_path / "adapter-error.md"
     run_json = tmp_path / "adapter-error.json"
@@ -152,7 +152,7 @@ def test_adapter_runtime_error_is_reported_without_blocking_delivery(tmp_path: P
     assert "simulated detector failure" in json.dumps(runtime_errors, ensure_ascii=False)
 
 
-def test_project_detector_runtime_error_is_reported_without_blocking_delivery(tmp_path: Path, monkeypatch) -> None:
+def test_project_detector_runtime_error_is_reported_without_blocking_report(tmp_path: Path, monkeypatch) -> None:
     project = tmp_path / "project"
     project.mkdir()
     (project / "paper.md").write_text("References\n[1] doi:10.1234/example.2026\n", encoding="utf-8")
@@ -181,7 +181,7 @@ def test_project_detector_runtime_error_is_reported_without_blocking_delivery(tm
     assert "reference detector unavailable" in json.dumps(findings, ensure_ascii=False)
 
 
-def test_project_manifest_parse_error_is_reported_without_blocking_delivery(tmp_path: Path) -> None:
+def test_project_manifest_parse_error_is_reported_without_blocking_report(tmp_path: Path) -> None:
     manifest = tmp_path / "pcr-project.json"
     manifest.write_text("{not valid json", encoding="utf-8")
     out = tmp_path / "bad-project.md"

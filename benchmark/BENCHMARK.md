@@ -20,7 +20,7 @@ From the repo root:
 python3 benchmark/run_benchmark.py
 ```
 
-To skip external Crossref/OpenAlex/NCBI calls:
+To skip external Crossref/OpenAlex/PubPeer/NCBI calls:
 
 ```bash
 python3 benchmark/run_benchmark.py --no-network
@@ -36,7 +36,7 @@ python3 benchmark/run_benchmark.py --regenerate
 
 The suite covers raw data rules, including digit distribution, high-similarity rows/columns, column relationships, rare categories, and ordinal concentration; summary-stat crosscheck; R scrutiny; R statcheck; R rsprite2; p-value collection checks; reference parsing; external metadata lookup; citation claim extraction; papermill light/network signals; image duplicate/copy-move/metadata review; code scan/rerun; unsupported code recording; data trace crosscheck; provenance record/verify; and local corpus screening.
 
-Network coverage uses `inputs/project_external` and expects evidence from Crossref, OpenAlex, and NCBI. Network failures should be interpreted separately from detector regressions because external APIs can be unavailable, rate-limited, or return changed metadata.
+Network coverage uses `inputs/project_external` and expects evidence from Crossref, OpenAlex, PubPeer, and NCBI. Network failures should be interpreted separately from detector regressions because external APIs can be unavailable, rate-limited, require credentials, or return changed metadata.
 
 ## Interpretation
 

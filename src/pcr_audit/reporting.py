@@ -5,6 +5,7 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
+from pcr_audit.public_report import public_path
 from pcr_audit.io import read_json, write_json
 from pcr_audit.models import Finding, LEVEL_LABEL, LEVEL_SCORE, TableResult, finding_from_mapping, validate_results
 
@@ -28,6 +29,17 @@ def overall_level(findings: list[Finding]) -> str:
 def _short_value(value: Any, limit: int = 180) -> str:
     text = str(value or "")
     return text if len(text) <= limit else text[: limit - 1] + "…"
+
+
+def _public_path(value: Any) -> str:
+    return public_path(value)
+
+
+def _public_finding_dict(finding: Finding) -> dict[str, Any]:
+    payload = asdict(finding)
+    for key in ("table", "location"):
+        payload[key] = _public_path(payload.get(key) or "")
+    return payload
 
 
 def _confidence_percent(finding: Finding) -> str:
@@ -140,7 +152,7 @@ def _material_rows(audit_context: dict[str, Any] | None, results: list[TableResu
                     {
                         "name": Path(path).name or path,
                         "role": role,
-                        "path": path,
+                        "path": _public_path(path),
                         "rows": "",
                         "columns": "",
                         "input_type": "project_material",
@@ -159,7 +171,7 @@ def _material_rows(audit_context: dict[str, Any] | None, results: list[TableResu
                     {
                         "name": name,
                         "role": str(route.get("source_kind") or ""),
-                        "path": source,
+                        "path": _public_path(source),
                         "rows": str(item.get("rows") or ""),
                         "columns": str(item.get("columns") or ""),
                         "input_type": _classification_text(item),
@@ -295,12 +307,12 @@ def render_markdown(
     lines += ["## Material Coverage Matrix", "", header, sep]
     for sheet_name in sheet_names_ordered:
         first_result = sheet_results[sheet_name][0]
-        row = f"| {markdown_cell(sheet_name)} | {first_result.rows} | {first_result.columns} |"
+        matrix_row = f"| {markdown_cell(sheet_name)} | {first_result.rows} | {first_result.columns} |"
         for tool_id in tools_ordered:
             c = sheet_tool_counts[sheet_name][tool_id]
             cell = f"H{c['high']} M{c['medium']} L{c['low']}"
-            row += f" {cell} |"
-        lines.append(row)
+            matrix_row += f" {cell} |"
+        lines.append(matrix_row)
     lines.append("")
 
     lines += [
@@ -346,7 +358,7 @@ def render_markdown(
         for finding in ordered:
             low_confidence_note = " (Low confidence; recommend supplementing data and re-checking)" if finding.confidence_score < 0.40 else ""
             lines.append(
-                f"| {LEVEL_LABEL[finding.level]} | {_confidence_percent(finding)}{low_confidence_note} | {markdown_cell(finding.evidence_id)} | {markdown_cell(finding.location)} | {markdown_cell(finding.check)} | {markdown_cell(finding.target)} | {markdown_cell(finding.summary)} | {markdown_cell(finding.evidence)} | {markdown_cell(finding.review_actions or finding.suggestion)} |"
+                f"| {LEVEL_LABEL[finding.level]} | {_confidence_percent(finding)}{low_confidence_note} | {markdown_cell(finding.evidence_id)} | {markdown_cell(_public_path(finding.location))} | {markdown_cell(finding.check)} | {markdown_cell(finding.target)} | {markdown_cell(finding.summary)} | {markdown_cell(finding.evidence)} | {markdown_cell(finding.review_actions or finding.suggestion)} |"
             )
         lines.append("")
         confidence_bins = Counter(
@@ -368,7 +380,7 @@ def render_markdown(
                 f"### {idx}. {LEVEL_LABEL[finding.level]} Risk: {finding.check} ({finding.target})",
                 "",
                 f"- Evidence ID: {finding.evidence_id}",
-                f"- Location: {finding.location}",
+                f"- Location: {_public_path(finding.location)}",
                 f"- Finding: {finding.summary}",
                 f"- Trigger evidence: {finding.evidence}",
                 f"- Tool: {finding.tool_name or finding.tool_id} ({finding.tool_id})",
@@ -433,13 +445,13 @@ def render_markdown(
 def save_json(path: Path, source: Path, results: list[TableResult]) -> None:
     validate_results(results)
     payload = {
-        "source": str(source),
+        "source": _public_path(source),
         "results": [
             {
                 "name": result.name,
                 "rows": result.rows,
                 "columns": result.columns,
-                "findings": [asdict(finding) for finding in result.findings],
+                "findings": [_public_finding_dict(finding) for finding in result.findings],
             }
             for result in results
         ],
@@ -477,7 +489,7 @@ def merge_reports(finding_json: list[str], out: Path, json_out: Path | None = No
         path = Path(item).expanduser().resolve()
         finding_paths.append(path)
         payload = read_json(path)
-        sources.append(str(payload.get("source") or item))
+        sources.append(_public_path(payload.get("source") or item))
         all_results.extend(results_from_payload(payload))
 
     pseudo_source = Path(sources[0] if len(sources) == 1 else "merged-findings.json")
@@ -497,7 +509,7 @@ def merge_reports(finding_json: list[str], out: Path, json_out: Path | None = No
                         "name": result.name,
                         "rows": result.rows,
                         "columns": result.columns,
-                        "findings": [asdict(finding) for finding in result.findings],
+                        "findings": [_public_finding_dict(finding) for finding in result.findings],
                     }
                     for result in all_results
                 ],

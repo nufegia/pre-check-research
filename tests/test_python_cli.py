@@ -20,7 +20,7 @@ def test_raw_audit_generates_markdown_and_json(tmp_path: Path) -> None:
     payload = json.loads(findings.read_text(encoding="utf-8"))
 
     assert report.exists()
-    assert payload["source"] == str(source.resolve())
+    assert payload["source"] == f"/{source.name}"
     assert payload["results"]
     assert "findings" in payload["results"][0]
 
@@ -250,6 +250,8 @@ def test_audit_project_example_and_flags(tmp_path: Path, monkeypatch) -> None:
             "http://localhost:8070",
             "--contact-email",
             "audit@example.org",
+            "--external-lookup-limit",
+            "50",
             "--no-external-lookups",
         ]
     ) == 0
@@ -261,6 +263,7 @@ def test_audit_project_example_and_flags(tmp_path: Path, monkeypatch) -> None:
     assert route["project_id"] == "project-minimal"
     assert route["policy"]["grobid_url"] == "http://localhost:8070"
     assert route["policy"]["contact_email"] == "audit@example.org"
+    assert route["policy"]["external_lookup_limit"] == 50
     assert "Audit Scope and Interpretation Guide" in report
     assert "Material Inventory" in report
     assert "Tool Run Details" in report

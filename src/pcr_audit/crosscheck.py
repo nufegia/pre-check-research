@@ -121,6 +121,17 @@ def parse_p_value(value: Any) -> tuple[str, float] | None:
         return None
 
 
+def _numeric_value(row: dict[str, Any], key: str) -> float | None:
+    value = row.get(key)
+    if value is None or pd.isna(value):
+        return None
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError):
+        return None
+    return numeric if math.isfinite(numeric) else None
+
+
 def add_finding(
     findings: list[Finding],
     table: str,
@@ -191,6 +202,11 @@ def _detect_columns(df: pd.DataFrame) -> dict[str, str | list[str] | None]:
     return detected
 
 
+def _detected_column(detected: dict[str, str | list[str] | None], role: str) -> str | None:
+    value = detected.get(role)
+    return value if isinstance(value, str) else None
+
+
 def _detect_percent_scale(series: pd.Series) -> float:
     """Return 100.0 if values appear to be percentages (0-100), 1.0 if proportions (0-1)."""
     valid = series.dropna()
@@ -240,16 +256,16 @@ def _t_crit(df_val: float | None, confidence_level: float = 0.95) -> float:
 # ---------------------------------------------------------------------------
 
 def _check_se_sd_n(
-    row: dict,
+    row: dict[str, Any],
     row_idx: int,
     table_name: str,
     findings: list[Finding],
     tol: CrosscheckTolerances,
 ) -> None:
-    se = row.get("SE")
-    sd = row.get("SD")
-    n = row.get("N")
-    if any(v is None or pd.isna(v) for v in (se, sd, n)):
+    se = _numeric_value(row, "SE")
+    sd = _numeric_value(row, "SD")
+    n = _numeric_value(row, "N")
+    if se is None or sd is None or n is None:
         return
     if n <= 1 or sd < 0 or se < 0:
         return
@@ -270,16 +286,16 @@ def _check_se_sd_n(
 
 
 def _check_ci_centering(
-    row: dict,
+    row: dict[str, Any],
     row_idx: int,
     table_name: str,
     findings: list[Finding],
     tol: CrosscheckTolerances,
 ) -> None:
-    ci_low = row.get("CI_low")
-    ci_high = row.get("CI_high")
-    mean = row.get("Mean")
-    if any(v is None or pd.isna(v) for v in (ci_low, ci_high, mean)):
+    ci_low = _numeric_value(row, "CI_low")
+    ci_high = _numeric_value(row, "CI_high")
+    mean = _numeric_value(row, "Mean")
+    if ci_low is None or ci_high is None or mean is None:
         return
     ci_center = (ci_low + ci_high) / 2.0
     ci_span = ci_high - ci_low
@@ -299,25 +315,23 @@ def _check_ci_centering(
 
 
 def _check_ci_span_vs_se(
-    row: dict,
+    row: dict[str, Any],
     row_idx: int,
     table_name: str,
     findings: list[Finding],
     tol: CrosscheckTolerances,
 ) -> None:
-    ci_low = row.get("CI_low")
-    ci_high = row.get("CI_high")
-    se = row.get("SE")
-    if any(v is None or pd.isna(v) for v in (ci_low, ci_high, se)):
+    ci_low = _numeric_value(row, "CI_low")
+    ci_high = _numeric_value(row, "CI_high")
+    se = _numeric_value(row, "SE")
+    if ci_low is None or ci_high is None or se is None:
         return
     ci_span = ci_high - ci_low
     if ci_span <= 0 or se <= 0:
         return
-    df_val = row.get("df")
-    n_val = row.get("N")
-    df_for_t = df_val if df_val is not None and not pd.isna(df_val) and df_val > 0 else (
-        n_val - 1 if n_val is not None and not pd.isna(n_val) and n_val > 1 else None
-    )
+    df_val = _numeric_value(row, "df")
+    n_val = _numeric_value(row, "N")
+    df_for_t = df_val if df_val is not None and df_val > 0 else (n_val - 1 if n_val is not None and n_val > 1 else None)
     t = _t_crit(df_for_t, tol.confidence_level)
     expected_span = 2.0 * t * se
     rel_err = abs(ci_span - expected_span) / expected_span
@@ -327,21 +341,21 @@ def _check_ci_span_vs_se(
         findings, table_name, "medium",
         "CI width/SE consistency", f"row {row_idx}",
         f"CI width inconsistent with SE×t critical value（deviation={rel_err:.1%}）",
-        f"CI width={ci_span:.6g}，2×t({df_for_t:.6g})×SE={expected_span:.6g}",
+        f"CI width={ci_span:.6g}，2×t({df_for_t:.6g})×SE={expected_span:.6g}" if df_for_t is not None else f"CI width={ci_span:.6g}，2×normal critical×SE={expected_span:.6g}",
         "Verify CI confidence level (usually 95%) and whether SE corresponds.",
     )
 
 
 def _check_ci_validity(
-    row: dict,
+    row: dict[str, Any],
     row_idx: int,
     table_name: str,
     findings: list[Finding],
     _tol: CrosscheckTolerances,
 ) -> None:
-    ci_low = row.get("CI_low")
-    ci_high = row.get("CI_high")
-    if ci_low is None or ci_high is None or pd.isna(ci_low) or pd.isna(ci_high):
+    ci_low = _numeric_value(row, "CI_low")
+    ci_high = _numeric_value(row, "CI_high")
+    if ci_low is None or ci_high is None:
         return
     if ci_low > ci_high:
         add_finding(
@@ -352,8 +366,8 @@ def _check_ci_validity(
             "CI column order may be reversed, or column misalignment occurred during table extraction.",
         )
         return
-    mean = row.get("Mean")
-    if mean is not None and not pd.isna(mean):
+    mean = _numeric_value(row, "Mean")
+    if mean is not None:
         eps = 1e-12 * abs(ci_high - ci_low)
         if mean < ci_low - eps or mean > ci_high + eps:
             add_finding(
@@ -366,16 +380,16 @@ def _check_ci_validity(
 
 
 def _check_percent_count(
-    row: dict,
+    row: dict[str, Any],
     row_idx: int,
     table_name: str,
     findings: list[Finding],
     tol: CrosscheckTolerances,
 ) -> None:
-    pct = row.get("percent")
-    cnt = row.get("count")
-    n = row.get("N")
-    if any(v is None or pd.isna(v) for v in (pct, cnt, n)):
+    pct = _numeric_value(row, "percent")
+    cnt = _numeric_value(row, "count")
+    n = _numeric_value(row, "N")
+    if pct is None or cnt is None or n is None:
         return
     if n <= 0 or cnt < 0 or pct < 0:
         return
@@ -394,7 +408,7 @@ def _check_percent_count(
 
 
 def _check_p_validity(
-    row: dict,
+    row: dict[str, Any],
     row_idx: int,
     table_name: str,
     findings: list[Finding],
@@ -412,22 +426,22 @@ def _check_p_validity(
         add_finding(
             findings, table_name, "high",
             "P-value outside domain", f"row {row_idx}",
-            f"P-value outside [0, 1] range.",
+            "P-value outside [0, 1] range.",
             f"Reported p-value={p_raw}（{p_col}）",
             "P-value must be between 0 and 1; may be data entry error or decimal point misplacement.",
         )
 
 
 def _check_p_vs_t(
-    row: dict,
+    row: dict[str, Any],
     row_idx: int,
     table_name: str,
     findings: list[Finding],
     tol: CrosscheckTolerances,
 ) -> None:
-    t_val = row.get("t")
-    df_val = row.get("df")
-    if t_val is None or df_val is None or pd.isna(t_val) or pd.isna(df_val):
+    t_val = _numeric_value(row, "t")
+    df_val = _numeric_value(row, "df")
+    if t_val is None or df_val is None:
         return
     if df_val <= 0:
         return
@@ -462,15 +476,15 @@ def _check_p_vs_t(
 
 
 def _check_df_vs_n(
-    row: dict,
+    row: dict[str, Any],
     row_idx: int,
     table_name: str,
     findings: list[Finding],
     _tol: CrosscheckTolerances,
 ) -> None:
-    df_val = row.get("df")
-    n_val = row.get("N")
-    if df_val is None or n_val is None or pd.isna(df_val) or pd.isna(n_val):
+    df_val = _numeric_value(row, "df")
+    n_val = _numeric_value(row, "N")
+    if df_val is None or n_val is None:
         return
     if n_val <= 0:
         return
@@ -490,18 +504,16 @@ def _check_df_vs_n(
 
 
 def _check_ratio_ci_p_direction(
-    row: dict,
+    row: dict[str, Any],
     row_idx: int,
     table_name: str,
     findings: list[Finding],
     _tol: CrosscheckTolerances,
 ) -> None:
-    effect = row.get("effect")
-    ci_low = row.get("CI_low")
-    ci_high = row.get("CI_high")
+    effect = _numeric_value(row, "effect")
+    ci_low = _numeric_value(row, "CI_low")
+    ci_high = _numeric_value(row, "CI_high")
     if effect is None or ci_low is None or ci_high is None:
-        return
-    if any(pd.isna(v) for v in (effect, ci_low, ci_high)):
         return
     for p_col, p_raw in row.get("_p_raw", {}).items():
         parsed = parse_p_value(p_raw)
@@ -537,15 +549,15 @@ def _check_ratio_ci_p_direction(
 
 
 def _check_mean_ci_p_direction(
-    row: dict,
+    row: dict[str, Any],
     row_idx: int,
     table_name: str,
     findings: list[Finding],
     _tol: CrosscheckTolerances,
 ) -> None:
-    ci_low = row.get("CI_low")
-    ci_high = row.get("CI_high")
-    if ci_low is None or ci_high is None or pd.isna(ci_low) or pd.isna(ci_high):
+    ci_low = _numeric_value(row, "CI_low")
+    ci_high = _numeric_value(row, "CI_high")
+    if ci_low is None or ci_high is None:
         return
     crosses_zero = ci_low <= 0.0 <= ci_high
     for p_col, p_raw in row.get("_p_raw", {}).items():
@@ -619,10 +631,11 @@ def crosscheck_table(
     detected = _detect_columns(df)
     findings: list[Finding] = []
 
-    p_cols: list[str] = detected.get("p") or []  # type: ignore[assignment]
+    raw_p_cols = detected.get("p")
+    p_cols = raw_p_cols if isinstance(raw_p_cols, list) else []
 
     # Detect percent scale and set in tolerances
-    pct_col = detected.get("percent")
+    pct_col = _detected_column(detected, "percent")
     tolerances.pct_scale = _detect_percent_scale(coerce_numeric(df[pct_col])) if pct_col else 100.0
 
     if len(df) == 0:
@@ -640,15 +653,15 @@ def crosscheck_table(
     # Build numeric series for detected columns
     numeric: dict[str, pd.Series | None] = {}
     for role in ["N", "Mean", "SD", "SE", "CI_low", "CI_high", "count", "effect", "t", "df"]:
-        col = detected.get(role)
+        col = _detected_column(detected, role)
         numeric[role] = coerce_numeric(df[col]) if col else None
 
-    pct_col_name = detected.get("percent")
+    pct_col_name = _detected_column(detected, "percent")
     numeric["percent"] = coerce_numeric(df[pct_col_name]) if pct_col_name else None
 
     # Iterate rows
     for row_idx in range(len(df)):
-        row: dict = {}
+        row: dict[str, Any] = {}
         for role, series in numeric.items():
             if series is not None:
                 row[role] = series.iloc[row_idx]

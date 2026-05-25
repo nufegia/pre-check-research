@@ -107,8 +107,8 @@ def _deliver_payloads(source: Path, payloads: list[dict[str, Any]], out: Path, j
     try:
         merge_reports(part_paths, out, json_out)
     except Exception as exc:
-        fallback = workdir / f"{prefix}-delivery-error.json"
-        write_json(fallback, info_payload(source, "pcr_audit_delivery", "Result merge failed; delivery failure diagnosis generated.", _exception_evidence(exc), "runtime_error"))
+        fallback = workdir / f"{prefix}-report-error.json"
+        write_json(fallback, info_payload(source, "pcr_audit_report", "Result merge failed; report failure diagnosis generated.", _exception_evidence(exc), "runtime_error"))
         merge_reports([str(fallback)], out, json_out)
 
 
@@ -183,10 +183,11 @@ def run_project_audit(
     external_lookups: bool = True,
     grobid_url: str = "",
     contact_email: str = "",
+    external_lookup_limit: int = 20,
     rerun_code: bool = True,
     code_timeout: int = 60,
 ) -> int:
-    from pcr_audit.product.common import AuditConfig
+    from pcr_audit.product.common import AuditConfig, positive_int
     from pcr_audit.product.code_audit import analyze_code_files
     from pcr_audit.product.corpus_signals import analyze_papermill_network_signals
     from pcr_audit.product.image_audit import analyze_images
@@ -211,6 +212,7 @@ def run_project_audit(
         grobid_url=grobid_url,
         contact_email=contact_email,
         lookup_cache_dir=workdir / "lookup-cache",
+        external_lookup_limit=external_lookup_limit,
     )
     try:
         spec, config = parse_project_spec(source, config_override, workdir)
@@ -234,6 +236,7 @@ def run_project_audit(
         )
         return 0
     config.external_lookups = external_lookups
+    config.external_lookup_limit = positive_int(external_lookup_limit or config.external_lookup_limit, 20)
     sources = {
         "documents": [m.path for m in spec.materials if m.role in {"manuscript", "references", "supplement"} and m.path.suffix.lower() in {".pdf", ".docx", ".txt", ".md", ".csv", ".xlsx", ".xls"}],
         "data": [m.path for m in spec.materials if m.role == "raw_data" or m.path.suffix.lower() in {".csv", ".xlsx", ".xls"}],
@@ -252,6 +255,7 @@ def run_project_audit(
             "materials": [{"path": str(material.path), "role": material.role} for material in spec.materials],
             "policy": {
                 "external_lookups": "enabled" if config.external_lookups else "disabled",
+                "external_lookup_limit": config.external_lookup_limit,
                 "grobid_url": config.grobid_url,
                 "contact_email": config.contact_email,
                 "pyMuPDF": "not_used_due_to_license_review",
@@ -300,10 +304,10 @@ def run_project_audit(
     _append_result_safely(project_results, source, "papermill_network_signals", lambda: analyze_papermill_network_signals(source))
     for doc in sources["documents"][:20]:
         if doc.suffix.lower() in {".pdf", ".docx", ".txt", ".md"}:
-            _append_result_safely(project_results, doc, "reference_audit", lambda doc=doc: analyze_references(doc, config), "paper_document")
-            _append_result_safely(project_results, doc, "citation_claim_check", lambda doc=doc: analyze_citation_claims(doc, config), "paper_document")
-            _append_result_safely(project_results, doc, "papermill_light_signals", lambda doc=doc: analyze_papermill_signals(doc, config), "paper_document")
-            _append_result_safely(project_results, doc, "image_extract", lambda doc=doc: analyze_images(doc, workdir / f"images-{doc.stem}"), "scientific_figure")
+            _append_result_safely(project_results, doc, "reference_audit", lambda: analyze_references(doc, config), "paper_document")
+            _append_result_safely(project_results, doc, "citation_claim_check", lambda: analyze_citation_claims(doc, config), "paper_document")
+            _append_result_safely(project_results, doc, "papermill_light_signals", lambda: analyze_papermill_signals(doc, config), "paper_document")
+            _append_result_safely(project_results, doc, "image_extract", lambda: analyze_images(doc, workdir / f"images-{doc.stem}"), "scientific_figure")
     if sources["images"]:
         _append_result_safely(project_results, source, "image_extract", lambda: analyze_images(source, workdir / "images-project"), "scientific_figure")
     if not sources["documents"] and not sources["images"] and not sources["code"]:

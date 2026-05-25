@@ -133,6 +133,24 @@ class TestSaveAndLoadJSON:
         assert len(loaded["results"]) == 1
         assert loaded["results"][0]["name"] == "sheet1"
 
+    def test_absolute_paths_are_sanitized_for_customer_outputs(self, tmp_path: Path):
+        source = tmp_path / "private" / "paper.pdf"
+        finding = make_finding("medium")
+        finding.table = str(source)
+        finding.location = str(source)
+        results = [TableResult("paper", 1, 0, [finding])]
+
+        report = render_markdown(source, results, [])
+        assert f"Location: /{source.name}" in report
+        assert str(tmp_path) not in report
+
+        json_path = tmp_path / "audit.json"
+        save_json(json_path, source, results)
+        payload = json.loads(json_path.read_text(encoding="utf-8"))
+        assert payload["source"] == f"/{source.name}"
+        assert payload["results"][0]["findings"][0]["location"] == f"/{source.name}"
+        assert str(tmp_path) not in json.dumps(payload)
+
     def test_results_from_payload(self):
         payload = {
             "source": "test.csv",

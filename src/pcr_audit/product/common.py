@@ -26,6 +26,7 @@ SYSTEM_DIR_NAMES = {".git", ".pcr", "__pycache__", ".pytest_cache", ".mypy_cache
 
 DOI_RE = re.compile(r"\b10\.\d{4,9}/[-._;()/:A-Z0-9]+\b", re.I)
 PMID_RE = re.compile(r"\bPMID\s*:?\s*(\d{5,10})\b", re.I)
+PMCID_RE = re.compile(r"\bPMC(?:ID)?\s*:?\s*(PMC\d{5,10}|\d{5,10})\b", re.I)
 REFERENCE_LINE_RE = re.compile(r"^\s*(?:\[\d+\]|\d+\.|\(\d+\))?\s*(?P<body>.{25,})$", re.M)
 CLAIM_WITH_CITATION_RE = re.compile(r"(?P<claim>[^.\n]{30,240}?\s*(?:\[[0-9,;\-\s]+\]|\([A-Za-z][^)]+,\s*\d{4}\)))")
 TORTURED_PHRASES = {
@@ -38,10 +39,40 @@ TORTURED_PHRASES = {
     "man-made brainpower": "artificial intelligence",
 }
 
+DOI_GLUE_BOUNDARY_RE = re.compile(
+    r"(?:PMID|PMCID|PubMedCentral|PubMed|PMC|Article|Published|Accessed|Retrieved|Copyright|"
+    r"November|December|January|February|March|April|June|July|August|September|October)",
+    re.I,
+)
+DOI_VALID_RE = re.compile(r"^10\.\d{4,9}/\S+$", re.I)
+
 TEXT_TOKEN_RE = re.compile(r"[A-Za-z0-9]{2,}")
 EMAIL_RE = re.compile(r"\b[A-Z0-9._%+-]+@([A-Z0-9.-]+\.[A-Z]{2,})\b", re.I)
 AUTHOR_LINE_RE = re.compile(r"^\s*(?:authors?)\s*[:：]\s*(?P<value>.+)$", re.I | re.M)
 INSTITUTION_LINE_RE = re.compile(r"^\s*(?:affiliations?|institutions?)\s*[:：]\s*(?P<value>.+)$", re.I | re.M)
+
+
+def normalize_doi(raw: str) -> str:
+    """Clean common PDF-extraction DOI glue without inventing identifiers."""
+    doi = str(raw or "").strip()
+    doi = re.sub(r"^(?:doi|https?://(?:dx\.)?doi\.org/)[:\s]*", "", doi, flags=re.I)
+    doi = doi.rstrip(".,);]}>")
+    boundary = DOI_GLUE_BOUNDARY_RE.search(doi)
+    if boundary:
+        doi = doi[: boundary.start()]
+    doi = doi.rstrip(".,;:()[]{}<>")
+    if not DOI_VALID_RE.match(doi):
+        return ""
+    suffix = doi.split("/", 1)[1]
+    if len(suffix) < 6:
+        return ""
+    if not re.search(r"\d", suffix):
+        return ""
+    if re.fullmatch(r"[A-Za-z]+(?:\.[A-Za-z]+)?", suffix):
+        return ""
+    if doi.lower().startswith("10.1038/") and re.fullmatch(r"[a-z]{2,8}\.(?:19|20)\d{2}", suffix, re.I):
+        return ""
+    return doi
 
 
 @dataclass
@@ -50,6 +81,15 @@ class AuditConfig:
     grobid_url: str = ""
     contact_email: str = ""
     lookup_cache_dir: Path | None = None
+    external_lookup_limit: int = 20
+
+
+def positive_int(value: Any, default: int = 20) -> int:
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        return default
+    return max(1, parsed)
 
 
 @dataclass
@@ -175,6 +215,7 @@ def _env_config(workdir: Path | None = None) -> AuditConfig:
         grobid_url=os.environ.get("PCR_GROBID_URL", ""),
         contact_email=os.environ.get("PCR_CONTACT_EMAIL", ""),
         lookup_cache_dir=(workdir / "lookup-cache") if workdir else None,
+        external_lookup_limit=positive_int(os.environ.get("PCR_EXTERNAL_LOOKUP_LIMIT"), 20),
     )
 
 

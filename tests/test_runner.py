@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from pcr_audit.runner import (
     _exception_evidence,
     run_audit,

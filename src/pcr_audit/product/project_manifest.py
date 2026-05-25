@@ -5,7 +5,7 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
-from pcr_audit.models import TableResult
+from pcr_audit.models import Finding, TableResult
 from pcr_audit.product.common import (
     CODE_SUFFIXES,
     DATA_SUFFIXES,
@@ -19,6 +19,7 @@ from pcr_audit.product.common import (
     finding,
     is_audit_material_path,
     iter_audit_files,
+    positive_int,
 )
 
 def payload_from_results(source: Path, results: list[TableResult], tool_id: str, tool_name: str, input_type: str) -> dict[str, Any]:
@@ -75,6 +76,7 @@ def inspect_project_payload(source: Path, workdir: Path | None = None) -> dict[s
             "external_lookups": config.external_lookups,
             "grobid_url": config.grobid_url,
             "contact_email": config.contact_email,
+            "external_lookup_limit": config.external_lookup_limit,
         },
         "materials": [
             {"path": str(material.path), "role": material.role, "exists": material.path.exists()}
@@ -91,22 +93,24 @@ def init_manifest_payload(source: Path, overwrite: bool = False) -> dict[str, An
     if manifest.exists() and not overwrite:
         raise FileExistsError(f"Manifest already exists: {manifest}")
     files = [path for path in iter_audit_files(source) if path.name != "pcr-project.json"]
+    material_items = [
+        {"path": str(path.relative_to(source)), "role": infer_role(path)}
+        for path in files
+        if infer_role(path) != "unknown"
+    ]
     payload = {
         "project_id": source.name,
         "title": source.name,
-        "materials": [
-            {"path": str(path.relative_to(source)), "role": infer_role(path)}
-            for path in files
-            if infer_role(path) != "unknown"
-        ],
+        "materials": material_items,
         "settings": {
             "external_lookups": True,
             "grobid_url": "",
             "contact_email": "",
+            "external_lookup_limit": 20,
         },
     }
     manifest.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
-    return {"manifest": str(manifest), "materials": len(payload["materials"]), "roles": role_summary([Material(source / item["path"], item["role"]) for item in payload["materials"]])}
+    return {"manifest": str(manifest), "materials": len(material_items), "roles": role_summary([Material(source / item["path"], item["role"]) for item in material_items])}
 
 
 def parse_project_spec(source: Path, config_overrides: AuditConfig | None = None, workdir: Path | None = None) -> tuple[ProjectSpec, AuditConfig]:
@@ -200,6 +204,7 @@ def parse_project_spec(source: Path, config_overrides: AuditConfig | None = None
         grobid_url=str(settings.get("grobid_url") or env.grobid_url),
         contact_email=str(settings.get("contact_email") or env.contact_email),
         lookup_cache_dir=(workdir / "lookup-cache") if workdir else env.lookup_cache_dir,
+        external_lookup_limit=positive_int(settings.get("external_lookup_limit", env.external_lookup_limit), env.external_lookup_limit),
     )
     if config_overrides:
         if config_overrides.external_lookups:
@@ -210,6 +215,8 @@ def parse_project_spec(source: Path, config_overrides: AuditConfig | None = None
             config.contact_email = config_overrides.contact_email
         if config_overrides.lookup_cache_dir:
             config.lookup_cache_dir = config_overrides.lookup_cache_dir
+        if config_overrides.external_lookup_limit:
+            config.external_lookup_limit = config_overrides.external_lookup_limit
 
     return ProjectSpec(source, project_id, title, materials, settings, findings), config
 

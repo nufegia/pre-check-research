@@ -105,9 +105,48 @@ def report_main(argv: list[str] | None = None) -> int:
     merge.add_argument("finding_json", nargs="+")
     merge.add_argument("--out", required=True)
     merge.add_argument("--json", help="Optional merged JSON output path.")
+    export = sub.add_parser("export", help="Export an audit JSON ledger into a sanitized shareable JSON profile.")
+    export.add_argument("audit_json")
+    export.add_argument("--out", required=True)
+    export.add_argument("--profile", choices=["public"], default="public")
+    validate = sub.add_parser("validate", help="Validate a Markdown or JSON artifact against a shareable-output profile.")
+    validate.add_argument("path")
+    validate.add_argument("--profile", choices=["public"], default="public")
     args = parser.parse_args(argv)
-    if args.command != "merge":
-        return 2
+    if args.command == "export":
+        from pcr_audit.public_report import write_public_payload
+
+        try:
+            payload = write_public_payload(Path(args.audit_json).expanduser().resolve(), Path(args.out).expanduser().resolve())
+        except FileNotFoundError as exc:
+            print(exc, file=sys.stderr)
+            return 2
+        except Exception as exc:
+            print(f"Export failed: {exc}", file=sys.stderr)
+            return 1
+        print(
+            "Public export generated: "
+            f"{Path(args.out).expanduser().resolve()} "
+            f"(high={payload['finding_counts']['high']}, medium={payload['finding_counts']['medium']}, low={payload['finding_counts']['low']})"
+        )
+        return 0
+    if args.command == "validate":
+        from pcr_audit.public_report import lint_file
+
+        try:
+            issues = lint_file(Path(args.path).expanduser().resolve())
+        except FileNotFoundError as exc:
+            print(exc, file=sys.stderr)
+            return 2
+        except Exception as exc:
+            print(f"Validation failed: {exc}", file=sys.stderr)
+            return 1
+        if issues:
+            for issue in issues:
+                print(f"{issue['severity']}:{issue['id']}:line {issue['line']}: {issue['message']}", file=sys.stderr)
+            return 1
+        print("Validation passed.")
+        return 0
     try:
         merge_reports(
             args.finding_json,
@@ -147,10 +186,11 @@ def audit_main(argv: list[str] | None = None) -> int:
     project.add_argument("--out")
     project.add_argument("--json", help="Optional merged JSON output path.")
     project.add_argument("--workdir", help="Temporary output directory. Defaults to <out>.parts.")
-    project.add_argument("--external-lookups", action="store_true", help="Enable Crossref/OpenAlex/NCBI lookups. Project audits enable this by default.")
-    project.add_argument("--no-external-lookups", action="store_true", help="Disable default Crossref/OpenAlex/NCBI lookups for project audits.")
+    project.add_argument("--external-lookups", action="store_true", help="Enable Crossref/OpenAlex/PubPeer/NCBI lookups. Project audits enable this by default.")
+    project.add_argument("--no-external-lookups", action="store_true", help="Disable default Crossref/OpenAlex/PubPeer/NCBI lookups for project audits.")
     project.add_argument("--grobid-url", default="", help="Optional GROBID REST base URL, e.g. http://localhost:8070.")
     project.add_argument("--contact-email", default="", help="Contact email for polite scholarly metadata API requests.")
+    project.add_argument("--external-lookup-limit", type=int, default=20, help="Maximum DOI and PMID external metadata lookups per document. Defaults to 20.")
     project.add_argument("--rerun-code", dest="rerun_code", action="store_true", default=True, help="Rerun Python/R analysis scripts in a temporary local sandbox. Default.")
     project.add_argument("--no-rerun-code", dest="rerun_code", action="store_false", help="Skip script reruns and only scan analysis code.")
     project.add_argument("--code-timeout", type=int, default=60, help="Per-script sandbox timeout in seconds. Defaults to 60.")
@@ -277,6 +317,7 @@ def audit_main(argv: list[str] | None = None) -> int:
             external_lookups=False if args.no_external_lookups else True,
             grobid_url=args.grobid_url,
             contact_email=args.contact_email,
+            external_lookup_limit=args.external_lookup_limit,
             rerun_code=args.rerun_code,
             code_timeout=args.code_timeout,
         )

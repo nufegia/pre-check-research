@@ -17,4 +17,4 @@ See the repository files for full details:
 python3 benchmark/run_benchmark.py --no-network
 ```
 
-Network benchmark coverage can be run without `--no-network`, but Crossref, OpenAlex, and NCBI availability can vary.
+Network benchmark coverage can be run without `--no-network`, but Crossref, OpenAlex, PubPeer, and NCBI availability can vary.

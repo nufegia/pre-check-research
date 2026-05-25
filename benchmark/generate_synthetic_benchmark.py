@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import math
 import shutil
 from pathlib import Path
 
@@ -283,7 +282,7 @@ def write_ground_truth() -> None:
                 "known_limitations": [
                     "R tool output depends on statcheck/scrutiny/rsprite2 parsing of column names and text formats.",
                     "Image copy-move is a weak signal; low-texture or regularly repeating graphics may produce false positives/negatives.",
-                    "Project-level external reference queries are disabled in this benchmark; Crossref/OpenAlex/NCBI network reliability is not tested.",
+                    "Project-level external reference queries are disabled in this benchmark; Crossref/OpenAlex/PubPeer/NCBI network reliability is not tested.",
                 ],
             },
             ensure_ascii=False,
