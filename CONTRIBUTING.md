@@ -35,5 +35,5 @@ Network benchmark coverage can be run with `python3 benchmark/run_benchmark.py`,
 
 - Findings must remain risk signals, not misconduct verdicts.
 - Missing dependencies, skipped checks, and unsupported material should be recorded as `level: info`.
-- Do not commit real manuscripts, private research data, client deliverables, local audit outputs, API keys, credentials, or external lookup caches.
+- Do not commit real manuscripts, private research data, confidential third-party materials, local audit outputs, API keys, credentials, or external lookup caches.
 - Keep CLI output compatible with `tools/common/schemas/finding.schema.json`.

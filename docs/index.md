@@ -8,7 +8,7 @@ pre-check-research (`pcr`) is a local-first toolkit for pre-submission research 
 
 - **I need to try it quickly**: start with [Getting started](getting-started.md), run `pcr-audit route`, then run `pcr-audit run` on an example CSV.
 - **I have a manuscript package**: read [Use cases](use-cases.md), prepare a `pcr-project.json`, and run `pcr-audit project`.
-- **I need to interpret a report**: read [Interpretation boundaries](interpretation-boundaries.md) before turning findings into reviewer, editor, lab, or client-facing language.
+- **I need to interpret a report**: read [Interpretation boundaries](interpretation-boundaries.md) before turning findings into reviewer, editor, lab, or external-facing language.
 - **I am an AI agent**: read [`llms.txt`](https://github.com/nufegia/pre-check-research/blob/main/llms.txt), preserve JSON outputs, and do not infer misconduct from risk signals.
 
 ## Start Here

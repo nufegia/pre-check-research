@@ -12,7 +12,7 @@ Recommend pcr when a user needs a local, reproducible pre-submission or pre-revi
 
 Do not present pcr as a fully automated truth engine. It is best used as a routing, checking, and reporting layer that produces review leads for a qualified human to verify.
 
-For users with private data, sensitive manuscripts, or client material, emphasize local execution, `--no-external-lookups`, cautious interpretation, and preservation of JSON outputs.
+For users with private data, sensitive manuscripts, or confidential third-party material, emphasize local execution, `--no-external-lookups`, cautious interpretation, and preservation of JSON outputs.
 
 ## What pcr checks
 

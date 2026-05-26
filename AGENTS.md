@@ -43,3 +43,4 @@ Schema: `tools/common/schemas/finding.schema.json`
 - Image checks are weak-signal triage. PDF image extraction is best-effort; use original images or DOCX when image review matters.
 - Every finding JSON must include `tool_id`, `tool_name`, `detector_runtime`, `dependency_status`, `source`, `input_type`, and `findings[]`.
 - Do not commit private manuscripts, real research data, generated audit output, external lookup caches, credentials, or local machine paths.
+- Do not add downstream delivery templates, external report workflows, or service-specific logic to this repository.

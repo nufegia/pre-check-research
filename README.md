@@ -13,7 +13,7 @@
 
 ## Where pcr Fits
 
-Use `pcr` when a research package needs a documented pre-submission or pre-decision screen before it moves to a journal, supervisor, editor, institution, client, or public record.
+Use `pcr` when a research package needs a documented pre-submission or pre-decision screen before it moves to a journal, supervisor, editor, institution, collaborator, or public record.
 
 It is designed for review workflows where the reviewer has source materials available: manuscript text, source tables, raw or summary data, analysis scripts, figures, references, and provenance context. The goal is to surface reproducible review leads early enough that a human expert can verify, resolve, or explain them.
 
@@ -48,7 +48,7 @@ A run produces two complementary outputs:
 - **Markdown report** for humans: findings grouped by tool, evidence, possible normal explanations, review steps, confidence, and limitations.
 - **JSON report** for systems: schema-bound findings that can be merged, archived, diffed, or handed to an AI-assisted review workflow.
 
-The report is designed to support a defensible review process. It does not replace source-material verification, subject-matter judgment, or statistical consultation.
+The report is designed to support a defensible review process. It does not replace source-material verification, subject-matter judgment, or independent statistical review.
 
 ## Review Boundaries
 
