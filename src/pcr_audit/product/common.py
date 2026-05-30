@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 from xml.etree import ElementTree
 
+from pcr_audit import __version__
 from pcr_audit.io import read_text_source
 from pcr_audit.models import Finding, enrich_finding_explanation
 
@@ -50,6 +51,7 @@ TEXT_TOKEN_RE = re.compile(r"[A-Za-z0-9]{2,}")
 EMAIL_RE = re.compile(r"\b[A-Z0-9._%+-]+@([A-Z0-9.-]+\.[A-Z]{2,})\b", re.I)
 AUTHOR_LINE_RE = re.compile(r"^\s*(?:authors?)\s*[:：]\s*(?P<value>.+)$", re.I | re.M)
 INSTITUTION_LINE_RE = re.compile(r"^\s*(?:affiliations?|institutions?)\s*[:：]\s*(?P<value>.+)$", re.I | re.M)
+USER_AGENT = f"pcr-audit/{__version__}"
 
 
 def normalize_doi(raw: str) -> str:
@@ -176,7 +178,7 @@ def finding(
 
 
 def _http_json(url: str, timeout: float = 8.0, contact_email: str = "") -> dict[str, Any] | None:
-    user_agent = f"pcr-audit/1.1.0 ({contact_email})" if contact_email else "pcr-audit/1.1.0"
+    user_agent = f"{USER_AGENT} ({contact_email})" if contact_email else USER_AGENT
     request = urllib.request.Request(
         url,
         headers={
@@ -279,7 +281,7 @@ def extract_text_with_grobid(source: Path, config: AuditConfig, findings: list[F
         request = urllib.request.Request(
             _grobid_endpoint(config.grobid_url),
             data=body,
-            headers={"Content-Type": f"multipart/form-data; boundary={boundary}", "User-Agent": "pcr-audit/1.1.0"},
+            headers={"Content-Type": f"multipart/form-data; boundary={boundary}", "User-Agent": USER_AGENT},
             method="POST",
         )
         with urllib.request.urlopen(request, timeout=20) as response:
