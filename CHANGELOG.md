@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.3.1
+
+- Fixed the audit HTTP user agent to use the package version consistently.
+
 ## v1.3.0
 
 - Added layout-aware XLSX extraction that splits visually arranged source-data sheets into separate logical tables using borders, blank row/column separators, merged-cell labels, and cell ranges.
