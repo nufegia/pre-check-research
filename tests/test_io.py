@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import pandas as pd
 import pytest
+from openpyxl import Workbook
+from openpyxl.styles import Border, Side
 
 from pcr_audit.io import (
     clean_cell,
@@ -106,6 +108,67 @@ class TestReadExcel:
         name, result_df = tables[0]
         assert result_df.shape == (2, 2)
 
+    def test_splits_bordered_layout_tables(self, tmp_path):
+        f = tmp_path / "layout.xlsx"
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Source Data"
+        ws["B2"] = "Fig. 1a"
+        ws["B3"] = "group"
+        ws["C3"] = "value"
+        ws["B4"] = "A"
+        ws["C4"] = 1
+        ws["B5"] = "B"
+        ws["C5"] = 2
+        ws["E2"] = "Fig. 1b"
+        ws["E3"] = "group"
+        ws["F3"] = "value"
+        ws["E4"] = "A"
+        ws["F4"] = 3
+        ws["E5"] = "B"
+        ws["F5"] = 4
+
+        side = Side(style="thin", color="000000")
+        border = Border(left=side, right=side, top=side, bottom=side)
+        for row in range(3, 6):
+            for col in (2, 3, 5, 6):
+                ws.cell(row=row, column=col).border = border
+        wb.save(f)
+
+        tables = read_excel(f)
+
+        assert [name for name, _df in tables] == [
+            "Source Data__Fig__1a__range_B3_C5",
+            "Source Data__Fig__1b__range_E3_F5",
+        ]
+        assert [df.shape for _name, df in tables] == [(2, 2), (2, 2)]
+        assert tables[0][1].iloc[0].to_dict() == {"group": "A", "value": 1}
+
+    def test_preserves_unsegmented_sheets_in_mixed_workbook(self, tmp_path):
+        f = tmp_path / "mixed.xlsx"
+        wb = Workbook()
+        layout = wb.active
+        layout.title = "Layout"
+        plain = wb.create_sheet("Plain")
+        side = Side(style="thin", color="000000")
+        border = Border(left=side, right=side, top=side, bottom=side)
+        for left, value in ((1, 10), (4, 20)):
+            layout.cell(row=1, column=left, value="id").border = border
+            layout.cell(row=1, column=left + 1, value="value").border = border
+            layout.cell(row=2, column=left, value="x").border = border
+            layout.cell(row=2, column=left + 1, value=value).border = border
+            layout.cell(row=3, column=left, value="y").border = border
+            layout.cell(row=3, column=left + 1, value=value + 1).border = border
+        plain.append(["subject", "score"])
+        plain.append(["s1", 1])
+        plain.append(["s2", 2])
+        wb.save(f)
+
+        tables = read_excel(f)
+
+        assert [name for name, _df in tables] == ["Layout__range_A1_B3", "Layout__range_D1_E3", "Plain"]
+        assert tables[-1][1].shape == (2, 2)
+
 
 class TestReadTextSource:
     def test_reads_txt_file(self, tmp_path):
@@ -159,3 +222,25 @@ class TestExtractFile:
         assert manifest["outputs"][0]["kind"] == "table"
         csv_out = tmp_path / "out" / "01_test.csv"
         assert csv_out.exists()
+
+    def test_extracts_bordered_excel_tables_to_separate_csvs(self, tmp_path):
+        f = tmp_path / "layout.xlsx"
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Sheet"
+        side = Side(style="thin", color="000000")
+        border = Border(left=side, right=side, top=side, bottom=side)
+        for left, value in ((1, 10), (4, 20)):
+            ws.cell(row=1, column=left, value="id").border = border
+            ws.cell(row=1, column=left + 1, value="value").border = border
+            ws.cell(row=2, column=left, value="x").border = border
+            ws.cell(row=2, column=left + 1, value=value).border = border
+            ws.cell(row=3, column=left, value="y").border = border
+            ws.cell(row=3, column=left + 1, value=value + 1).border = border
+        wb.save(f)
+
+        manifest = extract_file(f, tmp_path / "out")
+
+        assert len(manifest["outputs"]) == 2
+        assert (tmp_path / "out" / "01_Sheet__range_A1_B3.csv").exists()
+        assert (tmp_path / "out" / "02_Sheet__range_D1_E3.csv").exists()

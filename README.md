@@ -55,6 +55,7 @@ The report is designed to support a defensible review process. It does not repla
 - Findings are **risk signals**, not misconduct conclusions.
 - Missing tools, missing dependencies, skipped checks, and unsupported material are recorded as `level: info`.
 - PDF/DOCX extraction can introduce recognition errors; important findings should be verified against source CSV/XLSX, original figures, and manuscript tables.
+- XLSX extraction uses deterministic layout-aware splitting for visually arranged source-data sheets, but Excel borders and blank space are still presentation cues rather than formal data semantics.
 - Python/R scripts can be rerun in a temporary copy; Stata/SPSS/SAS scripts are scanned read-only and flagged for controlled manual rerun.
 
 ## Who Is This For
@@ -213,7 +214,7 @@ Project manifest (`pcr-project.json`):
 ### Extraction and merging
 
 ```bash
-# Extract tables from DOCX/PDF/XLSX
+# Extract tables from DOCX/PDF/XLSX. Visually arranged XLSX sheets are split into logical CSV tables when layout cues are present.
 pcr-extract examples/suspicious_sample.xlsx --out build/extracted --json build/extracted.json
 
 # Merge multiple finding JSONs
@@ -235,6 +236,7 @@ pcr-audit corpus screen examples/project_minimal --index build/corpus-index.json
 - `low` / `medium` / `high` — risk signals requiring human review. **Not misconduct conclusions.**
 - Each finding includes: evidence, calculation trace, normal explanations, review steps, confidence score, false-positive risk, and method limitations.
 - PDF/DOCX extraction can introduce table-recognition errors; verify important findings against source CSV/XLSX.
+- XLSX source-data workbooks may be split by borders and blank separators before table checks; review generated table names and ranges when layout is unusually complex.
 
 ## Commands
 

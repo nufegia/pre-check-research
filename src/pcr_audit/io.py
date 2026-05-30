@@ -55,8 +55,222 @@ def read_csv(path: Path) -> list[tuple[str, pd.DataFrame]]:
 
 
 def read_excel(path: Path) -> list[tuple[str, pd.DataFrame]]:
+    if path.suffix.lower() == ".xlsx":
+        segmented = read_excel_layout_tables(path)
+        if segmented:
+            return segmented
     sheets = pd.read_excel(path, sheet_name=None)
     return [(name, df.map(clean_cell)) for name, df in sheets.items()]
+
+
+def read_excel_layout_tables(path: Path) -> list[tuple[str, pd.DataFrame]]:
+    try:
+        from openpyxl import load_workbook
+        from openpyxl.utils import get_column_letter
+    except ImportError:
+        return []
+
+    wb = load_workbook(path, data_only=True, read_only=False)
+    tables: list[tuple[str, pd.DataFrame]] = []
+    any_segmented = False
+    for ws in wb.worksheets:
+        values: dict[tuple[int, int], Any] = {}
+        bordered: set[tuple[int, int]] = set()
+        for row in ws.iter_rows():
+            for cell in row:
+                cleaned = clean_cell(cell.value)
+                if not pd.isna(cleaned):
+                    values[(cell.row, cell.column)] = cleaned
+                border = cell.border
+                if any(getattr(border, side).style for side in ("left", "right", "top", "bottom")):
+                    bordered.add((cell.row, cell.column))
+
+        for merged_range in ws.merged_cells.ranges:
+            top_left = values.get((merged_range.min_row, merged_range.min_col))
+            if top_left is None:
+                continue
+            for row in range(merged_range.min_row, merged_range.max_row + 1):
+                for col in range(merged_range.min_col, merged_range.max_col + 1):
+                    values.setdefault((row, col), top_left)
+
+        if not values:
+            continue
+
+        candidates = _excel_layout_candidates(values, bordered)
+        if len(candidates) <= 1:
+            fallback_df = pd.read_excel(path, sheet_name=ws.title).map(clean_cell)
+            tables.append((ws.title, fallback_df))
+            continue
+
+        any_segmented = True
+        for idx, box in enumerate(_split_boxes_on_empty_axes(values, candidates), start=1):
+            df = _dataframe_from_excel_box(values, box)
+            if df.empty:
+                continue
+            top, left, bottom, right = box
+            ref = f"{get_column_letter(left)}{top}_{get_column_letter(right)}{bottom}"
+            caption = _nearby_excel_caption(values, box)
+            label = f"{ws.title}__{caption}__range_{ref}" if caption else f"{ws.title}__range_{ref}"
+            tables.append((label, df.map(clean_cell)))
+    return tables if any_segmented else []
+
+
+def _excel_layout_candidates(
+    values: dict[tuple[int, int], Any], bordered: set[tuple[int, int]]
+) -> list[tuple[int, int, int, int]]:
+    candidates: list[tuple[int, int, int, int]] = []
+    for component in _grid_components(bordered):
+        box = _component_box(component)
+        trimmed = _trim_box_to_values(values, box)
+        if trimmed and _box_value_count(values, trimmed) >= 4:
+            candidates.append(trimmed)
+
+    for component in _grid_components(set(values)):
+        box = _component_box(component)
+        if _box_value_count(values, box) < 4:
+            continue
+        if any(_boxes_overlap(existing, box) for existing in candidates):
+            continue
+        candidates.append(box)
+
+    return _dedupe_boxes(candidates)
+
+
+def _grid_components(cells: set[tuple[int, int]]) -> list[set[tuple[int, int]]]:
+    seen: set[tuple[int, int]] = set()
+    components: list[set[tuple[int, int]]] = []
+    for cell in sorted(cells):
+        if cell in seen:
+            continue
+        stack = [cell]
+        seen.add(cell)
+        component: set[tuple[int, int]] = set()
+        while stack:
+            row, col = stack.pop()
+            component.add((row, col))
+            for neighbor in ((row - 1, col), (row + 1, col), (row, col - 1), (row, col + 1)):
+                if neighbor in cells and neighbor not in seen:
+                    seen.add(neighbor)
+                    stack.append(neighbor)
+        components.append(component)
+    return components
+
+
+def _component_box(component: set[tuple[int, int]]) -> tuple[int, int, int, int]:
+    rows = [row for row, _ in component]
+    cols = [col for _, col in component]
+    return min(rows), min(cols), max(rows), max(cols)
+
+
+def _trim_box_to_values(
+    values: dict[tuple[int, int], Any], box: tuple[int, int, int, int]
+) -> tuple[int, int, int, int] | None:
+    top, left, bottom, right = box
+    occupied = [(row, col) for row, col in values if top <= row <= bottom and left <= col <= right]
+    if not occupied:
+        return None
+    rows = [row for row, _ in occupied]
+    cols = [col for _, col in occupied]
+    return min(rows), min(cols), max(rows), max(cols)
+
+
+def _box_value_count(values: dict[tuple[int, int], Any], box: tuple[int, int, int, int]) -> int:
+    top, left, bottom, right = box
+    return sum(1 for row, col in values if top <= row <= bottom and left <= col <= right)
+
+
+def _box_contains(outer: tuple[int, int, int, int], inner: tuple[int, int, int, int]) -> bool:
+    return outer[0] <= inner[0] and outer[1] <= inner[1] and outer[2] >= inner[2] and outer[3] >= inner[3]
+
+
+def _boxes_overlap(left: tuple[int, int, int, int], right: tuple[int, int, int, int]) -> bool:
+    return not (left[2] < right[0] or right[2] < left[0] or left[3] < right[1] or right[3] < left[1])
+
+
+def _dedupe_boxes(boxes: list[tuple[int, int, int, int]]) -> list[tuple[int, int, int, int]]:
+    ordered = sorted(set(boxes), key=lambda box: (box[0], box[1], box[2], box[3]))
+    deduped: list[tuple[int, int, int, int]] = []
+    for box in ordered:
+        if any(_box_contains(existing, box) for existing in deduped):
+            continue
+        deduped.append(box)
+    return deduped
+
+
+def _split_boxes_on_empty_axes(
+    values: dict[tuple[int, int], Any], boxes: list[tuple[int, int, int, int]]
+) -> list[tuple[int, int, int, int]]:
+    split: list[tuple[int, int, int, int]] = []
+    for box in boxes:
+        sub_boxes = [box]
+        changed = True
+        while changed:
+            changed = False
+            next_boxes: list[tuple[int, int, int, int]] = []
+            for sub_box in sub_boxes:
+                parts = _split_box_once_on_empty_axis(values, sub_box)
+                if len(parts) > 1:
+                    changed = True
+                next_boxes.extend(parts)
+            sub_boxes = next_boxes
+        split.extend(sub_boxes)
+    return _dedupe_boxes([box for box in split if _box_value_count(values, box) >= 4])
+
+
+def _split_box_once_on_empty_axis(
+    values: dict[tuple[int, int], Any], box: tuple[int, int, int, int]
+) -> list[tuple[int, int, int, int]]:
+    top, left, bottom, right = box
+    for row in range(top + 1, bottom):
+        if not any((row, col) in values for col in range(left, right + 1)):
+            return [(top, left, row - 1, right), (row + 1, left, bottom, right)]
+    for col in range(left + 1, right):
+        if not any((row, col) in values for row in range(top, bottom + 1)):
+            return [(top, left, bottom, col - 1), (top, col + 1, bottom, right)]
+    return [box]
+
+
+def _dataframe_from_excel_box(values: dict[tuple[int, int], Any], box: tuple[int, int, int, int]) -> pd.DataFrame:
+    top, left, bottom, right = box
+    rows = [[values.get((row, col), np.nan) for col in range(left, right + 1)] for row in range(top, bottom + 1)]
+    df = pd.DataFrame(rows).dropna(axis=0, how="all").dropna(axis=1, how="all")
+    if df.shape[0] >= 2:
+        first = ["" if pd.isna(item) else str(item) for item in df.iloc[0].tolist()]
+        has_header = len(set(first)) == len(first) and any(not _looks_numeric(item) for item in first)
+        if has_header:
+            body = df.iloc[1:].reset_index(drop=True)
+            body.columns = first
+            df = body
+    return df.reset_index(drop=True)
+
+
+def _nearby_excel_caption(values: dict[tuple[int, int], Any], box: tuple[int, int, int, int]) -> str:
+    top, left, _bottom, right = box
+    for row in range(top - 1, max(top - 3, 0), -1):
+        labels = [str(values[(row, col)]).strip() for col in range(left, right + 1) if (row, col) in values]
+        short_labels = [
+            label
+            for label in labels
+            if label and len(label) <= 60 and any(ch.isalpha() for ch in label) and not _looks_numeric(label)
+        ]
+        if len(short_labels) > 3:
+            continue
+        if short_labels:
+            return safe_table_name("_".join(short_labels), 0)
+    return ""
+
+
+def _looks_numeric(value: Any) -> bool:
+    if value is None or (isinstance(value, float) and np.isnan(value)):
+        return False
+    text = str(value).strip().replace(",", "").replace("%", "")
+    if text == "":
+        return False
+    try:
+        float(text)
+    except ValueError:
+        return False
+    return True
 
 
 def read_docx_tables(path: Path) -> list[tuple[str, pd.DataFrame]]:
