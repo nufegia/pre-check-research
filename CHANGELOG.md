@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.3.2
+
+- Updated package and citation metadata author attribution to Daotuan Wang.
+- Updated MIT license copyright holder to Daotuan Wang.
+
 ## v1.3.1
 
 - Fixed the audit HTTP user agent to use the package version consistently.
